@@ -1,0 +1,20 @@
+{
+  "name": "spotcafe-server",
+  "version": "0.0.1",
+  "description": "SpotCafe application server",
+  "main": "index.js",
+  "scripts": {},
+  "author": "admin@computerclubsystem.com",
+  "license": "ISC",
+  "dependencies": {
+    "koa": "^2.3.0",
+    "rxjs": "^5.4.3",
+    "tedious": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/koa": "^2.0.39",
+    "@types/tedious": "^1.8.30",
+    "tslint": "^5.6.0",
+    "typescript": "^2.4.2"
+  }
+}

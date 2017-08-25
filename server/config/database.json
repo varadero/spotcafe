@@ -1,0 +1,19 @@
+{
+    "databaseProviders": {
+        "defaultProvider": "MSSQL Database Provider",
+        "providers": [
+            {
+                "name": "MSSQL Database Provider",
+                "module": "./mssql/mssql-database-provider.js",
+                "config": {
+                    "userName": "admin",
+                    "password": "123456",
+                    "server": "localhost",
+                    "options": {
+                        "database": "SpotCafe-Dev"
+                    }
+                }
+            }
+        ]
+    }
+}

@@ -1,0 +1,31 @@
+/* You can add global styles to this file, and also import other style files */
+html, body, app-root, md-sidenav-container, .primary-content {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* overflow:auto fixes Safari vertical scrolling problem if content is taller than te available screen height */
+.primary-content {
+    overflow: auto;
+}
+
+.mat-sidenav.sidenav-collapsed {
+    /* Angular material design sets min-width: 5vw; which in desktop Firefox and Edge could be 96px and overrides this setting */
+    /* In these browsers, collapsed width is visually larger - the problem doesn't exists in Chrome, Edge Mobile and Safari mobile */
+    /* That's why we need to use more specific selector and override min-width also */
+    min-width: 64px;
+    width: 64px;
+}
+
+.inactive-nav-item {
+    border-left: 4px solid transparent;
+}
+
+.active-nav-item {
+    border-left: 4px solid rgb(32, 178, 170);
+}
+
+.active-nav-item md-icon {
+    color: lightseagreen;    
+}

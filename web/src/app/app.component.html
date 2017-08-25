@@ -1,0 +1,35 @@
+<md-sidenav-container>
+  <md-sidenav mode="side" opened="true" [ngClass]="{'sidenav-collapsed': sidenavCollapsed}">
+    <md-nav-list>
+      <md-list-item routerLink="/computers" [attr.title]="sidenavCollapsed ? 'Computers': null" routerLinkActive="active-nav-item"
+        class="inactive-nav-item">
+        <md-icon md-list-icon>desktop_windows</md-icon>
+        <h4 md-line *ngIf="!sidenavCollapsed">Computers</h4>
+      </md-list-item>
+      <md-divider></md-divider>
+      <md-list-item routerLink="/reports" [attr.title]="sidenavCollapsed ? 'Reports': null" routerLinkActive="active-nav-item"
+        class="inactive-nav-item">
+        <md-icon md-list-icon>timeline</md-icon>
+        <h4 md-line *ngIf="!sidenavCollapsed">Reports</h4>
+      </md-list-item>
+      <md-list-item routerLink="/settings" [attr.title]="sidenavCollapsed ? 'Settings': null" routerLinkActive="active-nav-item" class="inactive-nav-item">
+        <md-icon md-list-icon>settings</md-icon>
+        <h4 md-line *ngIf="!sidenavCollapsed">Settings</h4>
+      </md-list-item>
+      <md-divider></md-divider>
+      <div (click)="toggleSidenav()">
+        <md-list-item *ngIf="!sidenavCollapsed" routerLinkActive="active-nav-item" class="inactive-nav-item">
+          <md-icon md-list-icon>chevron_left</md-icon>
+          <h4 md-line>Collapse</h4>
+        </md-list-item>
+        <md-list-item *ngIf="sidenavCollapsed" title="Expand" routerLinkActive="active-nav-item" class="inactive-nav-item">
+          <md-icon md-list-icon>chevron_right</md-icon>
+        </md-list-item>
+      </div>
+    </md-nav-list>
+  </md-sidenav>
+
+  <div class="primary-content">
+    <router-outlet></router-outlet>
+  </div>
+</md-sidenav-container>

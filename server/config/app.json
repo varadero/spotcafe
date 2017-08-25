@@ -1,0 +1,6 @@
+{
+    "httpServer": {
+        "host": "localhost",
+        "port": 443
+    }
+}
