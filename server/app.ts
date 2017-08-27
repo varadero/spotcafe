@@ -1,12 +1,16 @@
 import * as https from 'https';
 import * as Koa from 'koa';
+import * as koaStatic from 'koa-static';
+import * as bodyParser from 'koa-bodyparser';
 
+import { notFound } from './middleware/not-found';
 import { DatabaseProvider } from './database-provider/database-provider';
 import { DatabaseProviderHelper } from './database-provider/database-provider-helper';
 import { Logger } from './utils/logger';
 import { IAppConfig } from './config/config';
 import { IDatabaseConfig } from './config/database';
 import { IPrepareDatabaseResult } from './database-provider/prepare-database-result';
+
 export class App {
     private logger = new Logger();
     private koa: Koa;
@@ -66,16 +70,23 @@ export class App {
         return dbHelper.getProvider(this.options.databaseConfig);
     }
 
-    private async startServer(): Promise<https.Server> {
+    private createKoa() {
         this.koa = new Koa();
+        this.koa.use(notFound({ root: this.options.config.httpServer.webAppFolder, serve: 'index.html' }));
+        this.koa.use(koaStatic(this.options.config.httpServer.webAppFolder));
+        this.koa.use(bodyParser());
+    }
 
-        const options = <https.ServerOptions>{
+    private async startServer(): Promise<https.Server> {
+        this.createKoa();
+
+        const httpsServerOptions = <https.ServerOptions>{
             key: this.options.key,
             cert: this.options.cert
 
         };
         const result = new Promise<https.Server>((resolve, reject) => {
-            const server = https.createServer(options, this.koa.callback())
+            const server = https.createServer(httpsServerOptions, this.koa.callback())
                 .listen(this.options.config.httpServer.port, this.options.config.httpServer.host, () => {
                     resolve(<https.Server>server);
                 });
@@ -97,25 +108,3 @@ export interface IAppOptions {
     key: any;
     cert: any;
 }
-
-
-
-
-// function startServer() {
-//     app =
-// }
-
-// import { IConnectionData } from './config/connection-data';
-// import { DatabaseProvider } from './database-provider/database-provider';
-
-// const connData = <IConnectionData>JSON.parse(fs.readFileSync('./connection-data.json', { encoding: 'utf8' }));
-
-// const connection = new Connection(connData.config);
-
-// connection.on('connect', err => {
-//     if (err) {
-//         console.log(err);
-//     } else {
-//         console.log('Connected');
-//     }
-// });

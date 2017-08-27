@@ -1,5 +1,3 @@
-import * as fs from 'fs';
-
 import { IDatabaseConfig, IDatabaseProviderConfig } from '../config/database';
 import { DatabaseProvider } from './database-provider';
 

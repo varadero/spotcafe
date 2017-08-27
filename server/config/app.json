@@ -1,6 +1,7 @@
 {
     "httpServer": {
         "host": "localhost",
-        "port": 443
+        "port": 443,
+        "webAppFolder": "web/dist/"
     }
 }

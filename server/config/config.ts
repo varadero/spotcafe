@@ -5,4 +5,5 @@ export interface IAppConfig {
 export interface IHttpServerConfig {
     host: string;
     port: number;
+    webAppFolder: string;
 }
