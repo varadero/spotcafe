@@ -1,0 +1,16 @@
+<div>
+    <span>Employee:</span>
+</div>
+
+<md-card *ngFor="let permission of permissions">
+    <md-card-title>
+        <md-checkbox>
+            {{permission.name}}
+        </md-checkbox>
+    </md-card-title>
+    <md-card-content>
+        {{permission.description}}
+    </md-card-content>
+</md-card>
+
+<button md-button>Save</button>

@@ -9,6 +9,10 @@ export function notFound(options: INotFoundOptions) {
             // Only GET requrest are processed
             return next();
         }
+        if (options.ignorePrefix && ctx.path.startsWith(options.ignorePrefix)) {
+            return next();
+        }
+
         const requestedPath = path.join(options.root, ctx.path);
         if (!fs.existsSync(requestedPath)) {
             ctx.response.append('Content-Type', 'text/html');
@@ -20,8 +24,8 @@ export function notFound(options: INotFoundOptions) {
     };
 }
 
-
 export interface INotFoundOptions {
     root: string;
     serve: string;
+    ignorePrefix?: string;
 }

@@ -1,15 +1,30 @@
 import * as path from 'path';
 import * as fs from 'fs';
+import * as crypto from 'crypto';
+
 import { Connection, Request, ColumnValue, TediousType, TYPES, ConnectionConfig } from 'tedious';
 import { ICreateDatabaseResult } from '../create-database-result';
 import { IPrepareDatabaseResult } from '../prepare-database-result';
 
 export class DatabaseHelper {
-    private dbSettingsTableName = 'DatabaseSettings';
+    private constants = {
+        databaseSettingsTableName: 'DatabaseSettings',
+        databaseVersionSettingName: 'database.version',
+        administratorId: 'AD0CA48F-E266-48EA-BFB7-0C03147E442C'
+    };
 
     constructor(private config: ConnectionConfig) { }
 
-    async createDatabase(): Promise<ICreateDatabaseResult> {
+    async getTokenSecret(): Promise<string | null> {
+        const conn = await this.connect();
+        try {
+            return await this.getDatabaseSetting(conn, 'token.secret');
+        } finally {
+            conn.close();
+        }
+    }
+
+    async createDatabase(administratorPassword: string): Promise<ICreateDatabaseResult> {
         const result = <ICreateDatabaseResult>{};
         if (!this.config.options || !this.config.options.database) {
             return Promise.reject('Database is not specified');
@@ -26,8 +41,7 @@ export class DatabaseHelper {
         let conn = await this.connect(conf);
         try {
             try {
-                const createDatabaseSql = `CREATE DATABASE [${database}]`;
-                await this.executeRowCount(conn, createDatabaseSql);
+                await this.createNewDatabase(conn, database);
             } catch (err) {
                 // Don't fail on error on database creation
                 // It could be already created by previous action which failed later (ex. at update phase)
@@ -42,45 +56,19 @@ export class DatabaseHelper {
 
             // Check for DatabaseSettings existence
             // If it exists - don't continue since the database already exist and we can't recreate it - it must be udated instead
-            const checkDatabaseSettingsTableExistenceSql = `
-                SELECT TOP 1 [TABLE_NAME]
-                FROM [INFORMATION_SCHEMA].[TABLES]
-                WHERE [TABLE_NAME]='${this.dbSettingsTableName}'
-            `;
-            const checkDatabaseSettingsResult = await this.executeRowCount(conn, checkDatabaseSettingsTableExistenceSql);
-            if (checkDatabaseSettingsResult > 0) {
-                // Table 'DatabaseSettings' already exist - we can't continue with creation of the table - update must be made instead
-                throw new Error(`Can't create database "${database}", because it is not empty. It must be updated instead.`);
+            const checkDatabaseSettingsResult = await this.checkDatabaseSettingsTableExistence(conn);
+            if (checkDatabaseSettingsResult) {
+                // Table 'DatabaseSettings' already exist - we can't continue with creation of the table
+                throw new Error(`Can't create database "${database}", because it is not empty.`);
             }
 
-            const createDatabaseSettingsTableSql = `
-                CREATE TABLE dbo.${this.dbSettingsTableName}
-                (
-                Name nvarchar(250) NOT NULL,
-                Value nvarchar(MAX) NULL
-                )  ON [PRIMARY]
-                TEXTIMAGE_ON [PRIMARY]
-
-                ALTER TABLE dbo.DatabaseSettings ADD CONSTRAINT
-                PK_DatabaseSettings_Name PRIMARY KEY CLUSTERED
-                (
-                Name
-                ) WITH( STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-            `;
-            await this.executeRowCount(conn, createDatabaseSettingsTableSql);
-
-            // Insert minimum DatabaseVersion - every other script must have greater date as database version
-            const insertDatabaseVersionRowSql = `
-                INSERT INTO [${this.dbSettingsTableName}]
-                ([Name], [Value])
-                VALUES ('DatabaseVersion', '2017-08-25 12:00:00')
-            `;
-            await this.executeRowCount(conn, insertDatabaseVersionRowSql);
-
-            // Now after DatabaseSettings table is created and DatabaseVersion is set to "0" (new database) - prepare/update the database
-            result.prepareDatabaseResult = await this.prepareDatabaseWithExistingConnection(conn);
-
+            await this.createDatabaseSettingsTable(conn);
+            await this.insertDatabaseVersion(conn, '2017-08-25 12:00:00');
+            await this.insertTokenSecret(conn, this.getRandomString(30).replace(`'`, `''`));
+            await this.prepareDatabaseWithExistingConnection(conn);
+            await this.setEmployeePassword(conn, this.constants.administratorId, administratorPassword);
             await this.commitTransaction(conn);
+            result.databaseInitialized = true;
         } finally {
             this.close(conn);
         }
@@ -95,7 +83,6 @@ export class DatabaseHelper {
             // Update database in transaction
             await this.beginTransaction(conn);
             updateFilesProcessed = await this.updateDatabase(conn);
-
             await this.commitTransaction(conn);
         } finally {
             this.close(conn);
@@ -109,15 +96,9 @@ export class DatabaseHelper {
         });
     }
 
-    async getDatabaseVersion(conn: Connection): Promise<string> {
-        const dbVersionSql = `
-            SELECT TOP 1 [Value] FROM [${this.dbSettingsTableName}] WHERE [Name]=@Name
-        `;
-        const params: IRequestParameter[] = [
-            { name: 'Name', type: TYPES.NVarChar, value: 'DatabaseVersion' }
-        ];
-        const rows = await this.executeScalar(conn, dbVersionSql, params);
-        return Promise.resolve(rows ? rows.value : null);
+    async getDatabaseVersion(conn: Connection): Promise<string | null> {
+        const dbVersion = await this.getDatabaseSetting(conn, this.constants.databaseVersionSettingName);
+        return Promise.resolve(dbVersion);
     }
 
     async updateDatabase(conn: Connection): Promise<string[]> {
@@ -164,12 +145,13 @@ export class DatabaseHelper {
     }
 
     async executeToObjects(
-        conn: Connection,
+        conn: Connection | null,
         sql: string,
         inputParameters?: IRequestParameter[],
         outputParameters?: IRequestParameter[]
     ): Promise<any[]> {
-        const executeResult = await this.execute(conn, sql, inputParameters, outputParameters);
+        const connection = await this.getConnection(conn);
+        const executeResult = await this.execute(connection, sql, inputParameters, outputParameters);
         const rows = <any>[];
         for (let i = 0; i < executeResult.length; i++) {
             const currentRow = executeResult[i];
@@ -183,17 +165,31 @@ export class DatabaseHelper {
         return rows;
     }
 
+    execToObjects(
+        sql: string,
+        inputParameters?: IRequestParameter[],
+        outputParameters?: IRequestParameter[]
+    ): Promise<any[]> {
+        return this.executeToObjects(null, sql, inputParameters, outputParameters);
+    }
+
     /**
      * Executres sql query for a given connection and returns number of rows affected
      * @param conn Connection
      * @param sql Sql query
      */
-    async executeRowCount(conn: Connection, sql: string): Promise<number> {
+    async executeRowCount(
+        conn: Connection,
+        sql: string,
+        inputParameters?: IRequestParameter[],
+        outputParameters?: IRequestParameter[]
+    ): Promise<number> {
         return new Promise<number>((resolve, reject) => {
             const req = new Request(sql, (err, rowCount, rows) => {
                 if (err) { return reject(err); }
                 return resolve(rowCount);
             });
+            this.addRequestParameters(req, inputParameters);
             conn.execSql(req);
         });
     }
@@ -203,7 +199,8 @@ export class DatabaseHelper {
      * @param conn {Connection} Connection
      * @param sql {string} Sql query
      */
-    async executeScalar(conn: Connection, sql: string, inputParameters?: IRequestParameter[]): Promise<ColumnValue> {
+    async executeScalar(conn: Connection | null, sql: string, inputParameters?: IRequestParameter[]): Promise<ColumnValue> {
+        const connection = await this.getConnection(conn);
         let colValue: ColumnValue;
         return new Promise<ColumnValue>((resolve, reject) => {
             const req = new Request(sql, (err, rowCount) => {
@@ -217,8 +214,12 @@ export class DatabaseHelper {
                     colValue = columns[0];
                 }
             });
-            conn.execSql(req);
+            connection.execSql(req);
         });
+    }
+
+    async execScalar(sql: string, inputParameters?: IRequestParameter[]): Promise<ColumnValue> {
+        return this.executeScalar(null, sql, inputParameters);
     }
 
     async connect(config?: ConnectionConfig): Promise<Connection> {
@@ -253,6 +254,93 @@ export class DatabaseHelper {
         conn.close();
     }
 
+    private async createNewDatabase(conn: Connection, databaseName: string): Promise<number> {
+        const createDatabaseSql = `
+                CREATE DATABASE [${databaseName}]
+        `;
+        return await this.executeRowCount(conn, createDatabaseSql);
+    }
+
+    private async checkDatabaseSettingsTableExistence(conn: Connection): Promise<boolean> {
+        const checkDatabaseSettingsTableExistenceSql = `
+            SELECT TOP 1 [TABLE_NAME]
+            FROM [INFORMATION_SCHEMA].[TABLES]
+            WHERE [TABLE_NAME]='${this.constants.databaseSettingsTableName}'
+        `;
+        const checkDatabaseSettingsResult = await this.executeRowCount(conn, checkDatabaseSettingsTableExistenceSql);
+        return checkDatabaseSettingsResult > 0;
+    }
+
+    private async createDatabaseSettingsTable(conn: Connection): Promise<number> {
+        const createDatabaseSettingsTableSql = `
+            CREATE TABLE dbo.${this.constants.databaseSettingsTableName}
+            (
+            Name nvarchar(250) NOT NULL,
+            Value nvarchar(MAX) NULL
+            )  ON [PRIMARY]
+            TEXTIMAGE_ON [PRIMARY]
+
+            ALTER TABLE dbo.DatabaseSettings ADD CONSTRAINT
+            PK_DatabaseSettings_Name PRIMARY KEY CLUSTERED
+            (
+            Name
+            ) WITH( STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+        `;
+        return await this.executeRowCount(conn, createDatabaseSettingsTableSql);
+    }
+
+    private async insertDatabaseVersion(conn: Connection, databaseVersion: string): Promise<number> {
+        // Insert minimum database.version - every other script must have greater date as database version
+        const insertDatabaseVersionRowSql = `
+            INSERT INTO [${this.constants.databaseSettingsTableName}]
+            ([Name], [Value]) VALUES
+            ('${this.constants.databaseVersionSettingName}', @DatabaseVersion)
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'DatabaseVersion', type: TYPES.NVarChar, value: databaseVersion }
+        ];
+        return await this.executeRowCount(conn, insertDatabaseVersionRowSql, params);
+    }
+
+    private async insertTokenSecret(conn: Connection, tokenSecret: string): Promise<number> {
+        // Insert token secret
+        const insertTokenSecretRowSql = `
+                INSERT INTO [${this.constants.databaseSettingsTableName}]
+                ([Name], [Value]) VALUES
+                ('token.secret', '${tokenSecret}')
+            `;
+        return await this.executeRowCount(conn, insertTokenSecretRowSql);
+    }
+
+    private async setEmployeePassword(conn: Connection, employeeId: string, password: string): Promise<number> {
+        const insertAdministratorUserSql = `
+            UPDATE [Employees]
+            SET [Password]=@Password
+            WHERE [Id]=@Id
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'Password', value: this.getSha512(password), type: TYPES.NVarChar },
+            { name: 'Id', value: employeeId, type: TYPES.UniqueIdentifier }
+        ];
+        return await this.executeRowCount(conn, insertAdministratorUserSql, params);
+    }
+
+    private async getDatabaseSetting(conn: Connection, settingName: string): Promise<string | null> {
+        const sql = `
+            SELECT TOP 1 [Value]
+            FROM [DatabaseSettings]
+            WHERE [Name]=@Name
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'Name', value: settingName, type: TYPES.NVarChar }
+        ];
+        const scalarResult = await this.executeScalar(conn, sql, params);
+        if (scalarResult) {
+            return Promise.resolve(scalarResult.value);
+        }
+        return Promise.resolve(null);
+    }
+
     private readTextFileSync(file: string): string {
         return fs.readFileSync(file, { encoding: 'utf8' });
     }
@@ -278,9 +366,11 @@ export class DatabaseHelper {
             const scriptFilePath = path.join(scriptsFolder, scriptFileForUpdate.fileName);
             const fileContent = this.readTextFileSync(scriptFilePath);
             // Some line must be equal to expression that updates the database to the same version as file name
-            const stringToMatch = `UPDATE DatabaseSettings SET Value='${scriptFileForUpdate.version}' WHERE Name='DatabaseVersion'`;
+            const fileVersion = scriptFileForUpdate.version;
+            const databaseVersionSettingName = this.constants.databaseVersionSettingName;
+            const stringToMatch = `UPDATE [DatabaseSettings] SET [Value]='${fileVersion}' WHERE [Name]='${databaseVersionSettingName}'`;
             if (fileContent.indexOf(stringToMatch) === -1) {
-                const msg = `Script file ${scriptFileForUpdate.fileName} does't update database to correct version.`
+                const msg = `Script file ${scriptFileForUpdate.fileName} doesn't update database to correct version.`
                     + `Expected ${scriptFileForUpdate.version}.`;
                 return Promise.reject(msg);
             }
@@ -329,6 +419,33 @@ export class DatabaseHelper {
 
     private pascalize(value: string): string {
         return value[0].toLowerCase() + value.substr(1);
+    }
+
+    private async getConnection(conn: Connection | null): Promise<Connection> {
+        if (conn) { return Promise.resolve(conn); }
+        conn = await this.connect(this.config);
+        return conn;
+    }
+
+    private getRandomString(length: number): string {
+        let result = '';
+        for (let i = 0; i < length; i++) {
+            while (true) {
+                const rnd = crypto.randomBytes(1)[0];
+                const isOk = (rnd >= 33 && rnd <= 126);
+                if (isOk) {
+                    result += String.fromCharCode(rnd);
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
+    private getSha512(value: string): string {
+        const sha256 = crypto.createHash('sha512');
+        const hash = sha256.update(value).digest('hex');
+        return hash;
     }
 }
 

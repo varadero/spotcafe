@@ -5,7 +5,7 @@ html, body, app-root, md-sidenav-container, .primary-content {
     height: 100%;
 }
 
-/* overflow:auto fixes Safari vertical scrolling problem if content is taller than te available screen height */
+/* overflow:auto fixes Safari vertical scrolling problem if content is taller than the available screen height */
 .primary-content {
     overflow: auto;
 }
@@ -23,9 +23,13 @@ html, body, app-root, md-sidenav-container, .primary-content {
 }
 
 .active-nav-item {
-    border-left: 4px solid rgb(32, 178, 170);
+    border-left: 4px solid lightseagreen;
 }
 
 .active-nav-item md-icon {
     color: lightseagreen;    
+}
+
+.active-settings-nav-item {
+    border-bottom: 2px solid lightseagreen;    
 }

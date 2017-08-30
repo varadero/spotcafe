@@ -7,7 +7,7 @@
                 "module": "./mssql/mssql-database-provider.js",
                 "config": {
                     "userName": "admin",
-                    "password": "123456",
+                    "password": "123",
                     "server": "localhost",
                     "options": {
                         "database": "SpotCafe-Dev"

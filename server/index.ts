@@ -19,8 +19,14 @@ const appOptions = <IAppOptions>{
     try {
         const app = new App(appOptions);
         const createDatabase = process.argv.includes('--create-database');
-        await app.start(createDatabase);
-        console.log(`${new Date().toISOString()}: App started`);
+        const administratorPasswordArg = process.argv.find(x => x.startsWith('--administrator-password='));
+        const administratorPassword = administratorPasswordArg ?
+            administratorPasswordArg.substr(administratorPasswordArg.indexOf('=') + 1)
+            : null;
+        const server = await app.start(createDatabase, administratorPassword);
+        if (server) {
+            console.log(`${new Date().toISOString()}: App started`);
+        }
     } catch (err) {
         console.error(err);
     }

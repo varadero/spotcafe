@@ -12,7 +12,8 @@
         <md-icon md-list-icon>timeline</md-icon>
         <h4 md-line *ngIf="!sidenavCollapsed">Reports</h4>
       </md-list-item>
-      <md-list-item routerLink="/settings" [attr.title]="sidenavCollapsed ? 'Settings': null" routerLinkActive="active-nav-item" class="inactive-nav-item">
+      <md-list-item routerLink="/settings" [attr.title]="sidenavCollapsed ? 'Settings': null" routerLinkActive="active-nav-item"
+        class="inactive-nav-item">
         <md-icon md-list-icon>settings</md-icon>
         <h4 md-line *ngIf="!sidenavCollapsed">Settings</h4>
       </md-list-item>
@@ -30,6 +31,18 @@
   </md-sidenav>
 
   <div class="primary-content">
+    <div *ngIf="!isLoggedIn">
+      <div>
+        You need to log in
+      </div>
+      <md-input-container>
+        <input mdInput #username placeholder="Username" value="administrator">
+      </md-input-container>
+      <md-input-container>
+        <input mdInput #password type="password" placeholder="Password" value="123456">
+      </md-input-container>
+      <button (click)="logInEmployee(username.value, password.value)" md-raised-button color="primary">Log in</button>
+    </div>
     <router-outlet></router-outlet>
   </div>
 </md-sidenav-container>
