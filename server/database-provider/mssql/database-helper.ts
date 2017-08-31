@@ -193,29 +193,39 @@ export class DatabaseHelper {
         sql: string,
         inputParameters?: IRequestParameter[],
         outputParameters?: IRequestParameter[]
-    ): Promise<any[]> {
+    ): Promise<IExecuteToObjectsResult> {
         const connection = await this.getConnection(conn);
         const executeResult = await this.execute(connection, sql, inputParameters, outputParameters);
-        const rows = <any>[];
-        if (executeResult.firstResultSet.rows) {
-            for (let i = 0; i < executeResult.firstResultSet.rows.length; i++) {
-                const currentRow = executeResult.firstResultSet.rows[i];
-                const rowObj = <any>{};
-                for (let j = 0; j < currentRow.length; j++) {
-                    const currentCol = currentRow[j];
-                    rowObj[this.pascalize(currentCol.metadata.colName)] = currentCol.value;
+        const result = <IExecuteToObjectsResult>{};
+        result.allResultSets = [];
+        if (executeResult.allResultSets.length > 0) {
+            for (let rsi = 0; rsi < executeResult.allResultSets.length; rsi++) {
+                const rs = executeResult.allResultSets[rsi];
+                if (rs.rows) {
+                    const rows = <any>[];
+                    // Convert each row of each result set into an object
+                    for (let i = 0; i < rs.rows.length; i++) {
+                        const currentRow = rs.rows[i];
+                        const rowObj = <any>{};
+                        for (let j = 0; j < currentRow.length; j++) {
+                            const currentCol = currentRow[j];
+                            rowObj[this.pascalize(currentCol.metadata.colName)] = currentCol.value;
+                        }
+                        rows.push(rowObj);
+                    }
+                    result.allResultSets.push(<IObjectsResultSet>{ rows: rows });
                 }
-                rows.push(rowObj);
             }
         }
-        return rows;
+        result.firstResultSet = result.allResultSets[0] || <IObjectsResultSet>{ rows: [] };
+        return result;
     }
 
     execToObjects(
         sql: string,
         inputParameters?: IRequestParameter[],
         outputParameters?: IRequestParameter[]
-    ): Promise<any[]> {
+    ): Promise<IExecuteToObjectsResult> {
         return this.executeToObjects(null, sql, inputParameters, outputParameters);
     }
 
@@ -512,6 +522,11 @@ export interface IUpdateScriptFileInfo {
     version: string;
 }
 
+export interface IExecuteToObjectsResult {
+    firstResultSet: IObjectsResultSet;
+    allResultSets: IObjectsResultSet[];
+}
+
 export interface IExecuteResult {
     firstResultSet: IResultSet;
     allResultSets: IResultSet[];
@@ -519,4 +534,8 @@ export interface IExecuteResult {
 
 export interface IResultSet {
     rows: ColumnValue[][] | null;
+}
+
+export interface IObjectsResultSet {
+    rows: any[];
 }

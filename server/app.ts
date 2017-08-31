@@ -1,4 +1,5 @@
 import * as https from 'https';
+import * as http from 'http';
 import * as Koa from 'koa';
 import * as koaStatic from 'koa-static';
 import * as bodyParser from 'koa-bodyparser';
@@ -19,7 +20,7 @@ export class App {
     private logger = new Logger();
     private koa: Koa;
     private dbProvider: DatabaseProvider;
-    private server: https.Server;
+    private server: https.Server | http.Server;
 
     constructor(private options: IAppOptions) { }
 
@@ -29,7 +30,7 @@ export class App {
      * @param administratorPassword {string} If createDatabase is true, must contain the password
      * for application administrator user which will be created as the first user
      */
-    start(createDatabase: boolean, administratorPassword?: string | null): Promise<https.Server | null> {
+    start(createDatabase: boolean, administratorPassword?: string | null): Promise<https.Server | http.Server | null> {
         return this.startImpl(createDatabase, administratorPassword);
     }
 
@@ -54,7 +55,7 @@ export class App {
         return dbHelper.getProvider(this.options.databaseConfig);
     }
 
-    private async startImpl(createDatabase: boolean, administratorPassword?: string | null): Promise<https.Server | null> {
+    private async startImpl(createDatabase: boolean, administratorPassword?: string | null): Promise<https.Server | http.Server | null> {
         if (createDatabase && !administratorPassword) {
             return Promise.reject('When database must be created, administrator password must be supplied');
         }
@@ -103,26 +104,38 @@ export class App {
         }
         this.logger.log('Starting HTTP server');
         this.server = await this.startServer();
-        this.logger.log(`Listening at ${JSON.stringify(this.server.address())}`);
+        const listenAddress = JSON.stringify(this.server.address());
+        const listenProtocol = this.options.config.httpServer.secure ? 'HTTPS' : 'HTTP';
+        this.logger.log(`${listenProtocol} listening at ${listenAddress}`);
         return this.server;
     }
 
-    private async startServer(): Promise<https.Server> {
+    private async startServer(): Promise<https.Server | http.Server> {
         const tokenSecret = await this.dbProvider.getTokenSecret();
         this.createKoa(tokenSecret);
 
-        const httpsServerOptions = <https.ServerOptions>{
-            key: this.options.key,
-            cert: this.options.cert
+        let result: Promise<https.Server | http.Server>;
+        if (this.options.config.httpServer.secure) {
+            const httpsServerOptions = <https.ServerOptions>{
+                key: this.options.key,
+                cert: this.options.cert
 
-        };
-        const result = new Promise<https.Server>((resolve, reject) => {
-            const server = https.createServer(httpsServerOptions, this.koa.callback())
-                .listen(this.options.config.httpServer.port, this.options.config.httpServer.host, () => {
-                    resolve(<https.Server>server);
-                });
-        });
+            };
 
+            result = new Promise<https.Server>((resolve, reject) => {
+                const server = https.createServer(httpsServerOptions, this.koa.callback())
+                    .listen(this.options.config.httpServer.port, this.options.config.httpServer.host, () => {
+                        resolve(<https.Server>server);
+                    });
+            });
+        } else {
+            result = new Promise<https.Server>((resolve, reject) => {
+                const server = http.createServer(this.koa.callback())
+                    .listen(this.options.config.httpServer.port, this.options.config.httpServer.host, () => {
+                        resolve(<any>server);
+                    });
+            });
+        }
         return result;
     }
 

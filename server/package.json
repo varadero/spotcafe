@@ -2,6 +2,9 @@
   "name": "spotcafe-server",
   "version": "0.0.1",
   "description": "SpotCafe application server",
+  "engines": {
+    "node": "8.4.0"
+  },
   "main": "index.js",
   "scripts": {},
   "author": "admin@computerclubsystem.com",

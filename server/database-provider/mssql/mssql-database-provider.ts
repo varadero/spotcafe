@@ -8,7 +8,7 @@ import { DatabaseHelper, IRequestParameter } from './database-helper';
 import { IEmployee } from '../../../shared/interfaces/employee';
 import { IPermission } from '../../../shared/interfaces/permission';
 import { IEmployeeWithRolesAndPermissions } from '../../../shared/interfaces/employee-with-roles-and-permissions';
-import { IRoleWithPermisions } from '../../../shared/interfaces/role-with-permissions';
+// import { IRoleWithPermisions } from '../../../shared/interfaces/employee-with-roles-and-permissions';
 
 export class MSSqlDatabaseProvider implements DatabaseProvider {
     private config: ConnectionConfig;
@@ -30,7 +30,7 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
             // Such employee is not found - return empty result
             return Promise.resolve(<IEmployeeWithRolesAndPermissions>{});
         }
-        // Now get user permissions
+        // Now get employee permissions
         const employeeRolesWithPermissionsSql = `
             SELECT r.[Id] AS [RoleId], r.[Name] AS [RoleName], r.[Description] AS RoleDescription,
             p.[Id] AS [PermissionId], p.[Name] AS [PermissionName], p.[Description] AS PermissionDescription
@@ -39,17 +39,17 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
             INNER JOIN [PermissionsInRoles] pir ON pir.[RoleId] = r.[Id]
             INNER JOIN [Permissions] p ON p.[Id] = pir.[PermissionId]
             WHERE eir.[EmployeeId] = @EmployeeId
-
-            SELECT * FROM [Employees]
         `;
         const userWithPermissionsParams: IRequestParameter[] = [
             { name: 'EmployeeId', value: employee.id, type: TYPES.NVarChar }
         ];
-        const rolesWithPermissionsData = await this.dbHelper.execToObjects(employeeRolesWithPermissionsSql, userWithPermissionsParams);
-        const rolesWithPermissions: IRoleWithPermisions[] = [];
-        rolesWithPermissions.push(<any>null);
-        for (let i = 0; i < rolesWithPermissionsData.length; i++) {
-        }
+        const rolesWithPermissionsResult = await this.dbHelper.execToObjects(employeeRolesWithPermissionsSql, userWithPermissionsParams);
+        // TODO Group by role properties and add all their permissions to array
+        const typedResultSet = <{
+            roleId: string, roleName: string, roleDescription: string,
+            permissionId: string, permissionName: string, permissionDescription: string
+        }[]>rolesWithPermissionsResult.firstResultSet.rows;
+        typedResultSet[0].permissionDescription = typedResultSet[0].permissionDescription;
         return Promise.resolve(<IEmployeeWithRolesAndPermissions>{ employee: employee, rolesWithPermissions: [] });
     }
 
@@ -60,7 +60,7 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
             ORDER BY [Name]
         `;
         const permissions = await this.dbHelper.executeToObjects(null, sql);
-        return permissions;
+        return permissions.firstResultSet.rows;
     }
 
     async createDatabase(administratorPassword: string): Promise<ICreateDatabaseResult> {
@@ -83,10 +83,10 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
             { name: 'PasswordHash', value: passwordHash, type: TYPES.NVarChar }
         ];
         const employeeData = await this.dbHelper.execToObjects(getEmployeeSql, params);
-        if (!employeeData.length) {
+        if (!employeeData.firstResultSet.rows.length) {
             return null;
         }
-        return <IEmployee>employeeData[0];
+        return <IEmployee>employeeData.firstResultSet.rows[0];
     }
 
     private getSha512(value: string): string {
