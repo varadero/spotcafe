@@ -124,19 +124,63 @@ export class DatabaseHelper {
         return Promise.resolve(scriptFilesForUpdate.map(x => x.fileName));
     }
 
+    // async execute(
+    //     conn: Connection,
+    //     sql: string,
+    //     inputParameters?: IRequestParameter[],
+    //     outputParameters?: IRequestParameter[]
+    // ): Promise<ColumnValue[][]> {
+    //     return new Promise<ColumnValue[][]>((resolve, reject) => {
+    //         const rows: ColumnValue[][] = [];
+    //         const req = new Request(sql, (err, rowCount) => {
+    //             if (err) { return reject(err); }
+    //             return resolve(rows);
+    //         });
+    //         this.addRequestParameters(req, inputParameters);
+    //         req.on('columnMetadata', (columns: ColumnValue[]) => {
+    //             // Happens when result set is started
+    //         });
+    //         req.on('row', (columns: ColumnValue[]) => {
+    //             rows.push(columns);
+    //         });
+    //         req.on('done', (rowCount, more: boolean, doneRows) => {
+    //             // Happens when all 'row' events for the result set were fired
+    //         });
+    //         conn.execSql(req);
+    //     });
+    // }
+
     async execute(
         conn: Connection,
         sql: string,
         inputParameters?: IRequestParameter[],
         outputParameters?: IRequestParameter[]
-    ): Promise<ColumnValue[][]> {
-        return new Promise<ColumnValue[][]>((resolve, reject) => {
-            const rows: ColumnValue[][] = [];
+    ): Promise<IExecuteResult> {
+        return new Promise<IExecuteResult>((resolve, reject) => {
+            const result = <IExecuteResult>{};
+            result.firstResultSet = <IResultSet>{ rows: [] };
+            result.allResultSets = [];
+            let rows: ColumnValue[][] = [];
             const req = new Request(sql, (err, rowCount) => {
                 if (err) { return reject(err); }
-                return resolve(rows);
+                if (rows.length > 0) {
+                    // Add rows of a single result set
+                    // Because 'done' event will not be fired for single result sets and allResultSets is empty
+                    result.allResultSets.push(<IResultSet>{ rows: rows });
+                }
+                if (result.allResultSets.length > 0) {
+                    result.firstResultSet = result.allResultSets[0];
+                }
+                return resolve(result);
             });
             this.addRequestParameters(req, inputParameters);
+            req.on('columnMetadata', (columns: ColumnValue[]) => {
+                // Happens before each resultset 'row' events
+                if (rows.length > 0) {
+                    result.allResultSets.push(<IResultSet>{ rows: rows });
+                    rows = [];
+                }
+            });
             req.on('row', (columns: ColumnValue[]) => {
                 rows.push(columns);
             });
@@ -153,14 +197,16 @@ export class DatabaseHelper {
         const connection = await this.getConnection(conn);
         const executeResult = await this.execute(connection, sql, inputParameters, outputParameters);
         const rows = <any>[];
-        for (let i = 0; i < executeResult.length; i++) {
-            const currentRow = executeResult[i];
-            const rowObj = <any>{};
-            for (let j = 0; j < currentRow.length; j++) {
-                const currentCol = currentRow[j];
-                rowObj[this.pascalize(currentCol.metadata.colName)] = currentCol.value;
+        if (executeResult.firstResultSet.rows) {
+            for (let i = 0; i < executeResult.firstResultSet.rows.length; i++) {
+                const currentRow = executeResult.firstResultSet.rows[i];
+                const rowObj = <any>{};
+                for (let j = 0; j < currentRow.length; j++) {
+                    const currentCol = currentRow[j];
+                    rowObj[this.pascalize(currentCol.metadata.colName)] = currentCol.value;
+                }
+                rows.push(rowObj);
             }
-            rows.push(rowObj);
         }
         return rows;
     }
@@ -252,6 +298,12 @@ export class DatabaseHelper {
 
     close(conn: Connection): void {
         conn.close();
+    }
+
+    groupBy(items: any[], groupByPropertyNames: string[]): any[] {
+        const result: any[] = [];
+
+        return result;
     }
 
     private async createNewDatabase(conn: Connection, databaseName: string): Promise<number> {
@@ -458,4 +510,13 @@ export interface IRequestParameter {
 export interface IUpdateScriptFileInfo {
     fileName: string;
     version: string;
+}
+
+export interface IExecuteResult {
+    firstResultSet: IResultSet;
+    allResultSets: IResultSet[];
+}
+
+export interface IResultSet {
+    rows: ColumnValue[][] | null;
 }

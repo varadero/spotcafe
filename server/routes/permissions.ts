@@ -2,7 +2,7 @@ import * as Koa from 'koa';
 import * as route from 'koa-route';
 
 import { DatabaseProvider } from '../database-provider/database-provider';
-import { IPermission } from '../shared/interfaces/permission';
+import { IPermission } from '../../shared/interfaces/permission';
 
 export class PermissionsRoutes {
     constructor(private dataProvider: DatabaseProvider) {

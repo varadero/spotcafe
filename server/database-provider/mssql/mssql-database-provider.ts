@@ -5,9 +5,10 @@ import { DatabaseProvider } from '../database-provider';
 import { IPrepareDatabaseResult } from '../prepare-database-result';
 import { ICreateDatabaseResult } from '../create-database-result';
 import { DatabaseHelper, IRequestParameter } from './database-helper';
-import { IEmployee } from '../../shared/interfaces/employee';
-import { IPermission } from '../../shared/interfaces/permission';
-import { IEmployeeWithPermissions } from '../../shared/interfaces/employee-with-permissions';
+import { IEmployee } from '../../../shared/interfaces/employee';
+import { IPermission } from '../../../shared/interfaces/permission';
+import { IEmployeeWithRolesAndPermissions } from '../../../shared/interfaces/employee-with-roles-and-permissions';
+import { IRoleWithPermisions } from '../../../shared/interfaces/role-with-permissions';
 
 export class MSSqlDatabaseProvider implements DatabaseProvider {
     private config: ConnectionConfig;
@@ -22,33 +23,34 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
         return this.dbHelper.getTokenSecret();
     }
 
-    async getEmployeeWithPermissions(username: string, password: string): Promise<IEmployeeWithPermissions> {
+    async getEmployeeWithRolesAndPermissions(username: string, password: string): Promise<IEmployeeWithRolesAndPermissions> {
         // First get employee
         const employee = await this.getEmployeeByUsernameAndPassword(username, password);
         if (!employee) {
             // Such employee is not found - return empty result
-            return Promise.resolve(<IEmployeeWithPermissions>{});
+            return Promise.resolve(<IEmployeeWithRolesAndPermissions>{});
         }
         // Now get user permissions
-        const userPermissionsSql = `
-            SELECT ep.[PermissionId], p.[Name], p.[Description]
-            FROM [Employees] e
-            LEFT OUTER JOIN [EmployeesPermissions] ep
-            ON ep.[EmployeeId] = e.[Id]
-            INNER JOIN [Permissions] p
-            ON p.[Id] = ep.[PermissionId]
-            WHERE e.[Id] = @EmployeeId
+        const employeeRolesWithPermissionsSql = `
+            SELECT r.[Id] AS [RoleId], r.[Name] AS [RoleName], r.[Description] AS RoleDescription,
+            p.[Id] AS [PermissionId], p.[Name] AS [PermissionName], p.[Description] AS PermissionDescription
+            FROM [Roles] r
+            INNER JOIN [EmployeesInRoles] eir ON eir.[RoleId] = r.[Id]
+            INNER JOIN [PermissionsInRoles] pir ON pir.[RoleId] = r.[Id]
+            INNER JOIN [Permissions] p ON p.[Id] = pir.[PermissionId]
+            WHERE eir.[EmployeeId] = @EmployeeId
+
+            SELECT * FROM [Employees]
         `;
         const userWithPermissionsParams: IRequestParameter[] = [
             { name: 'EmployeeId', value: employee.id, type: TYPES.NVarChar }
         ];
-        const permissionsData = await this.dbHelper.execToObjects(userPermissionsSql, userWithPermissionsParams);
-        const permissions: IPermission[] = [];
-        for (let i = 0; i < permissionsData.length; i++) {
-            const permissionData = <{ permissionId: string, name: string, description: string }>permissionsData[i];
-            permissions.push({ id: permissionData.permissionId, name: permissionData.name, description: permissionData.description });
+        const rolesWithPermissionsData = await this.dbHelper.execToObjects(employeeRolesWithPermissionsSql, userWithPermissionsParams);
+        const rolesWithPermissions: IRoleWithPermisions[] = [];
+        rolesWithPermissions.push(<any>null);
+        for (let i = 0; i < rolesWithPermissionsData.length; i++) {
         }
-        return Promise.resolve(<IEmployeeWithPermissions>{ employee: employee, permissions: permissions });
+        return Promise.resolve(<IEmployeeWithRolesAndPermissions>{ employee: employee, rolesWithPermissions: [] });
     }
 
     async getAllPermissions(): Promise<IPermission[]> {
