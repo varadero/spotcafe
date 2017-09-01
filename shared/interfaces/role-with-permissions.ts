@@ -1,7 +1,7 @@
 import { IRole } from './role';
 import { IPermission } from './permission';
 
-export interface IRoleWithPermisions {
+export interface IRoleWithPermissions {
     role: IRole;
     permissions: IPermission[];
 }

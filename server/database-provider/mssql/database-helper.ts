@@ -310,10 +310,56 @@ export class DatabaseHelper {
         conn.close();
     }
 
-    groupBy(items: any[], groupByPropertyNames: string[]): any[] {
-        const result: any[] = [];
-
+    groupByProperties(items: any[], keyObject: { [key: string]: any }): IGroup[] {
+        const result: IGroup[] = [];
+        const keyPropNames = Object.getOwnPropertyNames(keyObject);
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            const keyPropsAsObject = this.getPropsAsObject(keyPropNames, item);
+            const existingGroup = this.getGroupByKey(keyPropsAsObject, result);
+            const restPropsAsObject = this.getRestPropsAsObject(keyPropNames, item);
+            if (existingGroup) {
+                existingGroup.items.push(restPropsAsObject);
+            } else {
+                const newGroup = <IGroup>{ key: keyPropsAsObject, items: [restPropsAsObject] };
+                result.push(newGroup);
+            }
+        }
         return result;
+    }
+
+    private getRestPropsAsObject(excludePropNames: string[], obj: any): any {
+        const result = <any>{};
+        const allProps = Object.getOwnPropertyNames(obj);
+        for (let i = 0; i < allProps.length; i++) {
+            const propName = allProps[i];
+            if (!excludePropNames.includes(propName)) {
+                result[propName] = obj[propName];
+            }
+        }
+        return result;
+    }
+
+    private getPropsAsObject(propNames: string[], obj: any): any {
+        const result = <any>{};
+        for (let i = 0; i < propNames.length; i++) {
+            const propName = propNames[i];
+            result[propName] = obj[propName];
+        }
+        return result;
+    }
+
+    private getGroupByKey(key: { [key: string]: any }, groups: IGroup[]): IGroup | null {
+        const keyPropNames = Object.getOwnPropertyNames(key);
+        for (let i = 0; i < groups.length; i++) {
+            const groupKey = groups[i].key;
+            const equals = keyPropNames.every(propName => groupKey[propName] === key[propName]);
+            if (equals) {
+                return groups[i];
+            }
+        }
+
+        return null;
     }
 
     private async createNewDatabase(conn: Connection, databaseName: string): Promise<number> {
@@ -538,4 +584,9 @@ export interface IResultSet {
 
 export interface IObjectsResultSet {
     rows: any[];
+}
+
+export interface IGroup {
+    key: any;
+    items: any[];
 }
