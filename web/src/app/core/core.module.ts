@@ -1,25 +1,24 @@
 import { NgModule, Optional, SkipSelf } from '@angular/core';
-// import { CommonModule } from '@angular/common';
-import { HttpModule } from '@angular/http';
+import { HttpClientModule } from '@angular/common/http';
 
 import { MaterialSubsetModule } from '../shared/material-subset.module';
 import { DataService } from './data.sevice';
 import { AuthService } from './auth.service';
+import { CacheService } from './cache.service';
 
 @NgModule({
     imports: [
         MaterialSubsetModule,
-        HttpModule,
-        // CommonModule
+        HttpClientModule
     ],
     exports: [
         MaterialSubsetModule,
-        HttpModule,
-        // CommonModule
+        HttpClientModule
     ],
     providers: [
         DataService,
-        AuthService
+        AuthService,
+        CacheService
     ]
 })
 export class CoreModule {

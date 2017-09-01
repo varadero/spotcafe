@@ -5,11 +5,11 @@ import { DatabaseProvider } from '../database-provider/database-provider';
 import { IPermission } from '../../shared/interfaces/permission';
 
 export class PermissionsRoutes {
-    constructor(private dataProvider: DatabaseProvider) {
+    constructor(private dataProvider: DatabaseProvider, private apiPrefix: string) {
     }
 
     getAllPermissionsRoute(): any {
-        return route.get('/api/permissions', this.getAllPermissions.bind(this));
+        return route.get(this.apiPrefix + 'permissions', this.getAllPermissions.bind(this));
     }
 
     private async getAllPermissions(ctx: Koa.Context, next: () => Promise<any>): Promise<IPermission[]> {

@@ -6,8 +6,9 @@ export class DatabaseProviderHelper {
     /**
      * Creates ne instance of database provider configured in connection-data.json
      * @param databaseConfig {IDatabaseConfig} Database configuration
+     * @param  logger {any} A logger object with functions log and error
      */
-    getProvider(databaseConfig: IDatabaseConfig): DatabaseProvider {
+    getProvider(databaseConfig: IDatabaseConfig, logger: any): DatabaseProvider {
         // Find default provider configuration
         const defaultProviderName = databaseConfig.databaseProviders.defaultProvider;
         let providerConfig: IDatabaseProviderConfig | null = null;
@@ -47,7 +48,7 @@ export class DatabaseProviderHelper {
         }
 
         // Initialze the instance
-        providerInstance.initialize(providerConfig.config);
+        providerInstance.initialize(providerConfig.config, logger);
         return providerInstance;
     }
 }

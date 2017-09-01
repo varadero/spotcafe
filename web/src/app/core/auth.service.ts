@@ -1,35 +1,39 @@
 import { Injectable } from '@angular/core';
-
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+
+import { IToken } from '../../../../shared/interfaces/token';
 
 @Injectable()
 export class AuthService {
-    loggedIn$ = new BehaviorSubject<boolean>(false);
+    loggedIn$ = new BehaviorSubject<IToken>(null);
 
-    private token: any;
+    private token: IToken;
     private isLoggedIn: boolean;
 
     constructor() {
-        this.loggedIn$.next(false);
+        this.loggedIn$.next(null);
     }
 
-    setLoggedIn(token: any) {
+    setLoggedIn(token: IToken) {
         this.isLoggedIn = true;
-        this.loggedIn$.next(true);
+        this.token = token;
+        this.loggedIn$.next(token);
     }
 
     setLoggedOut() {
         this.isLoggedIn = false;
-        this.loggedIn$.next(false);
+        this.token = null;
+        this.loggedIn$.next(null);
     }
 
     setUnauthorized() {
         this.isLoggedIn = false;
         this.token = null;
-        this.loggedIn$.next(false);
+        this.loggedIn$.next(null);
     }
 
-    getToken(): any {
+    getToken(): IToken {
         return this.token;
     }
 }
+

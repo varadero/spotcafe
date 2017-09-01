@@ -1,8 +1,12 @@
 <div>
     <span>Employee:</span>
+    <div *ngFor="let employee of employees">
+        {{employee.firstName}} {{employee.lastName}} ({{employee.username}})
+    </div>
+    <button md-button (click)="getAllEmployees()">Refresh</button>
 </div>
 
-<md-card *ngFor="let permission of permissions">
+<!-- <md-card *ngFor="let permission of permissions">
     <md-card-title>
         <md-checkbox>
             {{permission.name}}
@@ -11,6 +15,6 @@
     <md-card-content>
         {{permission.description}}
     </md-card-content>
-</md-card>
+</md-card> -->
 
 <button md-button>Save</button>

@@ -14,10 +14,38 @@ import { IRole } from '../../../shared/interfaces/role';
 export class MSSqlDatabaseProvider implements DatabaseProvider {
     private config: ConnectionConfig;
     private dbHelper: DatabaseHelper;
+    private logger: { log: Function, error: Function };
 
-    initialize(obj: any): void {
+    initialize(obj: any, logger: any): void {
+        this.logger = logger;
         this.config = <ConnectionConfig>(obj);
-        this.dbHelper = new DatabaseHelper(this.config);
+        this.dbHelper = new DatabaseHelper(this.config, this.logger);
+    }
+
+    async getEmployeePermissionsIds(employeeId: string): Promise<string[]> {
+        const getEmployeePermissionsSql = `
+            SELECT p.[Id]
+            FROM [Permissions] p
+            INNER JOIN [PermissionsInRoles] pir ON pir.[PermissionId] = p.[Id]
+            INNER JOIN [EmployeesInRoles] eir ON eir.[RoleId] = pir.[RoleId]
+            WHERE eir.[EmployeeId] = @EmployeeId
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'EmployeeId', value: employeeId, type: TYPES.UniqueIdentifierN }
+        ];
+        const employeepermissionsResult = await this.dbHelper.execToObjects(getEmployeePermissionsSql, params);
+        this.logger.log(employeepermissionsResult.firstResultSet.rows);
+        return <string[]>employeepermissionsResult.firstResultSet.rows;
+    }
+
+    async getEmployees(): Promise<IEmployee[]> {
+        const getEmployeesSql = `
+            SELECT [Id], [Username], [FirstName], [LastName], [Email], [Disabled]
+            FROM [Employees]
+            ORDER BY [FirstName], [LastName]
+        `;
+        const employeesResult = await this.dbHelper.execToObjects(getEmployeesSql);
+        return <IEmployee[]>employeesResult.firstResultSet.rows;
     }
 
     async getTokenSecret(): Promise<string | null> {

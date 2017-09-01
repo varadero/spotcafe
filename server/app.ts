@@ -12,9 +12,10 @@ import { Logger } from './utils/logger';
 import { IAppConfig } from './config/config';
 import { IDatabaseConfig } from './config/database';
 import { IPrepareDatabaseResult } from './database-provider/prepare-database-result';
-import { AuthRoutes } from './routes/auth';
+import { AuthenticationRoutes } from './routes/authentication';
 import { PermissionsRoutes } from './routes/permissions';
 import { ICreateDatabaseResult } from './database-provider/create-database-result';
+import { EmployeesRoutes } from './routes/employees';
 
 export class App {
     private logger = new Logger();
@@ -35,24 +36,30 @@ export class App {
     }
 
     private createKoa(tokenSecret: string | null) {
+        const apiPrefix = '/api/';
         this.koa = new Koa();
 
         this.koa.use(koaStatic(this.options.config.httpServer.webAppFolder));
-        this.koa.use(notFound({ root: this.options.config.httpServer.webAppFolder, serve: 'index.html', ignorePrefix: '/api/' }));
+        this.koa.use(notFound({ root: this.options.config.httpServer.webAppFolder, serve: 'index.html', ignorePrefix: apiPrefix }));
         this.koa.use(bodyParser());
 
-        const authRoutes = new AuthRoutes(this.dbProvider);
+        const authRoutes = new AuthenticationRoutes(this.dbProvider, apiPrefix);
         this.koa.use(authRoutes.logInEmployee());
 
         this.koa.use(requireToken({ secret: tokenSecret || '' }));
+        this.koa.use(authRoutes.checkAuthorization());
 
-        const permissionsRoutes = new PermissionsRoutes(this.dbProvider);
+        const employeesRoutes = new EmployeesRoutes(this.dbProvider, apiPrefix);
+        this.koa.use(employeesRoutes.getAllEmployees());
+        this.koa.use(employeesRoutes.getEmployeeWithRolesAndPermissions());
+
+        const permissionsRoutes = new PermissionsRoutes(this.dbProvider, apiPrefix);
         this.koa.use(permissionsRoutes.getAllPermissionsRoute());
     }
 
     private getProvider(): DatabaseProvider {
         const dbHelper = new DatabaseProviderHelper();
-        return dbHelper.getProvider(this.options.databaseConfig);
+        return dbHelper.getProvider(this.options.databaseConfig, this.logger);
     }
 
     private async startImpl(createDatabase: boolean, administratorPassword?: string | null): Promise<https.Server | http.Server | null> {
@@ -98,11 +105,11 @@ export class App {
         if (createDatabase) {
             // Creating database will not start the server
             if (createDbResult && createDbResult.databaseInitialized) {
-                this.logger.log('Database was created');
+                this.logger.log('Database creation finished');
             }
             return null;
         }
-        this.logger.log('Starting HTTP server');
+        this.logger.log('Starting web server');
         this.server = await this.startServer();
         const listenAddress = JSON.stringify(this.server.address());
         const listenProtocol = this.options.config.httpServer.secure ? 'HTTPS' : 'HTTP';

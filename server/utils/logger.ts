@@ -1,19 +1,22 @@
 export class Logger {
+    showTimestamp = true;
 
-    public showTimestamp = true;
-
-    log(text: string) {
-        this.exec(console.log, text);
+    log(text: string, optionalParams?: any[]) {
+        this.exec(console.log, text, optionalParams);
     }
 
-    error(text: string) {
-        this.exec(console.error, text);
+    error(text: string, optionalParams?: any[]) {
+        this.exec(console.error, text, optionalParams);
     }
 
-    private exec(func: Function, text: string) {
+    private exec(func: Function, text: string, optionalParams?: any[]) {
         if (this.showTimestamp) {
             text = (new Date()).toISOString() + ': ' + text;
         }
-        func(text);
+        if (optionalParams) {
+            func(text, optionalParams);
+        } else {
+            func(text);
+        }
     }
 }

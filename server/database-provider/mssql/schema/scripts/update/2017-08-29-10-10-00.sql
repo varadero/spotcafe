@@ -2,6 +2,9 @@ CREATE TABLE [dbo].[Employees](
 	[Id] [uniqueidentifier] NOT NULL,
 	[Username] [nvarchar](250) NOT NULL,
 	[Password] [nvarchar](250) NOT NULL,
+	[FirstName] [nvarchar](250) NULL,
+	[LastName] [nvarchar](250) NULL,
+	[Email] [nvarchar](250) NULL,
 	[Disabled] [bit] NOT NULL,
  CONSTRAINT [PK_Employees_Id] PRIMARY KEY CLUSTERED 
 (
@@ -10,8 +13,8 @@ CREATE TABLE [dbo].[Employees](
 ) ON [PRIMARY]
 
 INSERT INTO [dbo].[Employees]
-([Id], [Username], [Password], [Disabled]) VALUES
-('AD0CA48F-E266-48EA-BFB7-0C03147E442C', 'administrator', '', 0)
+([Id], [Username], [FirstName], [LastName], [Email], [Password], [Disabled]) VALUES
+('AD0CA48F-E266-48EA-BFB7-0C03147E442C', 'administrator', 'Administrator', 'Employee', '', '', 0)
 
 CREATE TABLE [dbo].[Roles](
 	[Id] [uniqueidentifier] NOT NULL,

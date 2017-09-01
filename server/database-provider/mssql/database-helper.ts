@@ -13,7 +13,7 @@ export class DatabaseHelper {
         administratorId: 'AD0CA48F-E266-48EA-BFB7-0C03147E442C'
     };
 
-    constructor(private config: ConnectionConfig) { }
+    constructor(private config: ConnectionConfig, private logger: { log: Function, error: Function }) { }
 
     async getTokenSecret(): Promise<string | null> {
         const conn = await this.connect();
@@ -285,6 +285,10 @@ export class DatabaseHelper {
                 if (err) { return reject(err); }
                 return resolve(conn);
             });
+            conn.on('errorMessage', err => {
+                // TODO Log the error
+                this.logError('Connection error', err);
+            });
         });
     }
 
@@ -358,7 +362,6 @@ export class DatabaseHelper {
                 return groups[i];
             }
         }
-
         return null;
     }
 
@@ -554,6 +557,18 @@ export class DatabaseHelper {
         const sha256 = crypto.createHash('sha512');
         const hash = sha256.update(value).digest('hex');
         return hash;
+    }
+
+    // private logMessage(message?: any, optionalParams?: any[]) {
+    //     if (this.logger) {
+    //         this.logger.log(message, optionalParams);
+    //     }
+    // }
+
+    private logError(message?: any, optionalParams?: any[]) {
+        if (this.logger) {
+            this.logger.error(message, optionalParams);
+        }
     }
 }
 

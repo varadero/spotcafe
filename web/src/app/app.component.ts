@@ -15,8 +15,8 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     this.sidenavCollapsed = false;
-    this.authSvc.loggedIn$.subscribe(isLoggedIn => {
-      this.isLoggedIn = isLoggedIn;
+    this.authSvc.loggedIn$.subscribe(token => {
+      this.isLoggedIn = !!token;
     });
   }
 
