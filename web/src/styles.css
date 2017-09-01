@@ -8,6 +8,7 @@ html, body, app-root, md-sidenav-container, .primary-content {
 /* overflow:auto fixes Safari vertical scrolling problem if content is taller than the available screen height */
 .primary-content {
     overflow: auto;
+    margin-left: 12px;
 }
 
 .mat-sidenav.sidenav-collapsed {
@@ -32,4 +33,12 @@ html, body, app-root, md-sidenav-container, .primary-content {
 
 .active-settings-nav-item {
     border-bottom: 2px solid lightseagreen;    
+}
+
+.settings-feature {
+    margin-top: 24px;
+}
+
+.employee-drop-down {
+    width: 15em;
 }

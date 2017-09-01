@@ -13,8 +13,18 @@ export class EmployeesRoutes {
         return route.get(this.apiPrefix + 'employees', this.getEmployees.bind(this));
     }
 
+    updateEmployee(): any {
+        return route.post(this.apiPrefix + 'employees/:id', this.updateEmployeeImpl.bind(this));
+    }
+
     getEmployeeWithRolesAndPermissions(): any {
         return route.get(this.apiPrefix + 'employee-with-permission', this.getEmployeeWithPermissions.bind(this));
+    }
+
+    private async updateEmployeeImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<any> {
+        const employee = <IEmployee>ctx.request.body;
+        await this.dataProvider.updateEmployee(employee);
+        ctx.status = 200;
     }
 
     private async getEmployees(ctx: Koa.Context, next: () => Promise<any>): Promise<IEmployee[]> {

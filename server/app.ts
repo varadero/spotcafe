@@ -1,5 +1,6 @@
 import * as https from 'https';
 import * as http from 'http';
+import * as path from 'path';
 import * as Koa from 'koa';
 import * as koaStatic from 'koa-static';
 import * as bodyParser from 'koa-bodyparser';
@@ -39,8 +40,10 @@ export class App {
         const apiPrefix = '/api/';
         this.koa = new Koa();
 
-        this.koa.use(koaStatic(this.options.config.httpServer.webAppFolder));
-        this.koa.use(notFound({ root: this.options.config.httpServer.webAppFolder, serve: 'index.html', ignorePrefix: apiPrefix }));
+        const webFolder = path.join(__dirname, this.options.config.httpServer.webAppFolder);
+        this.logger.log(`Serving from '${webFolder}'`);
+        this.koa.use(koaStatic(webFolder));
+        this.koa.use(notFound({ root: webFolder, serve: 'index.html', ignorePrefix: apiPrefix }));
         this.koa.use(bodyParser());
 
         const authRoutes = new AuthenticationRoutes(this.dbProvider, apiPrefix);
@@ -52,6 +55,7 @@ export class App {
         const employeesRoutes = new EmployeesRoutes(this.dbProvider, apiPrefix);
         this.koa.use(employeesRoutes.getAllEmployees());
         this.koa.use(employeesRoutes.getEmployeeWithRolesAndPermissions());
+        this.koa.use(employeesRoutes.updateEmployee());
 
         const permissionsRoutes = new PermissionsRoutes(this.dbProvider, apiPrefix);
         this.koa.use(permissionsRoutes.getAllPermissionsRoute());

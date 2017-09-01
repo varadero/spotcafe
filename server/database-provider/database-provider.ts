@@ -10,6 +10,7 @@ export abstract class DatabaseProvider {
     abstract prepareDatabase(): Promise<IPrepareDatabaseResult>;
     abstract getTokenSecret(): Promise<string | null>;
     abstract getEmployees(): Promise<IEmployee[]>;
+    abstract updateEmployee(employee: IEmployee): Promise<void>;
     abstract getEmployeePermissionsIds(employeeId: string): Promise<string[]>;
     abstract getAllPermissions(): Promise<IPermission[]>;
     abstract getEmployeeWithRolesAndPermissions(username: string, password: string): Promise<IEmployeeWithRolesAndPermissions>;

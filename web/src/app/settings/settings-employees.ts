@@ -7,6 +7,8 @@ import { IEmployee } from '../../../../shared/interfaces/employee';
     templateUrl: './settings-employees.html'
 })
 export class SettingsEmployeesComponent implements OnInit {
+    selectedEmployee: IEmployee;
+
     private employees: IEmployee[];
 
     constructor(private settingsSvc: SettingsService) { }
@@ -20,6 +22,15 @@ export class SettingsEmployeesComponent implements OnInit {
             this.employees = x;
         }, err => {
             // TODO Show error
+        });
+    }
+
+    updateEmployee(employee: IEmployee) {
+        if (!employee) {
+            return;
+        }
+        this.settingsSvc.updateEmployee(this.selectedEmployee).then(x => {
+        }, err => {
         });
     }
 }

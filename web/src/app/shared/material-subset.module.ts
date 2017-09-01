@@ -8,7 +8,9 @@ import {
     MdCheckboxModule,
     MdCardModule,
     MdTabsModule,
-    MdInputModule
+    MdInputModule,
+    MdSelectModule,
+    MdFormFieldModule
 } from '@angular/material';
 
 const allModules = [
@@ -19,7 +21,9 @@ const allModules = [
     MdCheckboxModule,
     MdCardModule,
     MdTabsModule,
-    MdInputModule
+    MdInputModule,
+    MdSelectModule,
+    MdFormFieldModule
 ];
 
 @NgModule({

@@ -235,19 +235,28 @@ export class DatabaseHelper {
      * @param sql Sql query
      */
     async executeRowCount(
-        conn: Connection,
+        conn: Connection | null,
         sql: string,
         inputParameters?: IRequestParameter[],
         outputParameters?: IRequestParameter[]
     ): Promise<number> {
+        const connection = await this.getConnection(conn);
         return new Promise<number>((resolve, reject) => {
             const req = new Request(sql, (err, rowCount, rows) => {
                 if (err) { return reject(err); }
                 return resolve(rowCount);
             });
             this.addRequestParameters(req, inputParameters);
-            conn.execSql(req);
+            connection.execSql(req);
         });
+    }
+
+    async execRowCount(
+        sql: string,
+        inputParameters?: IRequestParameter[],
+        outputParameters?: IRequestParameter[]
+    ): Promise<number> {
+        return this.executeRowCount(null, sql, inputParameters, outputParameters);
     }
 
     /**
@@ -255,7 +264,10 @@ export class DatabaseHelper {
      * @param conn {Connection} Connection
      * @param sql {string} Sql query
      */
-    async executeScalar(conn: Connection | null, sql: string, inputParameters?: IRequestParameter[]): Promise<ColumnValue> {
+    async executeScalar(
+        conn: Connection | null,
+        sql: string, inputParameters?: IRequestParameter[]
+    ): Promise<ColumnValue> {
         const connection = await this.getConnection(conn);
         let colValue: ColumnValue;
         return new Promise<ColumnValue>((resolve, reject) => {

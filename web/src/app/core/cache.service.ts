@@ -5,10 +5,6 @@ export class CacheService {
     private expirationDuration = 60000;
     private cachedItems = new Map<string, any>();
 
-    getAllEmployees(): IEmployee[] {
-        return this.getItem<IEmployee[]>('allEmployees');
-    }
-
     seItem<T>(key: string, item: T) {
         const cachedAt = new Date().getTime();
         this.cachedItems.set(key, <ICacheItem<T>>{ key: key, item: item, cachedAt: cachedAt });

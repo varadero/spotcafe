@@ -25,10 +25,12 @@ export class AuthenticationRoutes {
         const authHeaderValue = <string>ctx.headers.authorization;
         const tokenString = authHeaderValue.split(' ')[1];
         const tokenObj = await this.verifyToken(tokenString);
+        // Set token into request context in order to be available for all other middlewares
+        ctx.state.token = tokenObj;
         if (!tokenObj) {
             return ctx.throw(401);
         }
-        const requiredPermission = this.getRequiredPermission(ctx.method, ctx.path);
+        const requiredPermission = this.getRequiredPermission(ctx.method, ctx.path, ctx.state.token);
         if (!requiredPermission) {
             // Can't find permission for that method and url path - don't allow execution
             return ctx.throw(403);
@@ -40,12 +42,21 @@ export class AuthenticationRoutes {
         return next();
     }
 
-    private getRequiredPermission(method: string, urlPath: string): string | null {
+    private getRequiredPermission(method: string, urlPath: string, token: IServerToken): string | null {
         const pids = this.permissionsMapper.permissionIds;
         if (method === 'GET' && urlPath === this.apiPrefix + 'employees') {
             return pids.employeesView;
         }
         if (method === 'POST' && urlPath === this.apiPrefix + 'employees') {
+            return pids.employeesModify;
+        }
+        if (method === 'POST' && urlPath.startsWith(this.apiPrefix + 'employees/')) {
+            const employeeId = urlPath.substr((this.apiPrefix + 'employees/').length);
+            if (employeeId === token.employeeId) {
+                // Employee wants to modify its own account
+                return pids.employeesModifyOwnAccount;
+            }
+            // Allow modification only if current user has
             return pids.employeesModify;
         }
 

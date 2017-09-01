@@ -2,6 +2,7 @@ export class PermissionsMapper {
     permissionIds: {
         employeesView: string;
         employeesModify: string;
+        employeesModifyOwnAccount: string;
     };
     private permissionsOrder: string[] = [];
 
@@ -11,6 +12,7 @@ export class PermissionsMapper {
         const po = this.permissionsOrder;
         po.push(pids.employeesView = 'E0E615C4-8727-41D3-BE61-682CC765D2D8');
         po.push(pids.employeesModify = 'C2986027-3D76-4455-81EC-DB93D9327710');
+        po.push(pids.employeesModifyOwnAccount = 'C2986027-3D76-4455-81EC-DB93D9327710');
     }
 
     mapToBinaryString(permissionIds: string[]): string {

@@ -22,6 +22,25 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
     }
 
+    async updateEmployee(employee: IEmployee): Promise<void> {
+        const updateEmployeeSql = `
+            UPDATE [Employees]
+            SET [FirstName]=@FirstName,
+                [LastName]=@LastName,
+                [Email]=@Email,
+                [Disabled]=@Disabled
+            WHERE [Id]=@Id
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'FirstName', value: employee.firstName, type: TYPES.NVarChar },
+            { name: 'LastName', value: employee.lastName, type: TYPES.NVarChar },
+            { name: 'Email', value: employee.email, type: TYPES.NVarChar },
+            { name: 'Disabled', value: employee.disabled, type: TYPES.Bit },
+            { name: 'Id', value: employee.id, type: TYPES.UniqueIdentifierN }
+        ];
+        await this.dbHelper.execRowCount(updateEmployeeSql, params);
+    }
+
     async getEmployeePermissionsIds(employeeId: string): Promise<string[]> {
         const getEmployeePermissionsSql = `
             SELECT p.[Id]

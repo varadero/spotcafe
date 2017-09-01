@@ -1,9 +1,23 @@
-<div>
-    <span>Employee:</span>
-    <div *ngFor="let employee of employees">
-        {{employee.firstName}} {{employee.lastName}} ({{employee.username}})
+<div class="settings-feature">
+    <md-select class="employee-drop-down" [(ngModel)]="selectedEmployee" placeholder="Select employee">
+        <md-option *ngFor="let employee of employees" [value]="employee">{{employee.username}} ({{employee.firstName}} {{employee.lastName}})</md-option>
+    </md-select>
+    <div *ngIf="selectedEmployee">
+        <md-form-field>
+            <input mdInput [(ngModel)]="selectedEmployee.firstName" placeholder="First name" />
+        </md-form-field>
+        <md-form-field>
+            <input mdInput [(ngModel)]="selectedEmployee.lastName" placeholder="Last name" />
+        </md-form-field>
+        <md-form-field>
+            <input mdInput [(ngModel)]="selectedEmployee.email" placeholder="Email" />
+        </md-form-field>
+        <md-checkbox [(ngModel)]="selectedEmployee.disabled">Disabled</md-checkbox>
     </div>
-    <button md-button (click)="getAllEmployees()">Refresh</button>
+    <button md-button (click)="updateEmployee(selectedEmployee)">Save</button>
+    <!-- <div *ngFor="let employee of employees">
+        {{employee.firstName}} {{employee.lastName}} ({{employee.username}})
+    </div> -->
 </div>
 
 <!-- <md-card *ngFor="let permission of permissions">
@@ -16,5 +30,3 @@
         {{permission.description}}
     </md-card-content>
 </md-card> -->
-
-<button md-button>Save</button>

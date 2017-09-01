@@ -3,7 +3,6 @@ import { NgModule } from '@angular/core';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import { CoreModule } from './core/core.module';
-import { SettingsModule } from './settings/settings.module';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { ComputersComponent } from './computers/computers.component';
@@ -16,7 +15,6 @@ import { ComputersComponent } from './computers/computers.component';
   imports: [
     BrowserModule,
     CoreModule,
-    SettingsModule,
     AppRoutingModule,
     NoopAnimationsModule
   ],

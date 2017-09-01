@@ -9,14 +9,13 @@ export class SettingsService {
     constructor(private dataSvc: DataService, private cacheSvc: CacheService) { }
 
     getAllEmployees(): Promise<IEmployee[]> {
-        const existing = this.cacheSvc.getAllEmployees();
-        if (existing) {
-            return Promise.resolve(existing);
-        }
-
-        return this.dataSvc.getAllEmployees().then(x => {
-            return x;
+        return this.dataSvc.getAllEmployees().then((employees: IEmployee[]) => {
+            return employees;
         });
+    }
+
+    updateEmployee(employee: IEmployee): Promise<void> {
+        return this.dataSvc.updateEmployee(employee);
     }
 }
 

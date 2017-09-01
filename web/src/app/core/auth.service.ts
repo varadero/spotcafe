@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Subject } from 'rxjs/Subject';
 
 import { IToken } from '../../../../shared/interfaces/token';
 
 @Injectable()
 export class AuthService {
     loggedIn$ = new BehaviorSubject<IToken>(null);
+    unauthorized$ = new Subject<string>();
 
     private token: IToken;
     private isLoggedIn: boolean;
@@ -26,10 +28,14 @@ export class AuthService {
         this.loggedIn$.next(null);
     }
 
-    setUnauthorized() {
+    setUnauthenticated() {
         this.isLoggedIn = false;
         this.token = null;
         this.loggedIn$.next(null);
+    }
+
+    setUnauthorized(url: string) {
+        this.unauthorized$.next(url);
     }
 
     getToken(): IToken {

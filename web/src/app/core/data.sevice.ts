@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-// import { Http, RequestOptionsArgs, Response } from '@angular/http';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/toPromise';
 
 import { AuthService } from './auth.service';
+import { IEmployee } from '../../../../shared/interfaces/employee';
 
 @Injectable()
 export class DataService {
@@ -20,11 +20,17 @@ export class DataService {
         return this.get('employees');
     }
 
+    updateEmployee(employee: IEmployee): Promise<void> {
+        // TODO Here we could remove some properties like id, because this is set in the url
+        // But this needs to use a clone of the employee in order to not change its properties in the caller
+        return this.post('employees/' + employee.id, employee);
+    }
+
     private get(url: string): Promise<any> {
         const headers = this.getHeaders();
         return this.http.get(this.getApiUrl(url), { headers: headers }).toPromise().then(
             res => res,
-            err => this.handleErr(err)
+            err => this.handleErr(err, url)
         );
     }
 
@@ -32,13 +38,23 @@ export class DataService {
         const headers = this.getHeaders();
         return this.http.post(this.getApiUrl(url), body, { headers: headers }).toPromise().then(
             res => res,
-            err => this.handleErr(err)
+            err => this.handleErr(err, url)
         );
     }
 
-    private handleErr(err: any): never {
+    private patch(url: string, body: any): Promise<any> {
+        const headers = this.getHeaders();
+        return this.http.patch(this.getApiUrl(url), body, { headers: headers }).toPromise().then(
+            res => res,
+            err => this.handleErr(err, url)
+        );
+    }
+
+    private handleErr(err: any, url: string): never {
         if (err.status === 401) {
-            this.authSvc.setUnauthorized();
+            this.authSvc.setUnauthenticated();
+        } else if (err.status === 403) {
+            this.authSvc.setUnauthorized(url);
         }
         throw err;
     }
