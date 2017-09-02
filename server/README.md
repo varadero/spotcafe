@@ -42,4 +42,4 @@ ConnectionError: Login failed for user 'admin'
 ```
 If such error occurs, first check whether the ```First time start-up``` step is performed and if it is, then check the connection parameters ```server```, ```userName``` and ```password``` in ```database.json``` as described in ```installation``` step.
 
-A service could be used to start the application automatically on operating system startup. Also a NPM package like [pm2](https://www.npmjs.com/package/pm2) (https://www.npmjs.com/package/pm2)or [forever](https://www.npmjs.com/package/forever) (https://www.npmjs.com/package/forever) can be used in order to restart NodeJS application if it crashes.
+A service could be used to start the application automatically on operating system startup. Also a NPM package like [pm2](https://www.npmjs.com/package/pm2) (https://www.npmjs.com/package/pm2) or [forever](https://www.npmjs.com/package/forever) (https://www.npmjs.com/package/forever) can be used in order to restart NodeJS application if it crashes.

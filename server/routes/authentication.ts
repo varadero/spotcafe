@@ -5,16 +5,19 @@ import * as jwt from 'jsonwebtoken';
 import { DatabaseProvider } from '../database-provider/database-provider';
 import { IToken } from '../../shared/interfaces/token';
 import { PermissionsMapper } from '../utils/permissions-mapper';
+import { IServerToken } from './interfaces/server-token';
+import { ErrorMessage } from '../utils/error-message';
 
 export class AuthenticationRoutes {
     private tokenSecret: string | null;
     private permissionsMapper = new PermissionsMapper();
+    private errorMessage = new ErrorMessage();
 
     constructor(private dataProvider: DatabaseProvider, private apiPrefix: string) {
     }
 
     logInEmployee(): any {
-        return route.post(this.apiPrefix + 'loginEmployee', this.logIn.bind(this));
+        return route.post(this.apiPrefix + 'loginEmployee', this.logInEmployeeImpl.bind(this));
     }
 
     checkAuthorization() {
@@ -33,11 +36,11 @@ export class AuthenticationRoutes {
         const requiredPermission = this.getRequiredPermission(ctx.method, ctx.path, ctx.state.token);
         if (!requiredPermission) {
             // Can't find permission for that method and url path - don't allow execution
-            return ctx.throw(403);
+            return ctx.throw(this.errorMessage.create('URL forbidden'), 403);
         }
         const hasPermission = this.permissionsMapper.hasPermission(requiredPermission, tokenObj.permissions);
         if (!hasPermission) {
-            return ctx.throw(403);
+            return ctx.throw(this.errorMessage.create('No permission'), 403);
         }
         return next();
     }
@@ -47,19 +50,9 @@ export class AuthenticationRoutes {
         if (method === 'GET' && urlPath === this.apiPrefix + 'employees') {
             return pids.employeesView;
         }
-        if (method === 'POST' && urlPath === this.apiPrefix + 'employees') {
+        if (method === 'POST' && urlPath.startsWith(this.apiPrefix + 'employees')) {
             return pids.employeesModify;
         }
-        if (method === 'POST' && urlPath.startsWith(this.apiPrefix + 'employees/')) {
-            const employeeId = urlPath.substr((this.apiPrefix + 'employees/').length);
-            if (employeeId === token.employeeId) {
-                // Employee wants to modify its own account
-                return pids.employeesModifyOwnAccount;
-            }
-            // Allow modification only if current user has
-            return pids.employeesModify;
-        }
-
         return null;
     }
 
@@ -76,7 +69,7 @@ export class AuthenticationRoutes {
         return promise;
     }
 
-    private async logIn(ctx: Koa.Context, next: () => Promise<any>): Promise<any> {
+    private async logInEmployeeImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<any> {
         const credentials = <{ username: string, password: string }>ctx.request.body;
         const userWithPermissions = await this.dataProvider.getEmployeeWithRolesAndPermissions(credentials.username, credentials.password);
         if (!userWithPermissions.employee) {
@@ -95,20 +88,20 @@ export class AuthenticationRoutes {
             allPermissionIds.push(...permissions.map(x => x.id));
         }
         // Create token object for crypting including mapped permissions
-        const tokenObj = {
-            employeeId: userWithPermissions.employee.id,
-            permissions: this.permissionsMapper.mapToBinaryString(allPermissionIds)
-        };
+        const serverToken: IServerToken = <IServerToken>{};
+        serverToken.accountId = userWithPermissions.employee.id;
+        serverToken.type = 'employee';
+        serverToken.permissions = this.permissionsMapper.mapToBinaryString(allPermissionIds);
         const tokenSecret = await this.getTokenSecret();
         // Use UTC time
-        const expiresIn = new Date().getTime();
-        const tokenString = jwt.sign(tokenObj, tokenSecret || '', { expiresIn: expiresIn });
+        const expiresIn = await this.getTokenDuration();
+        const tokenString = jwt.sign(serverToken, tokenSecret || '', { expiresIn: expiresIn });
 
         // Create token for the client application
         const body: IToken = {
             token: tokenString,
             expiresIn: expiresIn,
-            permissions: tokenObj.permissions
+            permissions: serverToken.permissions
         };
         ctx.body = body;
         return body;
@@ -121,11 +114,9 @@ export class AuthenticationRoutes {
         this.tokenSecret = await this.dataProvider.getTokenSecret();
         return this.tokenSecret;
     }
-}
 
-interface IServerToken {
-    employeeId: string;
-    exp: number;
-    iat: number;
-    permissions: string;
+    private getTokenDuration(): Promise<number> {
+        // Token expires in 24 hours
+        return Promise.resolve(24 * 60 * 60);
+    }
 }

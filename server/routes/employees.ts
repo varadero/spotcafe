@@ -4,8 +4,12 @@ import * as route from 'koa-route';
 import { DatabaseProvider } from '../database-provider/database-provider';
 import { IEmployeeWithRolesAndPermissions } from '../../shared/interfaces/employee-with-roles-and-permissions';
 import { IEmployee } from '../../shared/interfaces/employee';
+import { IServerToken } from './interfaces/server-token';
+import { ErrorMessage } from '../utils/error-message';
 
 export class EmployeesRoutes {
+    private errorMessage = new ErrorMessage();
+
     constructor(private dataProvider: DatabaseProvider, private apiPrefix: string) {
     }
 
@@ -23,6 +27,11 @@ export class EmployeesRoutes {
 
     private async updateEmployeeImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<any> {
         const employee = <IEmployee>ctx.request.body;
+        // Don't allow setting disabled=true for your own user
+        const serverToken = <IServerToken>ctx.state.token;
+        if (employee.disabled && employee.id.toUpperCase() === serverToken.accountId.toUpperCase()) {
+            return ctx.throw(this.errorMessage.create('Can\'t disable own account'), 403);
+        }
         await this.dataProvider.updateEmployee(employee);
         ctx.status = 200;
     }
