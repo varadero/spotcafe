@@ -1,11 +1,12 @@
-import { IEmployee } from '../../../../shared/interfaces/employee';
+import { Injectable } from '@angular/core';
 
+@Injectable()
 export class CacheService {
     // 60 seconds expiration
     private expirationDuration = 60000;
     private cachedItems = new Map<string, any>();
 
-    seItem<T>(key: string, item: T) {
+    setItem<T>(key: string, item: T): void {
         const cachedAt = new Date().getTime();
         this.cachedItems.set(key, <ICacheItem<T>>{ key: key, item: item, cachedAt: cachedAt });
     }
@@ -22,6 +23,10 @@ export class CacheService {
             return undefined;
         }
         return cacheItem.item;
+    }
+
+    removeItem(key: string): void {
+        this.cachedItems.delete(key);
     }
 }
 

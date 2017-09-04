@@ -17,6 +17,7 @@ import { AuthenticationRoutes } from './routes/authentication';
 import { PermissionsRoutes } from './routes/permissions';
 import { ICreateDatabaseResult } from './database-provider/create-database-result';
 import { EmployeesRoutes } from './routes/employees';
+import { RolesRoutes } from './routes/roles';
 
 export class App {
     private logger = new Logger();
@@ -53,9 +54,12 @@ export class App {
         this.koa.use(authRoutes.checkAuthorization());
 
         const employeesRoutes = new EmployeesRoutes(this.dbProvider, apiPrefix);
-        this.koa.use(employeesRoutes.getAllEmployees());
         this.koa.use(employeesRoutes.getEmployeeWithRolesAndPermissions());
-        this.koa.use(employeesRoutes.updateEmployee());
+        this.koa.use(employeesRoutes.updateEmployeeWithRoles());
+        this.koa.use(employeesRoutes.getAllEmployeesWithRoles());
+
+        const rolesRoute = new RolesRoutes(this.dbProvider, apiPrefix);
+        this.koa.use(rolesRoute.getAllRolesRoute());
 
         const permissionsRoutes = new PermissionsRoutes(this.dbProvider, apiPrefix);
         this.koa.use(permissionsRoutes.getAllPermissionsRoute());

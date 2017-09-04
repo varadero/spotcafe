@@ -18,15 +18,6 @@
         <h4 md-line *ngIf="!sidenavCollapsed">Settings</h4>
       </md-list-item>
       <md-divider></md-divider>
-      <div (click)="toggleSidenav()">
-        <md-list-item *ngIf="!sidenavCollapsed" routerLinkActive="active-nav-item" class="inactive-nav-item">
-          <md-icon md-list-icon>chevron_left</md-icon>
-          <h4 md-line>Collapse</h4>
-        </md-list-item>
-        <md-list-item *ngIf="sidenavCollapsed" title="Expand" routerLinkActive="active-nav-item" class="inactive-nav-item">
-          <md-icon md-list-icon>chevron_right</md-icon>
-        </md-list-item>
-      </div>
     </md-nav-list>
   </md-sidenav>
 

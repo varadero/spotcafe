@@ -1,19 +1,19 @@
 import { NgModule } from '@angular/core';
-import { HttpModule } from '@angular/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { MaterialSubsetModule } from './material-subset.module';
+import { DisplayMessagesComponent } from './display-messages.component';
 
 const allModules = [
-    HttpModule,
     CommonModule,
     FormsModule,
     MaterialSubsetModule
 ];
 
 @NgModule({
+    declarations: [DisplayMessagesComponent],
     imports: allModules,
-    exports: allModules
+    exports: [...allModules, DisplayMessagesComponent]
 })
 export class SharedModule { }

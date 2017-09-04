@@ -1,6 +1,6 @@
 import { NgModule, Optional, SkipSelf } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
-import { FormsModule } from '@angular/forms';
+import { BrowserModule } from '@angular/platform-browser';
 
 import { MaterialSubsetModule } from '../shared/material-subset.module';
 import { DataService } from './data.sevice';
@@ -10,8 +10,9 @@ import { CacheService } from './cache.service';
 const allModules = [
     MaterialSubsetModule,
     HttpClientModule,
-    FormsModule
+    BrowserModule
 ];
+
 @NgModule({
     imports: allModules,
     exports: allModules,

@@ -2,16 +2,19 @@ import { ICreateDatabaseResult } from './create-database-result';
 import { IPrepareDatabaseResult } from './prepare-database-result';
 import { IPermission } from '../../shared/interfaces/permission';
 import { IEmployeeWithRolesAndPermissions } from '../../shared/interfaces/employee-with-roles-and-permissions';
-import { IEmployee } from '../../shared/interfaces/employee';
+import { IEmployeeWithRoles } from '../../shared/interfaces/employee-with-roles';
+import { IRole } from '../../shared/interfaces/role';
 
 export abstract class DatabaseProvider {
     abstract initialize(obj: any, ...args: any[]): void;
     abstract createDatabase(administratorPassword: string): Promise<ICreateDatabaseResult>;
     abstract prepareDatabase(): Promise<IPrepareDatabaseResult>;
     abstract getTokenSecret(): Promise<string | null>;
-    abstract getEmployees(): Promise<IEmployee[]>;
-    abstract updateEmployee(employee: IEmployee): Promise<void>;
+    // abstract getEmployees(): Promise<IEmployee[]>;
+    abstract getAllEmployeesWithRoles(): Promise<IEmployeeWithRoles[]>;
+    abstract updateEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<void>;
     abstract getEmployeePermissionsIds(employeeId: string): Promise<string[]>;
+    abstract getAllRoles(): Promise<IRole[]>;
     abstract getAllPermissions(): Promise<IPermission[]>;
     abstract getEmployeeWithRolesAndPermissions(username: string, password: string): Promise<IEmployeeWithRolesAndPermissions>;
 }

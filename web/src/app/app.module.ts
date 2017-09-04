@@ -1,4 +1,3 @@
-import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -13,7 +12,6 @@ import { ComputersComponent } from './computers/computers.component';
     ComputersComponent
   ],
   imports: [
-    BrowserModule,
     CoreModule,
     AppRoutingModule,
     NoopAnimationsModule

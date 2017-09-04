@@ -8,7 +8,6 @@ html, body, app-root, md-sidenav-container, .primary-content {
 /* overflow:auto fixes Safari vertical scrolling problem if content is taller than the available screen height */
 .primary-content {
     overflow: auto;
-    margin-left: 12px;
 }
 
 .mat-sidenav.sidenav-collapsed {
@@ -20,11 +19,11 @@ html, body, app-root, md-sidenav-container, .primary-content {
 }
 
 .inactive-nav-item {
-    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
 }
 
 .active-nav-item {
-    border-left: 4px solid lightseagreen;
+    border-right: 4px solid lightseagreen;
 }
 
 .active-nav-item md-icon {
@@ -32,13 +31,19 @@ html, body, app-root, md-sidenav-container, .primary-content {
 }
 
 .active-settings-nav-item {
-    border-bottom: 2px solid lightseagreen;    
+    border-bottom: 2px solid lightseagreen; 
+    background-color: #BEFFFB;   
 }
 
 .settings-feature {
-    margin-top: 24px;
+    margin-top: 6px;
+}
+
+.settings-container {
+    margin-left: 6px;
+    margin-right: 6px;
 }
 
 .employee-drop-down {
-    width: 15em;
+    width: 20em;
 }

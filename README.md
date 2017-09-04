@@ -14,7 +14,7 @@
 # Development
 * Navigate to ```server``` folder and execute ```tsc --pretty --watch```
 * Navigate to ```web``` folder and execute ```ng build --sourcemaps --watch```
-* Open root folder (the one that contains ```server``` and ```web``` folders) in Visual Studio Code. You can use the following VS Code ```launch.json``` in the root flder:
+* Open root folder (the one that contains ```server``` and ```web``` folders) in Visual Studio Code. You can use the following VS Code ```launch.json``` in the root folder:
 ```
 {
     // Use IntelliSense to learn about possible Node.js debug attributes.

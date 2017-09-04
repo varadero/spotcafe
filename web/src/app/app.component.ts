@@ -4,17 +4,15 @@ import { DataService } from './core/data.sevice';
 import { AuthService } from './core/auth.service';
 
 @Component({
-  selector: 'app-root',
+  selector: 'spotcafe-root',
   templateUrl: './app.component.html'
 })
 export class AppComponent implements OnInit {
-  sidenavCollapsed: boolean;
   isLoggedIn: boolean;
 
   constructor(private dataSvc: DataService, private authSvc: AuthService) { }
 
   ngOnInit(): void {
-    this.sidenavCollapsed = false;
     this.authSvc.loggedIn$.subscribe(token => {
       this.isLoggedIn = !!token;
     });
@@ -29,9 +27,5 @@ export class AppComponent implements OnInit {
     }, err => {
       this.authSvc.setUnauthenticated();
     });
-  }
-
-  toggleSidenav(): void {
-    this.sidenavCollapsed = !this.sidenavCollapsed;
   }
 }

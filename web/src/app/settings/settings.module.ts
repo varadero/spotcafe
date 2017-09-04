@@ -4,24 +4,24 @@ import { SharedModule } from '../shared/shared.module';
 import { SettingsRoutingModule } from './setings-routing.module';
 import { SettingsComponent } from './settings.component';
 import { SettingsHomeComponent } from './settings-home.component';
-import { SettingsEmployeesComponent } from './settings-employees';
-import { SettingsService } from './settings.service';
+import { EmployeesComponent } from './employees/employees.component';
+import { EmployeesServce } from './employees/employees.services';
 
 @NgModule({
     declarations: [
         SettingsComponent,
         SettingsHomeComponent,
-        SettingsEmployeesComponent
+        EmployeesComponent
     ],
     imports: [
-        SettingsRoutingModule,
-        SharedModule
+        SharedModule,
+        SettingsRoutingModule
     ],
     exports: [
         SettingsRoutingModule
     ],
     providers: [
-        SettingsService
+        EmployeesServce
     ]
 })
 export class SettingsModule { }

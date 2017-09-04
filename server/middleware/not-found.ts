@@ -6,7 +6,7 @@ export function notFound(options: INotFoundOptions) {
     // TODO Make it async - look at https://github.com/evheniy/koa-2-error-handler/blob/master/lib/error.js
     return function (ctx: Koa.Context, next: () => Promise<any>): any {
         if (ctx.method !== 'GET') {
-            // Only GET requrest are processed
+            // Only GET requests are processed
             return next();
         }
         if (options.ignorePrefix && ctx.path.startsWith(options.ignorePrefix)) {

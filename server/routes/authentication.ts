@@ -47,11 +47,17 @@ export class AuthenticationRoutes {
 
     private getRequiredPermission(method: string, urlPath: string, token: IServerToken): string | null {
         const pids = this.permissionsMapper.permissionIds;
-        if (method === 'GET' && urlPath === this.apiPrefix + 'employees') {
-            return pids.employeesView;
-        }
+        // if (method === 'GET' && urlPath === this.apiPrefix + 'employees') {
+        //     return pids.employeesView;
+        // }
         if (method === 'POST' && urlPath.startsWith(this.apiPrefix + 'employees')) {
             return pids.employeesModify;
+        }
+        if (method === 'GET' && urlPath === this.apiPrefix + 'employees-with-roles') {
+            return pids.employeesView;
+        }
+        if (method === 'GET' && urlPath === this.apiPrefix + 'roles') {
+            return pids.employeesView;
         }
         return null;
     }

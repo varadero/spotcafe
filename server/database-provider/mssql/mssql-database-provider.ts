@@ -5,11 +5,12 @@ import { DatabaseProvider } from '../database-provider';
 import { IPrepareDatabaseResult } from '../prepare-database-result';
 import { ICreateDatabaseResult } from '../create-database-result';
 import { DatabaseHelper, IRequestParameter, IGroup } from './database-helper';
-import { IEmployee } from '../../../shared/interfaces/employee';
 import { IPermission } from '../../../shared/interfaces/permission';
 import { IEmployeeWithRolesAndPermissions } from '../../../shared/interfaces/employee-with-roles-and-permissions';
 import { IRoleWithPermissions } from '../../../shared/interfaces/role-with-permissions';
 import { IRole } from '../../../shared/interfaces/role';
+import { IEmployeeWithRoles } from '../../../shared/interfaces/employee-with-roles';
+import { IEmployee } from '../../../shared/interfaces/employee';
 
 export class MSSqlDatabaseProvider implements DatabaseProvider {
     private config: ConnectionConfig;
@@ -22,27 +23,70 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
     }
 
-    async updateEmployee(employee: IEmployee): Promise<void> {
-        const updateEmployeeSql = `
+    async getAllRoles(): Promise<IRole[]> {
+        const sql = `
+            SELECT [Id], [Name], [Description]
+            FROM [Roles]
+            ORDER BY [Name]
+        `;
+        const getAllRolesResult = await this.dbHelper.execToObjects(sql);
+        return <IRole[]>getAllRolesResult.firstResultSet.rows;
+    }
+
+    async getAllEmployeesWithRoles(): Promise<IEmployeeWithRoles[]> {
+        // TODO Return only ids of roles, not entire role object
+        const sql = `
+            SELECT e.[Id], e.[Username], e.[FirstName], e.[LastName], e.[Email], e.[Disabled],
+                   r.[Id] AS [RoleId], r.[Name] AS [RoleName], r.[Description] AS [RoleDescription]
+            FROM [Employees] e
+            LEFT OUTER JOIN [EmployeesInRoles] eir ON eir.[EmployeeId] = e.[Id]
+            LEFT OUTER JOIN [Roles] r ON r.[Id] = eir.[RoleId]
+            ORDER BY [Username]
+        `;
+        const employeeWithRolesResult = await this.dbHelper.execToObjects(sql);
+        const keyObject = { id: '', username: '', firstName: '', lastName: '', email: '', disabled: false };
+        const grouped = this.dbHelper.groupByProperties(employeeWithRolesResult.firstResultSet.rows, keyObject);
+        const employeesWithRoles = this.compileEmployeesWithRoles(grouped);
+        // Remove roles with id=null
+        employeesWithRoles.forEach(x => x.roles = x.roles.filter(y => y.id));
+        return employeesWithRoles;
+    }
+
+    async updateEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<void> {
+        let sql = `
             UPDATE [Employees]
             SET [FirstName]=@FirstName,
                 [LastName]=@LastName,
                 [Email]=@Email,
                 [Disabled]=@Disabled
             WHERE [Id]=@Id
+
+            DELETE FROM [EmployeesInRoles]
+            WHERE [EmployeeId]=@Id
         `;
-        const params: IRequestParameter[] = [
+        const params: IRequestParameter[] = [];
+        for (let i = 0; i < employeeWithRoles.roles.length; i++) {
+            const paramName = `EmployeeRole${i}`;
+            sql += `
+                INSERT INTO [EmployeesInRoles]
+                ([EmployeeId], [RoleId]) VALUES
+                (@Id, @${paramName})
+            `;
+            params.push({ name: paramName, value: employeeWithRoles.roles[i].id, type: TYPES.UniqueIdentifierN });
+        }
+        const employee = employeeWithRoles.employee;
+        params.push(...[
             { name: 'FirstName', value: employee.firstName, type: TYPES.NVarChar },
             { name: 'LastName', value: employee.lastName, type: TYPES.NVarChar },
             { name: 'Email', value: employee.email, type: TYPES.NVarChar },
             { name: 'Disabled', value: employee.disabled, type: TYPES.Bit },
             { name: 'Id', value: employee.id, type: TYPES.UniqueIdentifierN }
-        ];
-        await this.dbHelper.execRowCount(updateEmployeeSql, params);
+        ]);
+        await this.dbHelper.execRowCount(sql, params);
     }
 
     async getEmployeePermissionsIds(employeeId: string): Promise<string[]> {
-        const getEmployeePermissionsSql = `
+        const sql = `
             SELECT p.[Id]
             FROM [Permissions] p
             INNER JOIN [PermissionsInRoles] pir ON pir.[PermissionId] = p.[Id]
@@ -52,20 +96,19 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
         const params: IRequestParameter[] = [
             { name: 'EmployeeId', value: employeeId, type: TYPES.UniqueIdentifierN }
         ];
-        const employeepermissionsResult = await this.dbHelper.execToObjects(getEmployeePermissionsSql, params);
-        this.logger.log(employeepermissionsResult.firstResultSet.rows);
-        return <string[]>employeepermissionsResult.firstResultSet.rows;
+        const employeePermissionsResult = await this.dbHelper.execToObjects(sql, params);
+        return <string[]>employeePermissionsResult.firstResultSet.rows;
     }
 
-    async getEmployees(): Promise<IEmployee[]> {
-        const getEmployeesSql = `
-            SELECT [Id], [Username], [FirstName], [LastName], [Email], [Disabled]
-            FROM [Employees]
-            ORDER BY [FirstName], [LastName]
-        `;
-        const employeesResult = await this.dbHelper.execToObjects(getEmployeesSql);
-        return <IEmployee[]>employeesResult.firstResultSet.rows;
-    }
+    // async getEmployees(): Promise<IEmployeeWithRoles[]> {
+    //     const sql = `
+    //         SELECT [Id], [Username], [FirstName], [LastName], [Email], [Disabled]
+    //         FROM [Employees]
+    //         ORDER BY [FirstName], [LastName]
+    //     `;
+    //     const employeesResult = await this.dbHelper.execToObjects(sql);
+    //     return <IEmployeeWithRoles[]>employeesResult.firstResultSet.rows;
+    // }
 
     async getTokenSecret(): Promise<string | null> {
         return this.dbHelper.getTokenSecret();
@@ -79,9 +122,9 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
             return Promise.resolve(<IEmployeeWithRolesAndPermissions>{});
         }
         // Now get employee permissions
-        const employeeRolesWithPermissionsSql = `
-            SELECT r.[Id] AS [RoleId], r.[Name] AS [RoleName], r.[Description] AS RoleDescription,
-            p.[Id] AS [PermissionId], p.[Name] AS [PermissionName], p.[Description] AS PermissionDescription
+        const sql = `
+            SELECT r.[Id] AS [RoleId], r.[Name] AS [RoleName], r.[Description] AS [RoleDescription],
+            p.[Id] AS [PermissionId], p.[Name] AS [PermissionName], p.[Description] AS [PermissionDescription]
             FROM [Roles] r
             INNER JOIN [EmployeesInRoles] eir ON eir.[RoleId] = r.[Id]
             INNER JOIN [PermissionsInRoles] pir ON pir.[RoleId] = r.[Id]
@@ -91,7 +134,7 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
         const userWithPermissionsParams: IRequestParameter[] = [
             { name: 'EmployeeId', value: employee.id, type: TYPES.NVarChar }
         ];
-        const rolesWithPermissionsResult = await this.dbHelper.execToObjects(employeeRolesWithPermissionsSql, userWithPermissionsParams);
+        const rolesWithPermissionsResult = await this.dbHelper.execToObjects(sql, userWithPermissionsParams);
         const keyObject = { roleId: '', roleName: '', roleDescription: '' };
         const grouped = this.dbHelper.groupByProperties(rolesWithPermissionsResult.firstResultSet.rows, keyObject);
         const rolesWithPermissions = this.compileRolesWithPermissions(grouped);
@@ -107,7 +150,7 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
             FROM [Permissions]
             ORDER BY [Name]
         `;
-        const permissions = await this.dbHelper.executeToObjects(null, sql);
+        const permissions = await this.dbHelper.execToObjects(sql);
         return permissions.firstResultSet.rows;
     }
 
@@ -117,6 +160,26 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
 
     async prepareDatabase(): Promise<IPrepareDatabaseResult> {
         return this.dbHelper.prepareDatabase();
+    }
+
+    private compileEmployeesWithRoles(grouped: IGroup[]): IEmployeeWithRoles[] {
+        const result: IEmployeeWithRoles[] = [];
+        for (let i = 0; i < grouped.length; i++) {
+            const grp = grouped[i];
+            const grpEmployee = <IEmployee>grp.key;
+            const employeeWithRoles = <IEmployeeWithRoles>{ employee: grpEmployee, roles: [] };
+            for (let j = 0; j < grp.items.length; j++) {
+                const grpRole = grp.items[j] as { roleId: string, roleName: string, roleDescription: string };
+                const role: IRole = {
+                    id: grpRole.roleId,
+                    name: grpRole.roleName,
+                    description: grpRole.roleDescription
+                };
+                employeeWithRoles.roles.push(role);
+            }
+            result.push(employeeWithRoles);
+        }
+        return result;
     }
 
     private compileRolesWithPermissions(grouped: IGroup[]): IRoleWithPermissions[] {
@@ -147,7 +210,7 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
     }
 
     private async getEmployeeByUsernameAndPassword(username: string, password: string): Promise<IEmployee | null> {
-        const getEmployeeSql = `
+        const sql = `
             SELECT TOP 1 [Id], [Username], [Disabled]
             FROM [Employees]
             WHERE [Username]=@Username AND [Password]=@PasswordHash
@@ -157,7 +220,7 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
             { name: 'Username', value: username, type: TYPES.NVarChar },
             { name: 'PasswordHash', value: passwordHash, type: TYPES.NVarChar }
         ];
-        const employeeData = await this.dbHelper.execToObjects(getEmployeeSql, params);
+        const employeeData = await this.dbHelper.execToObjects(sql, params);
         if (!employeeData.firstResultSet.rows.length) {
             return null;
         }

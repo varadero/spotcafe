@@ -1,0 +1,85 @@
+import { Component, OnInit, ViewChild } from '@angular/core';
+
+import { DataService } from '../../core/data.sevice';
+import { DisplayMessagesComponent } from '../../shared/display-messages.component';
+import { IRole } from '../../../../../shared/interfaces/role';
+import { IEmployeeWithRoles } from '../../../../../shared/interfaces/employee-with-roles';
+import { EmployeesServce, INewEmployeeWithRoles, INewEmployeeErrors, ISelectableRole } from './employees.services';
+import { IEmployee } from '../../../../../shared/interfaces/employee';
+
+@Component({
+    templateUrl: './employees.component.html'
+})
+export class EmployeesComponent implements OnInit {
+    employeesWithRoles: IEmployeeWithRoles[];
+    selectedEmployeeWithRoles: IEmployeeWithRoles;
+    roles: IRole[] = [];
+    newEmployeeWithRoles: INewEmployeeWithRoles = <INewEmployeeWithRoles>{ employee: <IEmployee>{}, roles: [] };
+    newEmployeeErrors: INewEmployeeErrors = {
+        hasErrors: false,
+        usernameNotSupplied: false,
+        passwordsDontMatch: false
+    };
+    waiting = {
+        loadEmployees: false,
+        updateEmployee: false,
+        createEmployee: false
+    };
+
+    @ViewChild('updateEmployeeMessagesComponent') private updateEmployeeMessagesComponent: DisplayMessagesComponent;
+    @ViewChild('newEmployeeMessagesComponent') private newEmployeeMessagesComponent: DisplayMessagesComponent;
+    @ViewChild('loadEmployeesMessagesComponent') private loadEmployeesMessagesComponent: DisplayMessagesComponent;
+
+    constructor(
+        private dataSvc: DataService,
+        private employeesSvc: EmployeesServce
+    ) { }
+
+    async ngOnInit(): Promise<any> {
+        try {
+            this.waiting.loadEmployees = true;
+            const res = await Promise.all([this.dataSvc.getAllEmployeesWithRoles(), this.dataSvc.getAllRoles()]);
+            this.employeesWithRoles = res[0];
+            this.roles = res[1];
+            this.employeesSvc.addAllRolesToAllEmployees(this.employeesWithRoles, this.roles);
+        } catch (err) {
+            this.handleError(err, this.loadEmployeesMessagesComponent, 'Loading employees and roles');
+        } finally {
+            this.waiting.loadEmployees = false;
+        }
+    }
+
+    async updateEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<void> {
+        this.waiting.updateEmployee = true;
+        try {
+            const sanitizedEmployeeWithRoles = this.employeesSvc.getSanitizedEmployeeWithRoles(employeeWithRoles);
+            const updateResponse = await this.dataSvc.updateEmployeeWithRoles(sanitizedEmployeeWithRoles);
+            const username = employeeWithRoles.employee.username;
+            this.addSuccessMessage(`Employee ${username} has been updated`, this.updateEmployeeMessagesComponent);
+        } catch (err) {
+            this.handleError(err, this.updateEmployeeMessagesComponent, 'Update employee');
+        } finally {
+            this.waiting.updateEmployee = false;
+        }
+    }
+
+    createEmployeeWithRoles(employeeWithRoles: INewEmployeeWithRoles): void {
+        this.newEmployeeErrors = this.employeesSvc.getNewEmployeeErrors(employeeWithRoles);
+        if (this.newEmployeeErrors.hasErrors) {
+            return;
+        }
+        this.addSuccessMessage(`Employee ${employeeWithRoles.employee.username} has been created`, this.newEmployeeMessagesComponent);
+    }
+
+    private addSuccessMessage(text: string, messagesComponent: DisplayMessagesComponent): void {
+        messagesComponent.addSuccessMessage(text);
+    }
+
+    private handleError(err: any, messagesComponent: DisplayMessagesComponent, messagePrefix: string): void {
+        if (err.error && err.error.message) {
+            messagesComponent.addErrorMessage(`${messagePrefix} ${err.error.message}`);
+        } else {
+            messagesComponent.addErrorMessage(`${messagePrefix} ${err.status} ${err.statusText}`);
+        }
+    }
+}

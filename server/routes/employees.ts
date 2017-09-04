@@ -3,9 +3,9 @@ import * as route from 'koa-route';
 
 import { DatabaseProvider } from '../database-provider/database-provider';
 import { IEmployeeWithRolesAndPermissions } from '../../shared/interfaces/employee-with-roles-and-permissions';
-import { IEmployee } from '../../shared/interfaces/employee';
 import { IServerToken } from './interfaces/server-token';
 import { ErrorMessage } from '../utils/error-message';
+import { IEmployeeWithRoles } from '../../shared/interfaces/employee-with-roles';
 
 export class EmployeesRoutes {
     private errorMessage = new ErrorMessage();
@@ -13,36 +13,39 @@ export class EmployeesRoutes {
     constructor(private dataProvider: DatabaseProvider, private apiPrefix: string) {
     }
 
-    getAllEmployees(): any {
-        return route.get(this.apiPrefix + 'employees', this.getEmployees.bind(this));
+    getAllEmployeesWithRoles(): any {
+        return route.get(this.apiPrefix + 'employees-with-roles', this.getAllEmployeesWithRolesImpl.bind(this));
     }
 
-    updateEmployee(): any {
-        return route.post(this.apiPrefix + 'employees/:id', this.updateEmployeeImpl.bind(this));
+    updateEmployeeWithRoles(): any {
+        return route.post(this.apiPrefix + 'employees/:id', this.updateEmployeeWithRolesImpl.bind(this));
     }
 
     getEmployeeWithRolesAndPermissions(): any {
-        return route.get(this.apiPrefix + 'employee-with-permission', this.getEmployeeWithPermissions.bind(this));
+        return route.get(this.apiPrefix + 'employee-with-permission', this.getEmployeeWithRolesAndPermissionsImpl.bind(this));
     }
 
-    private async updateEmployeeImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<any> {
-        const employee = <IEmployee>ctx.request.body;
+    private async getAllEmployeesWithRolesImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<IEmployeeWithRoles[]> {
+        const employeeIdWithRoles = await this.dataProvider.getAllEmployeesWithRoles();
+        ctx.body = employeeIdWithRoles;
+        return employeeIdWithRoles;
+    }
+
+    private async updateEmployeeWithRolesImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<any> {
+        const employeeWithRoles = <IEmployeeWithRoles>ctx.request.body;
         // Don't allow setting disabled=true for your own user
         const serverToken = <IServerToken>ctx.state.token;
-        if (employee.disabled && employee.id.toUpperCase() === serverToken.accountId.toUpperCase()) {
+        if (employeeWithRoles.employee.disabled && employeeWithRoles.employee.id.toUpperCase() === serverToken.accountId.toUpperCase()) {
             return ctx.throw(this.errorMessage.create('Can\'t disable own account'), 403);
         }
-        await this.dataProvider.updateEmployee(employee);
+        await this.dataProvider.updateEmployeeWithRoles(employeeWithRoles);
         ctx.status = 200;
     }
 
-    private async getEmployees(ctx: Koa.Context, next: () => Promise<any>): Promise<IEmployee[]> {
-        const employees = await this.dataProvider.getEmployees();
-        ctx.body = employees;
-        return employees;
-    }
-
-    private async getEmployeeWithPermissions(ctx: Koa.Context, next: () => Promise<any>): Promise<IEmployeeWithRolesAndPermissions> {
+    private async getEmployeeWithRolesAndPermissionsImpl(
+        ctx: Koa.Context,
+        next: () => Promise<any>
+    ): Promise<IEmployeeWithRolesAndPermissions> {
         const credentials = <{ username: string, password: string }>ctx.request.body;
         const userWithPermissions = await this.dataProvider.getEmployeeWithRolesAndPermissions(credentials.username, credentials.password);
         return userWithPermissions;

@@ -3,7 +3,8 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { SettingsComponent } from './settings.component';
 import { SettingsHomeComponent } from './settings-home.component';
-import { SettingsEmployeesComponent } from './settings-employees';
+import { EmployeesComponent } from './employees/employees.component';
+import { DisplayMessagesComponent } from '../shared/display-messages.component';
 
 const routes: Routes = [
     {
@@ -16,7 +17,7 @@ const routes: Routes = [
             },
             {
                 path: 'employees',
-                component: SettingsEmployeesComponent
+                component: EmployeesComponent
             }
         ]
     }

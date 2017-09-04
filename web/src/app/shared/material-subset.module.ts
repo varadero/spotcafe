@@ -10,7 +10,8 @@ import {
     MdTabsModule,
     MdInputModule,
     MdSelectModule,
-    MdFormFieldModule
+    MdFormFieldModule,
+    MdSnackBarModule
 } from '@angular/material';
 
 const allModules = [
@@ -23,7 +24,8 @@ const allModules = [
     MdTabsModule,
     MdInputModule,
     MdSelectModule,
-    MdFormFieldModule
+    MdFormFieldModule,
+    MdSnackBarModule
 ];
 
 @NgModule({
