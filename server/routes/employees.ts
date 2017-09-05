@@ -13,6 +13,10 @@ export class EmployeesRoutes {
     constructor(private dataProvider: DatabaseProvider, private apiPrefix: string) {
     }
 
+    createEmployeeWithRoles(): any {
+        return route.post(this.apiPrefix + 'employees-with-roles', this.createEmployeeWithRolesImpl.bind(this));
+    }
+
     getAllEmployeesWithRoles(): any {
         return route.get(this.apiPrefix + 'employees-with-roles', this.getAllEmployeesWithRolesImpl.bind(this));
     }
@@ -23,6 +27,20 @@ export class EmployeesRoutes {
 
     getEmployeeWithRolesAndPermissions(): any {
         return route.get(this.apiPrefix + 'employee-with-permission', this.getEmployeeWithRolesAndPermissionsImpl.bind(this));
+    }
+
+    private async createEmployeeWithRolesImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<string> {
+        const employeeWithRoles = <IEmployeeWithRoles>ctx.request.body;
+        if (employeeWithRoles.employee.password.length < 6) {
+            return ctx.throw(this.errorMessage.create('Password length must be at least 6 characters'), 400);
+        }
+        employeeWithRoles.employee.username = employeeWithRoles.employee.username.trim();
+        if (!employeeWithRoles.employee.username) {
+            return ctx.throw(this.errorMessage.create('User name is required'), 400);
+        }
+        const createdEmployeeId = await this.dataProvider.createEmployeeWithRoles(employeeWithRoles);
+        ctx.body = { createdEmployeeId: createdEmployeeId };
+        return createdEmployeeId;
     }
 
     private async getAllEmployeesWithRolesImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<IEmployeeWithRoles[]> {

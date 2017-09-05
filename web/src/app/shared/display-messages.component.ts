@@ -1,5 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
 
+import { MessagesService } from './messages.service';
+import { IMessage } from './message';
+
 @Component({
     selector: 'spotcafe-messages',
     styles: [`
@@ -36,6 +39,8 @@ export class DisplayMessagesComponent implements OnInit {
 
     private timeout = 5000;
 
+    constructor(private messagesSvc: MessagesService) { }
+
     ngOnInit(): void {
         if (this.staticMessage) {
             this.messages.push(this.staticMessage);
@@ -59,15 +64,11 @@ export class DisplayMessagesComponent implements OnInit {
     }
 
     addMessage(text: string, type: string): void {
-        const msg: IMessage = { text, type };
+        const msg: IMessage = { text, type, addedAt: new Date().getTime() };
+        this.messagesSvc.addMessage(msg);
         this.messages.push(msg);
         setTimeout(() => {
             this.messages = this.messages.filter(x => x !== msg);
         }, this.timeout);
     }
-}
-
-export interface IMessage {
-    text: string;
-    type: string;
 }

@@ -50,11 +50,14 @@ export class AuthenticationRoutes {
         // if (method === 'GET' && urlPath === this.apiPrefix + 'employees') {
         //     return pids.employeesView;
         // }
-        if (method === 'POST' && urlPath.startsWith(this.apiPrefix + 'employees')) {
-            return pids.employeesModify;
-        }
         if (method === 'GET' && urlPath === this.apiPrefix + 'employees-with-roles') {
             return pids.employeesView;
+        }
+        if (method === 'POST' && urlPath === this.apiPrefix + 'employees-with-roles') {
+            return pids.employeesModify;
+        }
+        if (method === 'POST' && urlPath.startsWith(this.apiPrefix + 'employees')) {
+            return pids.employeesModify;
         }
         if (method === 'GET' && urlPath === this.apiPrefix + 'roles') {
             return pids.employeesView;

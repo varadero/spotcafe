@@ -1,6 +1,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
+import * as uuidv4 from 'uuid/v4';
 
 import { Connection, Request, ColumnValue, TediousType, TYPES, ConnectionConfig } from 'tedious';
 import { ICreateDatabaseResult } from '../create-database-result';
@@ -344,6 +345,16 @@ export class DatabaseHelper {
         return result;
     }
 
+    generateId(): string {
+        return uuidv4().toUpperCase();
+    }
+
+    getSha512(value: string): string {
+        const sha256 = crypto.createHash('sha512');
+        const hash = sha256.update(value).digest('hex');
+        return hash;
+    }
+
     private getRestPropsAsObject(excludePropNames: string[], obj: any): any {
         const result = <any>{};
         const allProps = Object.getOwnPropertyNames(obj);
@@ -563,12 +574,6 @@ export class DatabaseHelper {
             }
         }
         return result;
-    }
-
-    private getSha512(value: string): string {
-        const sha256 = crypto.createHash('sha512');
-        const hash = sha256.update(value).digest('hex');
-        return hash;
     }
 
     // private logMessage(message?: any, optionalParams?: any[]) {

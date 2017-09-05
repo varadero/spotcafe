@@ -22,23 +22,23 @@ describe('AppComponent', () => {
         expect(app).toBeTruthy();
       }));
 
-      it('should set value sidenavCollapsed to false', async(() => {
-        const app = getComponent();
-        expect(app.sidenavCollapsed).toBe(false, 'initially sidenav should be expaneded');
-      }));
+      // it('should set value sidenavCollapsed to false', async(() => {
+      //   const app = getComponent();
+      //   expect(app.sidenavCollapsed).toBe(false, 'initially sidenav should be expaneded');
+      // }));
     });
 
-    describe('toggle sidenav', () => {
-      it('should toggle sidenav visibility "expanded" -> "collapsed" -> "expanded"...', async(() => {
-        const app = getComponent();
+    // describe('toggle sidenav', () => {
+    //   it('should toggle sidenav visibility "expanded" -> "collapsed" -> "expanded"...', async(() => {
+    //     const app = getComponent();
 
-        app.toggleSidenav();
-        expect(app.sidenavCollapsed).toBe(true, 'should toggle sidenav from "expanded" to "collapsed"');
+    //     app.toggleSidenav();
+    //     expect(app.sidenavCollapsed).toBe(true, 'should toggle sidenav from "expanded" to "collapsed"');
 
-        app.toggleSidenav();
-        expect(app.sidenavCollapsed).toBe(false, 'should toggle sidenav from "collapsed" to "expanded"');
-      }));
-    });
+    //     app.toggleSidenav();
+    //     expect(app.sidenavCollapsed).toBe(false, 'should toggle sidenav from "collapsed" to "expanded"');
+    //   }));
+    // });
   });
 
   describe('template', () => {

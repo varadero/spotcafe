@@ -57,12 +57,13 @@ export class App {
         this.koa.use(employeesRoutes.getEmployeeWithRolesAndPermissions());
         this.koa.use(employeesRoutes.updateEmployeeWithRoles());
         this.koa.use(employeesRoutes.getAllEmployeesWithRoles());
+        this.koa.use(employeesRoutes.createEmployeeWithRoles());
 
         const rolesRoute = new RolesRoutes(this.dbProvider, apiPrefix);
-        this.koa.use(rolesRoute.getAllRolesRoute());
+        this.koa.use(rolesRoute.getAllRoles());
 
         const permissionsRoutes = new PermissionsRoutes(this.dbProvider, apiPrefix);
-        this.koa.use(permissionsRoutes.getAllPermissionsRoute());
+        this.koa.use(permissionsRoutes.getAllPermissions());
     }
 
     private getProvider(): DatabaseProvider {

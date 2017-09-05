@@ -8,11 +8,11 @@ export class PermissionsRoutes {
     constructor(private dataProvider: DatabaseProvider, private apiPrefix: string) {
     }
 
-    getAllPermissionsRoute(): any {
-        return route.get(this.apiPrefix + 'permissions', this.getAllPermissions.bind(this));
+    getAllPermissions(): any {
+        return route.get(this.apiPrefix + 'permissions', this.getAllPermissionsImpl.bind(this));
     }
 
-    private async getAllPermissions(ctx: Koa.Context, next: () => Promise<any>): Promise<IPermission[]> {
+    private async getAllPermissionsImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<IPermission[]> {
         const permissions = await this.dataProvider.getAllPermissions();
         ctx.body = permissions;
         return permissions;

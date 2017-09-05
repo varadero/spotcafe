@@ -16,18 +16,20 @@
                 <input mdInput [(ngModel)]="selectedEmployeeWithRoles.employee.email" placeholder="Email" />
             </md-form-field>
             <md-checkbox [(ngModel)]="selectedEmployeeWithRoles.employee.disabled">Disabled</md-checkbox>
-            <spotcafe-messages #updateEmployeeMessagesComponent></spotcafe-messages>
+            <md-card>
+                <md-card-subtitle>Roles</md-card-subtitle>
+                <md-list>
+                    <md-list-item *ngFor="let role of selectedEmployeeWithRoles.roles">
+                        <md-checkbox [(ngModel)]="role.selected">
+                            {{role.name}} : {{role.description}}
+                        </md-checkbox>
+                    </md-list-item>
+                </md-list>
+            </md-card>
             <md-card-actions>
+                <spotcafe-messages #updateEmployeeMessagesComponent></spotcafe-messages>
                 <button md-raised-button (click)="updateEmployeeWithRoles(selectedEmployeeWithRoles)" color="primary">Update {{selectedEmployeeWithRoles.employee.username}} ({{selectedEmployeeWithRoles.employee.firstName}} {{selectedEmployeeWithRoles.employee.lastName}})</button>
             </md-card-actions>
-            <div>Roles</div>
-            <md-list>
-                <md-list-item *ngFor="let role of selectedEmployeeWithRoles.roles">
-                    <md-checkbox [(ngModel)]="role.selected">
-                        {{role.name}} : {{role.description}}
-                    </md-checkbox>
-                </md-list-item>
-            </md-list>
         </div>
     </md-card>
     <md-card>
@@ -46,18 +48,30 @@
             <input mdInput [(ngModel)]="newEmployeeWithRoles.employee.email" placeholder="Email" />
         </md-form-field>
         <md-form-field>
-            <input mdInput [(ngModel)]="newEmployeeWithRoles.password" type="password" placeholder="Password" />
+            <input mdInput [(ngModel)]="newEmployeeWithRoles.employee.password" type="password" placeholder="Password" />
         </md-form-field>
         <md-form-field>
-            <input mdInput [(ngModel)]="newEmployeeWithRoles.confirmPassword" type="password" placeholder="Confirm password"
-            />
+            <input mdInput [(ngModel)]="newEmployeeWithRoles.confirmPassword" type="password" placeholder="Confirm password" />
         </md-form-field>
-        <spotcafe-messages *ngIf="newEmployeeErrors.usernameNotSupplied" [staticMessage]="{text:
-            'User name can not be empty', type: 'error'}"></spotcafe-messages>
-        <spotcafe-messages *ngIf="newEmployeeErrors.passwordsDontMatch" [staticMessage]="{text:
-            'Passwords do not match', type: 'error'}"></spotcafe-messages>
-        <spotcafe-messages #newEmployeeMessagesComponent></spotcafe-messages>
+        <md-checkbox [(ngModel)]="newEmployeeWithRoles.employee.disabled">Disabled</md-checkbox>
+        <md-card>
+            <md-card-subtitle>Roles</md-card-subtitle>
+            <md-list>
+                <md-list-item *ngFor="let role of newEmployeeWithRoles.roles">
+                    <md-checkbox [(ngModel)]="role.selected">
+                        {{role.name}} : {{role.description}}
+                    </md-checkbox>
+                </md-list-item>
+            </md-list>
+        </md-card>
         <md-card-actions>
+            <spotcafe-messages *ngIf="newEmployeeErrors.usernameNotSupplied" [staticMessage]="{text:
+                    'User name can not be empty', type: 'error'}"></spotcafe-messages>
+            <spotcafe-messages *ngIf="newEmployeeErrors.passwordsDontMatch" [staticMessage]="{text:
+                    'Passwords do not match', type: 'error'}"></spotcafe-messages>
+            <spotcafe-messages *ngIf="newEmployeeErrors.passwordTooShort" [staticMessage]="{text:
+                        'Password must be at least 6 characters', type: 'error'}"></spotcafe-messages>
+            <spotcafe-messages #newEmployeeMessagesComponent></spotcafe-messages>
             <button md-raised-button (click)="createEmployeeWithRoles(newEmployeeWithRoles)" color="primary">Create {{newEmployeeWithRoles.employee.username}}</button>
         </md-card-actions>
     </md-card>

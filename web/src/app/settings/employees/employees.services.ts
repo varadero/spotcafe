@@ -5,8 +5,22 @@ import { IEmployeeWithRoles } from '../../../../../shared/interfaces/employee-wi
 
 @Injectable()
 export class EmployeesServce {
+    cloneRoles(roles: IRole[]): IRole[] {
+        const result: IRole[] = [];
+        for (let i = 0; i < roles.length; i++) {
+            const role = roles[i];
+            result.push({
+                description: role.description,
+                id: role.id,
+                name: role.name
+
+            });
+        }
+        return result;
+    }
+
     getSanitizedEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): IEmployeeWithRoles {
-        const result = {...employeeWithRoles};
+        const result = { ...employeeWithRoles };
         result.roles = [...employeeWithRoles.roles];
         // Remove not selected roles
         result.roles = (<ISelectableRole[]>result.roles).filter(x => x.selected);
@@ -19,16 +33,19 @@ export class EmployeesServce {
 
     getNewEmployeeErrors(employeeWithRoles: INewEmployeeWithRoles): INewEmployeeErrors {
         const result: INewEmployeeErrors = <INewEmployeeErrors>{};
-        if (!employeeWithRoles.employee.username || !employeeWithRoles.employee.username.trim()) {
-            result.hasErrors = true;
+        const employee = employeeWithRoles.employee;
+        if (!employee.username || !employee.username.trim()) {
             result.usernameNotSupplied = true;
         }
-        if (!employeeWithRoles.password
-            || !employeeWithRoles.password.trim()
-            || employeeWithRoles.password !== employeeWithRoles.confirmPassword) {
-            result.hasErrors = true;
+        if (!employee.password
+            || !employee.password.trim()
+            || employee.password !== employeeWithRoles.confirmPassword) {
             result.passwordsDontMatch = true;
         }
+        if (employee.password && employee.password.length < 6) {
+            result.passwordTooShort = true;
+        }
+        result.hasErrors = result.passwordsDontMatch || result.passwordTooShort || result.usernameNotSupplied;
         return result;
     }
 
@@ -65,7 +82,6 @@ export class EmployeesServce {
 }
 
 export interface INewEmployeeWithRoles extends IEmployeeWithRoles {
-    password: string;
     confirmPassword: string;
 }
 
@@ -73,6 +89,7 @@ export interface INewEmployeeErrors {
     hasErrors: boolean;
     usernameNotSupplied: boolean;
     passwordsDontMatch: boolean;
+    passwordTooShort: boolean;
 }
 
 export interface ISelectableRole extends IRole {

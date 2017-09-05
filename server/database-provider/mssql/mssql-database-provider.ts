@@ -1,4 +1,3 @@
-import * as crypto from 'crypto';
 import { ConnectionConfig, TYPES } from 'tedious';
 
 import { DatabaseProvider } from '../database-provider';
@@ -21,6 +20,38 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
         this.logger = logger;
         this.config = <ConnectionConfig>(obj);
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
+    }
+
+    async createEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<string> {
+        const newId = this.dbHelper.generateId();
+        let sql = `
+            INSERT INTO [Employees]
+            ([Id], [Username], [Password], [FirstName], [LastName], [Email], [Disabled]) VALUES
+            (@Id, @Username, @Password, @FirstName, @LastName, @Email, @Disabled)
+        `;
+        const employee = employeeWithRoles.employee;
+        const passwordHash = this.dbHelper.getSha512(employee.password);
+        const params: IRequestParameter[] = [
+            { name: 'Id', value: newId, type: TYPES.UniqueIdentifierN },
+            { name: 'Username', value: employee.username, type: TYPES.NVarChar },
+            { name: 'Password', value: passwordHash, type: TYPES.NVarChar },
+            { name: 'FirstName', value: employee.firstName, type: TYPES.NVarChar },
+            { name: 'LastName', value: employee.lastName, type: TYPES.NVarChar },
+            { name: 'Email', value: employee.email, type: TYPES.NVarChar },
+            { name: 'Disabled', value: employee.disabled, type: TYPES.Bit },
+        ];
+        for (let i = 0; i < employeeWithRoles.roles.length; i++) {
+            const roleId = employeeWithRoles.roles[i].id;
+            const roleIdParamName = `RoleId${i}`;
+            sql += `
+                INSERT INTO [EmployeesInRoles]
+                ([EmployeeId], [RoleId]) VALUES
+                (@Id, @${roleIdParamName})
+            `;
+            params.push({ name: roleIdParamName, value: roleId, type: TYPES.UniqueIdentifierN });
+        }
+        await this.dbHelper.execRowCount(sql, params);
+        return newId;
     }
 
     async getAllRoles(): Promise<IRole[]> {
@@ -215,7 +246,7 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
             FROM [Employees]
             WHERE [Username]=@Username AND [Password]=@PasswordHash
         `;
-        const passwordHash = this.getSha512(password);
+        const passwordHash = this.dbHelper.getSha512(password);
         const params: IRequestParameter[] = [
             { name: 'Username', value: username, type: TYPES.NVarChar },
             { name: 'PasswordHash', value: passwordHash, type: TYPES.NVarChar }
@@ -225,11 +256,5 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
             return null;
         }
         return <IEmployee>employeeData.firstResultSet.rows[0];
-    }
-
-    private getSha512(value: string): string {
-        const sha256 = crypto.createHash('sha512');
-        const hash = sha256.update(value).digest('hex');
-        return hash;
     }
 }

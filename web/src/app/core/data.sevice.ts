@@ -19,8 +19,12 @@ export class DataService {
         private cacheSvc: CacheService
     ) { }
 
+    createEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<void> {
+        return this.post('employees-with-roles', employeeWithRoles);
+    }
+
     getAllEmployeesWithRoles(): Promise<IEmployeeWithRoles[]> {
-        return this.execGetWithCache('employees-with-roles');
+        return this.get('employees-with-roles');
     }
 
     logInEmployee(username: string, password: string): Promise<any> {
@@ -28,7 +32,7 @@ export class DataService {
     }
 
     getAllRoles(): Promise<IRole[]> {
-        return this.execGetWithCache('roles');
+        return this.get('roles');
     }
 
     updateEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<void> {

@@ -9,11 +9,11 @@ export class RolesRoutes {
     constructor(private dataProvider: DatabaseProvider, private apiPrefix: string) {
     }
 
-    getAllRolesRoute(): any {
-        return route.get(this.apiPrefix + 'roles', this.getAllRolesRouteImpl.bind(this));
+    getAllRoles(): any {
+        return route.get(this.apiPrefix + 'roles', this.getAllRolesImpl.bind(this));
     }
 
-    private async getAllRolesRouteImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<IRole[]> {
+    private async getAllRolesImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<IRole[]> {
         const roles = await this.dataProvider.getAllRoles();
         ctx.body = roles;
         return roles;

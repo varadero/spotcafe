@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 
 import { MaterialSubsetModule } from './material-subset.module';
 import { DisplayMessagesComponent } from './display-messages.component';
+import { MessagesService } from './messages.service';
 
 const allModules = [
     CommonModule,
@@ -14,6 +15,7 @@ const allModules = [
 @NgModule({
     declarations: [DisplayMessagesComponent],
     imports: allModules,
-    exports: [...allModules, DisplayMessagesComponent]
+    exports: [...allModules, DisplayMessagesComponent],
+    providers: [MessagesService]
 })
 export class SharedModule { }

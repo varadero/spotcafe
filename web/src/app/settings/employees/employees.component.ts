@@ -14,11 +14,12 @@ export class EmployeesComponent implements OnInit {
     employeesWithRoles: IEmployeeWithRoles[];
     selectedEmployeeWithRoles: IEmployeeWithRoles;
     roles: IRole[] = [];
-    newEmployeeWithRoles: INewEmployeeWithRoles = <INewEmployeeWithRoles>{ employee: <IEmployee>{}, roles: [] };
+    newEmployeeWithRoles: INewEmployeeWithRoles;
     newEmployeeErrors: INewEmployeeErrors = {
         hasErrors: false,
         usernameNotSupplied: false,
-        passwordsDontMatch: false
+        passwordsDontMatch: false,
+        passwordTooShort: false
     };
     waiting = {
         loadEmployees: false,
@@ -36,11 +37,13 @@ export class EmployeesComponent implements OnInit {
     ) { }
 
     async ngOnInit(): Promise<any> {
+        this.resetNewEmployeeWithRoles();
         try {
             this.waiting.loadEmployees = true;
             const res = await Promise.all([this.dataSvc.getAllEmployeesWithRoles(), this.dataSvc.getAllRoles()]);
             this.employeesWithRoles = res[0];
             this.roles = res[1];
+            this.resetNewEmployeeWithRoles();
             this.employeesSvc.addAllRolesToAllEmployees(this.employeesWithRoles, this.roles);
         } catch (err) {
             this.handleError(err, this.loadEmployeesMessagesComponent, 'Loading employees and roles');
@@ -63,12 +66,38 @@ export class EmployeesComponent implements OnInit {
         }
     }
 
-    createEmployeeWithRoles(employeeWithRoles: INewEmployeeWithRoles): void {
+    async createEmployeeWithRoles(employeeWithRoles: INewEmployeeWithRoles): Promise<void> {
         this.newEmployeeErrors = this.employeesSvc.getNewEmployeeErrors(employeeWithRoles);
         if (this.newEmployeeErrors.hasErrors) {
             return;
         }
-        this.addSuccessMessage(`Employee ${employeeWithRoles.employee.username} has been created`, this.newEmployeeMessagesComponent);
+        try {
+            this.waiting.createEmployee = true;
+            const sanitizedEmployeeWithRoles = this.employeesSvc.getSanitizedEmployeeWithRoles(employeeWithRoles);
+            const createdEmployeeId = await this.dataSvc.createEmployeeWithRoles(sanitizedEmployeeWithRoles);
+            const username = sanitizedEmployeeWithRoles.employee.username;
+            this.addSuccessMessage(`Employee ${username} has been created`, this.newEmployeeMessagesComponent);
+            this.resetNewEmployeeWithRoles();
+        } catch (err) {
+            this.handleError(err, this.newEmployeeMessagesComponent, 'Create employee');
+        } finally {
+            this.waiting.createEmployee = true;
+        }
+    }
+
+    private resetNewEmployeeWithRoles(): void {
+        this.newEmployeeWithRoles = <INewEmployeeWithRoles>{
+            employee: {
+                disabled: false,
+                email: '',
+                firstName: '',
+                id: '',
+                lastName: '',
+                password: '',
+                username: ''
+            },
+            roles: this.employeesSvc.cloneRoles(this.roles)
+        };
     }
 
     private addSuccessMessage(text: string, messagesComponent: DisplayMessagesComponent): void {
