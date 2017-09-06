@@ -5,6 +5,7 @@ import * as Koa from 'koa';
 import * as koaStatic from 'koa-static';
 import * as bodyParser from 'koa-bodyparser';
 
+import { UdpDiscoveryListener } from './udp-discovery-listener';
 import { notFound } from './middleware/not-found';
 import { requireToken } from './middleware/require-token';
 import { DatabaseProvider } from './database-provider/database-provider';
@@ -37,7 +38,7 @@ export class App {
         return this.startImpl(createDatabase, administratorPassword);
     }
 
-    private createKoa(tokenSecret: string | null) {
+    private createKoa(tokenSecret: string | null): void {
         const apiPrefix = '/api/';
         this.koa = new Koa();
 
@@ -66,18 +67,49 @@ export class App {
         this.koa.use(permissionsRoutes.getAllPermissions());
     }
 
-    private getProvider(): DatabaseProvider {
+    private startDiscoveryListener(): void {
+        const listener = new UdpDiscoveryListener(this.dbProvider, this.logger);
+        listener.listen();
+    }
+
+    private createDatabaseProvider(): DatabaseProvider {
         const dbHelper = new DatabaseProviderHelper();
         return dbHelper.getProvider(this.options.databaseConfig, this.logger);
     }
 
-    private async startImpl(createDatabase: boolean, administratorPassword?: string | null): Promise<https.Server | http.Server | null> {
+    private async startImpl(
+        createDatabase: boolean,
+        administratorPassword?: string | null
+    ): Promise<https.Server | http.Server | null> {
         if (createDatabase && !administratorPassword) {
-            return Promise.reject('When database must be created, administrator password must be supplied');
+            return Promise.reject('When database must be created, application administrator password must be supplied');
         }
 
+        await this.prepareDatabase(createDatabase, administratorPassword);
+        if (createDatabase) {
+            // Creating database will not start the server
+            return null;
+        }
+        this.server = await this.startWebServer();
+        await this.startDiscoveryListener();
+        return this.server;
+    }
+
+    private async startWebServer(): Promise<https.Server | http.Server> {
+        this.logger.log('Starting web server');
+        const server = await this.startServer();
+        const listenAddress = JSON.stringify(server.address());
+        const listenProtocol = this.options.config.httpServer.secure ? 'HTTPS' : 'HTTP';
+        this.logger.log(`${listenProtocol} listening at ${listenAddress}`);
+        return server;
+    }
+
+    private async prepareDatabase(
+        createDatabase: boolean,
+        administratorPassword?: string | null
+    ): Promise<{ createDb: ICreateDatabaseResult | null, prepare: IPrepareDatabaseResult | null }> {
         this.logger.log('Creating database provider');
-        this.dbProvider = this.getProvider();
+        this.dbProvider = this.createDatabaseProvider();
         const numberOfRetries = 1000000;
         const delayBetweenRetries = 5000;
         let prepareDbResult: IPrepareDatabaseResult | null = null;
@@ -112,18 +144,11 @@ export class App {
             this.logger.log(`Update script files processed: ${prepareDbResult.updateScriptFilesProcessed}`);
         }
         if (createDatabase) {
-            // Creating database will not start the server
             if (createDbResult && createDbResult.databaseInitialized) {
                 this.logger.log('Database creation finished');
             }
-            return null;
         }
-        this.logger.log('Starting web server');
-        this.server = await this.startServer();
-        const listenAddress = JSON.stringify(this.server.address());
-        const listenProtocol = this.options.config.httpServer.secure ? 'HTTPS' : 'HTTP';
-        this.logger.log(`${listenProtocol} listening at ${listenAddress}`);
-        return this.server;
+        return { createDb: createDbResult, prepare: prepareDbResult };
     }
 
     private async startServer(): Promise<https.Server | http.Server> {

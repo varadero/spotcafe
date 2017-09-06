@@ -32,8 +32,10 @@ Sample output:
 2017-08-29T16:16:12.221Z: Database user name: admin
 2017-08-29T16:16:12.221Z: Update script files processed: 
 2017-08-29T16:16:12.221Z: Starting web server
+2017-08-29T16:16:12.221Z: Serving from '...'
 2017-08-29T16:16:12.252Z: HTTPS listening at {"address":"0.0.0.0","family":"IPv4","port":443}
 2017-08-29T16:16:12.252Z: App started
+2017-08-29T16:16:12.252Z: Discovery service listening at 0.0.0.0:64129
 ```
 
 If the database doesn't exist when ```node index``` is executed, sample output looks like:

@@ -38,6 +38,5 @@ function loadConfig<T>(fileName: string): T {
 }
 
 function getConfigFilePath(fileName: string): string {
-    const configPath = './config';
-    return path.join(__dirname, configPath, fileName);
+    return path.join(__dirname, './config', fileName);
 }

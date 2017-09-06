@@ -16,4 +16,4 @@ INSERT INTO [Permissions]
 ([Id], [Name], [Description]) VALUES
 ('C2986027-3D76-4455-81EC-DB93D9327710', 'Employees - Modify', 'Can modify employees')
 
-UPDATE [DatabaseSettings] SET [Value]='2017-08-25 18:30:00' WHERE [Name]='database.version'
+UPDATE [Settings] SET [Value]='2017-08-25 18:30:00' WHERE [Name]='database.version'

@@ -82,4 +82,4 @@ INSERT INTO [dbo].[EmployeesInRoles]
 ([EmployeeId], [RoleId]) VALUES
 ('AD0CA48F-E266-48EA-BFB7-0C03147E442C', 'D2595A95-630C-4E66-9B2E-1F804154FDF5')
 
-UPDATE [DatabaseSettings] SET [Value]='2017-08-29 10:10:00' WHERE [Name]='database.version'
+UPDATE [Settings] SET [Value]='2017-08-29 10:10:00' WHERE [Name]='database.version'
