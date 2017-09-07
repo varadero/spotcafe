@@ -10,5 +10,6 @@ namespace SpotCafe.Service.Discovery {
         public byte[] Data { get; set; }
         public DiscoveryResponse Response { get; set; }
         public IPEndPoint RemoteEndPoint { get; set; }
+        public bool StopDiscover { get; set; }
     }
 }

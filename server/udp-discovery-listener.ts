@@ -22,16 +22,16 @@ export class UdpDiscoveryListener {
             });
         });
 
-        socket.on('message', (msg, rinfo) => {
+        socket.on('message', async (msg, rinfo) => {
             const clientAppAddr = `IP: ${rinfo.address} ; Port:${rinfo.port}`;
             this.logger.log(`Client application discovery info: ${clientAppAddr}`);
             try {
                 const str = msg.toString('utf8');
-                const obj = JSON.parse(str);
+                const obj = <{clientId: string, clientName: string}>JSON.parse(str);
                 this.logger.log('Client application discovery data', obj);
+                const registerResult = await this.dataProvider.registerClientDevice(obj.clientId, obj.clientName);
                 const discoveryResponse = {
-                    // TODO Check if the clientId is known and if yes, return success response
-                    allowed: true
+                    approved: registerResult.clientDevice.approved
                 };
                 socket.send(JSON.stringify(discoveryResponse), rinfo.port, rinfo.address, (sendErr, bytesCount) => {
                     if (sendErr) {
@@ -43,7 +43,7 @@ export class UdpDiscoveryListener {
                 // const responseObj = {address:};
                 // server.send('echo', rinfo.port, rinfo.address);
             } catch (err) {
-                this.logger.error('Client applicaion discovery data error', err);
+                this.logger.error('Client application discovery data error', err);
             }
         });
 

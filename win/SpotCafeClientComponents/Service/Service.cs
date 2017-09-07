@@ -8,7 +8,6 @@ using System.Net;
 using System.ServiceProcess;
 using System.Text;
 using System.Threading.Tasks;
-using System.Web.Script.Serialization;
 
 namespace SpotCafe.Service {
     class Service : ServiceBase {
@@ -19,8 +18,10 @@ namespace SpotCafe.Service {
         private string configFileName = "SpotCafe.Service-Configuration.json";
         private ServiceConfiguration serviceConfig;
         private IPEndPoint remoteEndPoint;
+        private Serializer serializer;
 
         public Service() {
+            serializer = new Serializer();
             ServiceName = Name;
         }
 
@@ -63,14 +64,15 @@ namespace SpotCafe.Service {
         }
 
         private void Discoverer_DataReceived(object sender, DiscoveryDataReceivedEventArgs e) {
-            Log("Data recevied from discoverer");
+            Log("Data received from discoverer");
             var text = Encoding.UTF8.GetString(e.Data);
             Log(string.Format("Discovery data received from {0}: {1}", e.RemoteEndPoint.Address.ToString(), text));
             try {
                 // If data contains necessary information - stop further discovering
-                if (e.Response != null && e.Response.allowed) {
-                    remoteEndPoint = e.RemoteEndPoint;
+                if (e.Response != null && e.Response.Approved) {
+                    e.StopDiscover = true;
                     discoverer.StopDiscovery();
+                    remoteEndPoint = e.RemoteEndPoint;
                     ConnectToServer();
                 }
             } catch (Exception ex) {
@@ -80,6 +82,7 @@ namespace SpotCafe.Service {
 
         private void ConnectToServer() {
             // TODO Make initial request to the server authenticating with ClientId
+            Log(string.Format("Connection to {0}", remoteEndPoint.ToString()));
         }
 
         private void StartServerDiscovery() {
@@ -97,8 +100,7 @@ namespace SpotCafe.Service {
 
         private void SaveServiceConfiguration() {
             try {
-                JavaScriptSerializer jsSer = new JavaScriptSerializer();
-                File.WriteAllText(configFileName, jsSer.Serialize(serviceConfig));
+                File.WriteAllText(configFileName, serializer.Serialize(serviceConfig));
             } catch (Exception ex) {
                 Log(string.Format("Can't save configuration: {0}", ex));
             }
@@ -106,15 +108,14 @@ namespace SpotCafe.Service {
 
         private ServiceConfiguration GetServiceConfiguration() {
             ServiceConfiguration config;
-            JavaScriptSerializer jsSer = new JavaScriptSerializer();
             try {
-                config = jsSer.Deserialize<ServiceConfiguration>(File.ReadAllText(configFileName));
+                config = serializer.Deserialize<ServiceConfiguration>(File.ReadAllText(configFileName));
             } catch (Exception loadEx) {
                 Log(string.Format("Can't load configuration. Will create default config file: {0}", loadEx));
                 config = new ServiceConfiguration();
                 config.ClientId = Guid.NewGuid().ToString();
                 try {
-                    File.WriteAllText(configFileName, jsSer.Serialize(config));
+                    File.WriteAllText(configFileName, serializer.Serialize(config));
                     Log(string.Format("Configuration written to {0}", configFileName));
                 } catch (Exception writeEx) {
                     // Probably no access for writing

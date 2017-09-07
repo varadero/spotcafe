@@ -19,6 +19,7 @@ import { PermissionsRoutes } from './routes/permissions';
 import { ICreateDatabaseResult } from './database-provider/create-database-result';
 import { EmployeesRoutes } from './routes/employees';
 import { RolesRoutes } from './routes/roles';
+import { ClientDevicesRoutes } from './routes/client-devices';
 
 export class App {
     private logger = new Logger();
@@ -65,6 +66,9 @@ export class App {
 
         const permissionsRoutes = new PermissionsRoutes(this.dbProvider, apiPrefix);
         this.koa.use(permissionsRoutes.getAllPermissions());
+
+        const clientDevicesRoutes = new ClientDevicesRoutes(this.dbProvider, apiPrefix);
+        this.koa.use(clientDevicesRoutes.getClientDevices());
     }
 
     private startDiscoveryListener(): void {

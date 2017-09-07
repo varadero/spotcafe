@@ -14,7 +14,7 @@ export class RolesRoutes {
     }
 
     private async getAllRolesImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<IRole[]> {
-        const roles = await this.dataProvider.getAllRoles();
+        const roles = await this.dataProvider.getRoles();
         ctx.body = roles;
         return roles;
     }

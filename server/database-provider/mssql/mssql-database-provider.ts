@@ -10,6 +10,8 @@ import { IRoleWithPermissions } from '../../../shared/interfaces/role-with-permi
 import { IRole } from '../../../shared/interfaces/role';
 import { IEmployeeWithRoles } from '../../../shared/interfaces/employee-with-roles';
 import { IEmployee } from '../../../shared/interfaces/employee';
+import { IClientDevice } from '../../../shared/interfaces/client-device';
+import { IRegisterClientDeviceResult } from '../register-client-device-result';
 
 export class MSSqlDatabaseProvider implements DatabaseProvider {
     private config: ConnectionConfig;
@@ -20,6 +22,56 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
         this.logger = logger;
         this.config = <ConnectionConfig>(obj);
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
+    }
+
+    async registerClientDevice(id: string, name: string): Promise<IRegisterClientDeviceResult> {
+        const sql = `
+            SET TRANSACTION ISOLATION LEVEL SERIALIZABLE
+            BEGIN TRANSACTION
+
+            IF EXISTS (
+                SELECT TOP 1 [Id] FROM [ClientDevices]
+                WHERE [Id]=@Id
+            )
+                BEGIN
+                    SELECT [CreatedNew]=0
+                END
+                ELSE
+                BEGIN
+                    SELECT [CreatedNew]=1
+                    INSERT INTO [ClientDevices]
+                    ([Id], [Name], [Approved]) VALUES
+                    (@Id, @Name, 0)
+                END
+
+            SELECT TOP 1 [Id], [Name], [Description], [Approved], [ApprovedAt]
+            FROM [ClientDevices]
+            WHERE [Id]=@Id
+
+            COMMIT TRANSACTION
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'Id', value: id, type: TYPES.NVarChar },
+            { name: 'Name', value: name, type: TYPES.NVarChar }
+        ];
+        const registerDeviceResult = await this.dbHelper.execToObjects(sql, params);
+        const createdNew = registerDeviceResult.firstResultSet.rows[0];
+        const device = <IClientDevice>registerDeviceResult.allResultSets[1].rows[0];
+        const result = <IRegisterClientDeviceResult>{
+            clientDevice: device,
+            createdNew: createdNew
+        };
+        return result;
+    }
+
+    async getClientDevices(): Promise<IClientDevice[]> {
+        const sql = `
+            SELECT [Id], [Name], [Description], [Approved], [ApprovedAt]
+            FROM [ClientDevices]
+            ORDER BY [Name]
+        `;
+        const getResult = await this.dbHelper.execToObjects(sql);
+        return <IClientDevice[]>getResult.firstResultSet.rows;
     }
 
     async createEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<string> {
@@ -54,7 +106,7 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
         return newId;
     }
 
-    async getAllRoles(): Promise<IRole[]> {
+    async getRoles(): Promise<IRole[]> {
         const sql = `
             SELECT [Id], [Name], [Description]
             FROM [Roles]
@@ -64,7 +116,7 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
         return <IRole[]>getAllRolesResult.firstResultSet.rows;
     }
 
-    async getAllEmployeesWithRoles(): Promise<IEmployeeWithRoles[]> {
+    async getEmployeesWithRoles(): Promise<IEmployeeWithRoles[]> {
         // TODO Return only ids of roles, not entire role object
         const sql = `
             SELECT e.[Id], e.[Username], e.[FirstName], e.[LastName], e.[Email], e.[Disabled],
@@ -175,7 +227,7 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
         });
     }
 
-    async getAllPermissions(): Promise<IPermission[]> {
+    async getPermissions(): Promise<IPermission[]> {
         const sql = `
             SELECT [Id], [Name], [Description]
             FROM [Permissions]

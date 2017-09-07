@@ -13,7 +13,7 @@ export class PermissionsRoutes {
     }
 
     private async getAllPermissionsImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<IPermission[]> {
-        const permissions = await this.dataProvider.getAllPermissions();
+        const permissions = await this.dataProvider.getPermissions();
         ctx.body = permissions;
         return permissions;
     }

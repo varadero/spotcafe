@@ -6,7 +6,6 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web.Script.Serialization;
 
 namespace SpotCafe.Service.Discovery {
     class ServerDiscoverer {
@@ -16,10 +15,11 @@ namespace SpotCafe.Service.Discovery {
         private DiscoveryBroadcastData broadcastData;
         private bool discoveryStopped;
         private int discoverPort;
-
+        private Serializer serializer;
         public event EventHandler<DiscoveryDataReceivedEventArgs> DiscoveryDataReceived;
 
         public ServerDiscoverer(string clientId, string clientName, string serverIp) {
+            serializer = new Serializer();
             this.serverIp = serverIp;
             discoverPort = 64129;
             broadcastData = new DiscoveryBroadcastData { ClientId = clientId, ClientName = clientName };
@@ -37,7 +37,7 @@ namespace SpotCafe.Service.Discovery {
             StopDiscoveryTimer();
         }
 
-        protected virtual void OnDataReceived(byte[] data, IPEndPoint remoteEndpoint) {
+        protected async virtual void OnDataReceived(byte[] data, IPEndPoint remoteEndpoint) {
             if (discoveryStopped) {
                 return;
             }
@@ -45,11 +45,18 @@ namespace SpotCafe.Service.Discovery {
             if (handler != null) {
                 DiscoveryResponse discoveryResponse = null;
                 try {
-                    JavaScriptSerializer jsSer = new JavaScriptSerializer();
                     var text = Encoding.UTF8.GetString(data);
-                    discoveryResponse = jsSer.Deserialize<DiscoveryResponse>(text);
+                    discoveryResponse = serializer.Deserialize<DiscoveryResponse>(text);
                 } catch { }
-                DiscoveryDataReceived(this, new DiscoveryDataReceivedEventArgs { Response = discoveryResponse, Data = data, RemoteEndPoint = remoteEndpoint });
+                var args = new DiscoveryDataReceivedEventArgs { Response = discoveryResponse, Data = data, RemoteEndPoint = remoteEndpoint };
+                DiscoveryDataReceived(this, args);
+                if (!args.StopDiscover) {
+                    try {
+                        await StartReceiving();
+                    } catch { }
+                } else {
+                    StopDiscovery();
+                }
             }
         }
 
@@ -84,19 +91,18 @@ namespace SpotCafe.Service.Discovery {
             }
 
             try {
-                var udpReceiveResult = await StartReceiving();
-                OnDataReceived(udpReceiveResult.Buffer, udpReceiveResult.RemoteEndPoint);
+                await StartReceiving();
             } catch { }
         }
 
         private async Task<UdpReceiveResult> StartReceiving() {
             var result = await uc.ReceiveAsync();
+            OnDataReceived(result.Buffer, result.RemoteEndPoint);
             return result;
         }
 
         private void SendData() {
-            JavaScriptSerializer jsSer = new JavaScriptSerializer();
-            var arr = Encoding.UTF8.GetBytes(jsSer.Serialize(broadcastData));
+            var arr = Encoding.UTF8.GetBytes(serializer.Serialize(broadcastData));
             try {
                 var host = serverIp;
                 if (host == null || host.Trim().Length == 0) {

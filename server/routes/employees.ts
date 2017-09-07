@@ -44,7 +44,7 @@ export class EmployeesRoutes {
     }
 
     private async getAllEmployeesWithRolesImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<IEmployeeWithRoles[]> {
-        const employeeIdWithRoles = await this.dataProvider.getAllEmployeesWithRoles();
+        const employeeIdWithRoles = await this.dataProvider.getEmployeesWithRoles();
         ctx.body = employeeIdWithRoles;
         return employeeIdWithRoles;
     }
