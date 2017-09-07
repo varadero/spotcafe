@@ -4,7 +4,7 @@ import { IRole } from '../../../../../shared/interfaces/role';
 import { IEmployeeWithRoles } from '../../../../../shared/interfaces/employee-with-roles';
 
 @Injectable()
-export class EmployeesServce {
+export class EmployeesService {
     cloneRoles(roles: IRole[]): IRole[] {
         const result: IRole[] = [];
         for (let i = 0; i < roles.length; i++) {

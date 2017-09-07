@@ -82,7 +82,7 @@ namespace SpotCafe.Service {
 
         private void ConnectToServer() {
             // TODO Make initial request to the server authenticating with ClientId
-            Log(string.Format("Connection to {0}", remoteEndPoint.ToString()));
+            Log(string.Format("Using server {0}", remoteEndPoint.Address.ToString()));
         }
 
         private void StartServerDiscovery() {

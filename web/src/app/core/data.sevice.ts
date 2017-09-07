@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { CacheService } from './cache.service';
 import { IEmployeeWithRoles } from '../../../../shared/interfaces/employee-with-roles';
 import { IRole } from '../../../../shared/interfaces/role';
+import { IClientDevice } from '../../../../shared/interfaces/client-device';
 
 @Injectable()
 export class DataService {
@@ -19,11 +20,19 @@ export class DataService {
         private cacheSvc: CacheService
     ) { }
 
+    approveClientDevice(clientDevice: IClientDevice): Promise<void> {
+        return this.post('client-devices/approve', clientDevice);
+    }
+
+    getClientDevices(): Promise<IClientDevice[]> {
+        return this.get('client-devices');
+    }
+
     createEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<void> {
         return this.post('employees-with-roles', employeeWithRoles);
     }
 
-    getAllEmployeesWithRoles(): Promise<IEmployeeWithRoles[]> {
+    getEmployeesWithRoles(): Promise<IEmployeeWithRoles[]> {
         return this.get('employees-with-roles');
     }
 
@@ -31,7 +40,7 @@ export class DataService {
         return this.post('loginEmployee', { username: username, password: password });
     }
 
-    getAllRoles(): Promise<IRole[]> {
+    getRoles(): Promise<IRole[]> {
         return this.get('roles');
     }
 

@@ -4,7 +4,7 @@ import { DataService } from '../../core/data.sevice';
 import { DisplayMessagesComponent } from '../../shared/display-messages.component';
 import { IRole } from '../../../../../shared/interfaces/role';
 import { IEmployeeWithRoles } from '../../../../../shared/interfaces/employee-with-roles';
-import { EmployeesServce, INewEmployeeWithRoles, INewEmployeeErrors, ISelectableRole } from './employees.services';
+import { EmployeesService, INewEmployeeWithRoles, INewEmployeeErrors, ISelectableRole } from './employees.services';
 import { IEmployee } from '../../../../../shared/interfaces/employee';
 
 @Component({
@@ -33,14 +33,14 @@ export class EmployeesComponent implements OnInit {
 
     constructor(
         private dataSvc: DataService,
-        private employeesSvc: EmployeesServce
+        private employeesSvc: EmployeesService
     ) { }
 
-    async ngOnInit(): Promise<any> {
+    async ngOnInit(): Promise<void> {
         this.resetNewEmployeeWithRoles();
         try {
             this.waiting.loadEmployees = true;
-            const res = await Promise.all([this.dataSvc.getAllEmployeesWithRoles(), this.dataSvc.getAllRoles()]);
+            const res = await Promise.all([this.dataSvc.getEmployeesWithRoles(), this.dataSvc.getRoles()]);
             this.employeesWithRoles = res[0];
             this.roles = res[1];
             this.resetNewEmployeeWithRoles();

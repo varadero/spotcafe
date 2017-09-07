@@ -50,6 +50,12 @@ export class AuthenticationRoutes {
         // if (method === 'GET' && urlPath === this.apiPrefix + 'employees') {
         //     return pids.employeesView;
         // }
+        if (method === 'POST' && urlPath === this.apiPrefix + 'client-devices/approve') {
+            return pids.clientDevicesModify;
+        }
+        if (method === 'GET' && urlPath === this.apiPrefix + 'client-devices') {
+            return pids.clientDevicesView;
+        }
         if (method === 'GET' && urlPath === this.apiPrefix + 'employees-with-roles') {
             return pids.employeesView;
         }

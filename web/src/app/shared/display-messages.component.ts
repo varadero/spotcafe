@@ -8,15 +8,19 @@ import { IMessage } from './message';
     styles: [`
         .message-success {
             background-color: springgreen;
+            color: black;
         }
         .message-info {
             background-color: skyblue;
+            color: black;
         }
         .message-warning {
             background-color: yellow;
+            color: black;
         }
         .message-error {
             background-color: coral;
+            color: black;
         }
         .message {
             line-height: 2em;

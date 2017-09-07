@@ -19,6 +19,7 @@ export abstract class DatabaseProvider {
     abstract getRoles(): Promise<IRole[]>;
     abstract getPermissions(): Promise<IPermission[]>;
     abstract getEmployeeWithRolesAndPermissions(username: string, password: string): Promise<IEmployeeWithRolesAndPermissions>;
-    abstract registerClientDevice(id: string, name: string): Promise<IRegisterClientDeviceResult>;
+    abstract registerClientDevice(id: string, name: string, address: string): Promise<IRegisterClientDeviceResult>;
     abstract getClientDevices(): Promise<IClientDevice[]>;
+    abstract approveClientDevice(clientDevice: IClientDevice): Promise<void>;
 }

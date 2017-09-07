@@ -3,15 +3,15 @@ import { NgModule } from '@angular/core';
 import { SharedModule } from '../shared/shared.module';
 import { SettingsRoutingModule } from './setings-routing.module';
 import { SettingsComponent } from './settings.component';
-import { SettingsHomeComponent } from './settings-home.component';
 import { EmployeesComponent } from './employees/employees.component';
-import { EmployeesServce } from './employees/employees.services';
+import { EmployeesService } from './employees/employees.services';
+import { ClientDevicesComponent } from './client-devices/client-devices.component';
 
 @NgModule({
     declarations: [
         SettingsComponent,
-        SettingsHomeComponent,
-        EmployeesComponent
+        EmployeesComponent,
+        ClientDevicesComponent
     ],
     imports: [
         SharedModule,
@@ -21,7 +21,7 @@ import { EmployeesServce } from './employees/employees.services';
         SettingsRoutingModule
     ],
     providers: [
-        EmployeesServce
+        EmployeesService
     ]
 })
 export class SettingsModule { }

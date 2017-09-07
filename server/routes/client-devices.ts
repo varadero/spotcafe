@@ -14,12 +14,23 @@ export class ClientDevicesRoutes {
     constructor(private dataProvider: DatabaseProvider, private apiPrefix: string) {
     }
 
+    approveClientDevice(): any {
+        return route.post(this.apiPrefix + 'client-devices/approve', this.approveClientDeviceImpl.bind(this));
+    }
+
     getClientDevices(): any {
-        return route.post(this.apiPrefix + 'client-devices', this.getClientDevicesImpl.bind(this));
+        return route.get(this.apiPrefix + 'client-devices', this.getClientDevicesImpl.bind(this));
+    }
+
+    private async approveClientDeviceImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<void> {
+        const clientDevice = <IClientDevice>ctx.request.body;
+        await this.dataProvider.approveClientDevice(clientDevice);
+        ctx.status = 200;
     }
 
     private async getClientDevicesImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<IClientDevice[]> {
         const clientDevices = await this.dataProvider.getClientDevices();
+        ctx.body = clientDevices;
         return clientDevices;
     }
 }

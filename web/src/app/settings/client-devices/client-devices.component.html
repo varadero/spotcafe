@@ -1,0 +1,69 @@
+<div class="settings-feature">
+    <md-card>
+        <md-card-title>Client devices waiting for approval</md-card-title>
+        <span *ngIf="notApprovedDevices && notApprovedDevices.length === 0">No client device approval requests found</span>
+        <spotcafe-messages #loadDevicesMessagesComponent></spotcafe-messages>
+        <table *ngIf="notApprovedDevices && notApprovedDevices.length" class="client-devices-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Name</th>
+                    <th>Address</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let device of notApprovedDevices">
+                    <td><button md-raised-button color="primary" (click)="approveDevice(device)">Approve</button></td>
+                    <md-form-field>
+                        <input mdInput [(ngModel)]="device.name" />
+                    </md-form-field>
+                    <td>{{device.address}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </md-card>
+    <md-card>
+        <md-card-title>Approved client devices</md-card-title>
+        <span *ngIf="approvedDevices && approvedDevices.length === 0">No approved devices found</span>
+        <table *ngIf="approvedDevices && approvedDevices.length" class="client-devices-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Approved</th>
+                    <th>Name</th>
+                    <th>Address</th>
+                    <th>Description</th>
+                    <th>Approved at</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let device of approvedDevices">
+                    <td>
+                        <button md-raised-button color="primary">Update</button>
+                    </td>
+                    <td>
+                        <md-checkbox [(ngModel)]="device.approved">Approved</md-checkbox>
+                    </td>
+                    <td>
+                        <md-form-field>
+                            <input mdInput [(ngModel)]="device.name" />
+                        </md-form-field>
+                    </td>
+                    <td>
+                        <md-form-field>
+                            <input mdInput [(ngModel)]="device.address" />
+                        </md-form-field>
+                    </td>
+                    <td>
+                        <md-form-field>
+                            <input mdInput [(ngModel)]="device.description" />
+                        </md-form-field>
+                    </td>
+                    <td>
+                        {{device.approvedAt | date:"yyyy-MM-dd HH:mm:ss"}}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </md-card>
+</div>

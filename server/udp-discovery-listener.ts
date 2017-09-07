@@ -27,9 +27,9 @@ export class UdpDiscoveryListener {
             this.logger.log(`Client application discovery info: ${clientAppAddr}`);
             try {
                 const str = msg.toString('utf8');
-                const obj = <{clientId: string, clientName: string}>JSON.parse(str);
+                const obj = <{ clientId: string, clientName: string }>JSON.parse(str);
                 this.logger.log('Client application discovery data', obj);
-                const registerResult = await this.dataProvider.registerClientDevice(obj.clientId, obj.clientName);
+                const registerResult = await this.dataProvider.registerClientDevice(obj.clientId, obj.clientName, rinfo.address);
                 const discoveryResponse = {
                     approved: registerResult.clientDevice.approved
                 };

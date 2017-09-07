@@ -32,7 +32,6 @@ html, body, app-root, md-sidenav-container, .primary-content {
 
 .active-settings-nav-item {
     border-bottom: 2px solid lightseagreen; 
-    background-color: #BEFFFB;   
 }
 
 .settings-feature {
@@ -46,4 +45,16 @@ html, body, app-root, md-sidenav-container, .primary-content {
 
 .employee-drop-down {
     width: 20em;
+}
+
+.client-devices-table tr {
+    height: 3em;
+}
+
+.client-devices-table tr th {
+    text-align: start;
+}
+
+.client-devices-table tr td {
+    padding-right: 3em;
 }

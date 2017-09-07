@@ -17,8 +17,8 @@ export class EmployeesRoutes {
         return route.post(this.apiPrefix + 'employees-with-roles', this.createEmployeeWithRolesImpl.bind(this));
     }
 
-    getAllEmployeesWithRoles(): any {
-        return route.get(this.apiPrefix + 'employees-with-roles', this.getAllEmployeesWithRolesImpl.bind(this));
+    getEmployeesWithRoles(): any {
+        return route.get(this.apiPrefix + 'employees-with-roles', this.getEmployeesWithRolesImpl.bind(this));
     }
 
     updateEmployeeWithRoles(): any {
@@ -43,7 +43,7 @@ export class EmployeesRoutes {
         return createdEmployeeId;
     }
 
-    private async getAllEmployeesWithRolesImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<IEmployeeWithRoles[]> {
+    private async getEmployeesWithRolesImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<IEmployeeWithRoles[]> {
         const employeeIdWithRoles = await this.dataProvider.getEmployeesWithRoles();
         ctx.body = employeeIdWithRoles;
         return employeeIdWithRoles;

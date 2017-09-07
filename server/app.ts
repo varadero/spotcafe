@@ -58,7 +58,7 @@ export class App {
         const employeesRoutes = new EmployeesRoutes(this.dbProvider, apiPrefix);
         this.koa.use(employeesRoutes.getEmployeeWithRolesAndPermissions());
         this.koa.use(employeesRoutes.updateEmployeeWithRoles());
-        this.koa.use(employeesRoutes.getAllEmployeesWithRoles());
+        this.koa.use(employeesRoutes.getEmployeesWithRoles());
         this.koa.use(employeesRoutes.createEmployeeWithRoles());
 
         const rolesRoute = new RolesRoutes(this.dbProvider, apiPrefix);
@@ -69,6 +69,7 @@ export class App {
 
         const clientDevicesRoutes = new ClientDevicesRoutes(this.dbProvider, apiPrefix);
         this.koa.use(clientDevicesRoutes.getClientDevices());
+        this.koa.use(clientDevicesRoutes.approveClientDevice());
     }
 
     private startDiscoveryListener(): void {

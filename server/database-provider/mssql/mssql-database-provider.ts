@@ -24,7 +24,24 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
     }
 
-    async registerClientDevice(id: string, name: string): Promise<IRegisterClientDeviceResult> {
+    async approveClientDevice(clientDevice: IClientDevice): Promise<void> {
+        const sql = `
+            UPDATE [ClientDevices]
+            SET [Name]=@Name,
+                [Approved]=@Approved,
+                [ApprovedAt]=@ApprovedAt
+            WHERE [Id]=@Id
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'Name', value: clientDevice.name, type: TYPES.NVarChar },
+            { name: 'Approved', value: 1, type: TYPES.Bit },
+            { name: 'ApprovedAt', value: new Date().getTime(), type: TYPES.BigInt },
+            { name: 'Id', value: clientDevice.id, type: TYPES.NVarChar }
+        ];
+        await this.dbHelper.execRowCount(sql, params);
+    }
+
+    async registerClientDevice(id: string, name: string, address: string): Promise<IRegisterClientDeviceResult> {
         const sql = `
             SET TRANSACTION ISOLATION LEVEL SERIALIZABLE
             BEGIN TRANSACTION
@@ -40,11 +57,11 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
                 BEGIN
                     SELECT [CreatedNew]=1
                     INSERT INTO [ClientDevices]
-                    ([Id], [Name], [Approved]) VALUES
-                    (@Id, @Name, 0)
+                    ([Id], [Name], [Address], [Approved]) VALUES
+                    (@Id, @Name, @Address, 0)
                 END
 
-            SELECT TOP 1 [Id], [Name], [Description], [Approved], [ApprovedAt]
+            SELECT TOP 1 [Id], [Name], [Address], [Description], [Approved], [ApprovedAt]
             FROM [ClientDevices]
             WHERE [Id]=@Id
 
@@ -52,7 +69,8 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
         `;
         const params: IRequestParameter[] = [
             { name: 'Id', value: id, type: TYPES.NVarChar },
-            { name: 'Name', value: name, type: TYPES.NVarChar }
+            { name: 'Name', value: name, type: TYPES.NVarChar },
+            { name: 'Address', value: address, type: TYPES.NVarChar }
         ];
         const registerDeviceResult = await this.dbHelper.execToObjects(sql, params);
         const createdNew = registerDeviceResult.firstResultSet.rows[0];
@@ -66,7 +84,7 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
 
     async getClientDevices(): Promise<IClientDevice[]> {
         const sql = `
-            SELECT [Id], [Name], [Description], [Approved], [ApprovedAt]
+            SELECT [Id], [Name], [Address], [Description], [Approved], [ApprovedAt]
             FROM [ClientDevices]
             ORDER BY [Name]
         `;
