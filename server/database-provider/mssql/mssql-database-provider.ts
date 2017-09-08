@@ -24,6 +24,25 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
     }
 
+    async updateClientDevice(clientDevice: IClientDevice): Promise<void> {
+        const sql = `
+            UPDATE [ClientDevices]
+            SET [Name]=@Name,
+                [Address]=@Address,
+                [Description]=@Description,
+                [Approved]=@Approved
+            WHERE [Id]=@Id
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'Name', value: clientDevice.name, type: TYPES.NVarChar },
+            { name: 'Address', value: clientDevice.address, type: TYPES.NVarChar },
+            { name: 'Description', value: clientDevice.description, type: TYPES.NVarChar },
+            { name: 'Approved', value: clientDevice.approved, type: TYPES.Bit },
+            { name: 'Id', value: clientDevice.id, type: TYPES.NVarChar },
+        ];
+        await this.dbHelper.execRowCount(sql, params);
+    }
+
     async approveClientDevice(clientDevice: IClientDevice): Promise<void> {
         const sql = `
             UPDATE [ClientDevices]

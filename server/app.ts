@@ -70,6 +70,7 @@ export class App {
         const clientDevicesRoutes = new ClientDevicesRoutes(this.dbProvider, apiPrefix);
         this.koa.use(clientDevicesRoutes.getClientDevices());
         this.koa.use(clientDevicesRoutes.approveClientDevice());
+        this.koa.use(clientDevicesRoutes.updateClientDevice());
     }
 
     private startDiscoveryListener(): void {

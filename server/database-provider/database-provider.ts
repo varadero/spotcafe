@@ -22,4 +22,5 @@ export abstract class DatabaseProvider {
     abstract registerClientDevice(id: string, name: string, address: string): Promise<IRegisterClientDeviceResult>;
     abstract getClientDevices(): Promise<IClientDevice[]>;
     abstract approveClientDevice(clientDevice: IClientDevice): Promise<void>;
+    abstract updateClientDevice(clientDevice: IClientDevice): Promise<void>;
 }

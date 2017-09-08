@@ -39,7 +39,7 @@
             <tbody>
                 <tr *ngFor="let device of approvedDevices">
                     <td>
-                        <button md-raised-button color="primary">Update</button>
+                        <button md-raised-button color="primary" (click)="updateDevice(device)">Update</button>
                     </td>
                     <td>
                         <md-checkbox [(ngModel)]="device.approved">Approved</md-checkbox>

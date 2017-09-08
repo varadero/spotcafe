@@ -14,23 +14,23 @@ export class ClientDevicesRoutes {
     constructor(private dataProvider: DatabaseProvider, private apiPrefix: string) {
     }
 
-    // updateClientDevice(): any {
-    //     return route.post(this.apiPrefix + 'client-devices/:id', this.updateClientDeviceImpl.bind(this));
-    // }
+    updateClientDevice(): any {
+        return route.post(this.apiPrefix + 'client-devices/:id', this.updateClientDeviceImpl.bind(this));
+    }
 
     approveClientDevice(): any {
-        return route.post(this.apiPrefix + 'client-devices/approve', this.approveClientDeviceImpl.bind(this));
+        return route.post(this.apiPrefix + 'client-devices/:id/approve', this.approveClientDeviceImpl.bind(this));
     }
 
     getClientDevices(): any {
         return route.get(this.apiPrefix + 'client-devices', this.getClientDevicesImpl.bind(this));
     }
 
-    // private async updateClientDeviceImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<void> {
-    //     const clientDevice = <IClientDevice>ctx.request.body;
-    //     await this.dataProvider.approveClientDevice(clientDevice);
-    //     ctx.status = 200;
-    // }
+    private async updateClientDeviceImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<void> {
+        const clientDevice = <IClientDevice>ctx.request.body;
+        await this.dataProvider.updateClientDevice(clientDevice);
+        ctx.status = 200;
+    }
 
     private async approveClientDeviceImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<void> {
         const clientDevice = <IClientDevice>ctx.request.body;

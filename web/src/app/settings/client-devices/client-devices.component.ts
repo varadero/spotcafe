@@ -13,7 +13,8 @@ export class ClientDevicesComponent implements OnInit {
 
     waiting = {
         loadDevices: false,
-        approveDevice: false
+        approveDevice: false,
+        updateDevice: false
     };
 
     @ViewChild('loadDevicesMessagesComponent') private loadDevicesMessagesComponent: DisplayMessagesComponent;
@@ -22,6 +23,19 @@ export class ClientDevicesComponent implements OnInit {
 
     ngOnInit(): void {
         this.loadData();
+    }
+
+    async updateDevice(device: IClientDevice): Promise<void> {
+        try {
+            this.waiting.updateDevice = true;
+            await this.dataSvc.updateClientDevice(device);
+            this.loadData();
+        } catch (err) {
+
+        } finally {
+            this.waiting.updateDevice = false;
+
+        }
     }
 
     async approveDevice(device: IClientDevice): Promise<void> {

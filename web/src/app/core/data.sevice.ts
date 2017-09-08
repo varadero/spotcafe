@@ -20,8 +20,12 @@ export class DataService {
         private cacheSvc: CacheService
     ) { }
 
+    updateClientDevice(clientDevice: IClientDevice): Promise<void> {
+        return this.post('client-devices/' + encodeURIComponent(clientDevice.id), clientDevice);
+    }
+
     approveClientDevice(clientDevice: IClientDevice): Promise<void> {
-        return this.post('client-devices/approve', clientDevice);
+        return this.post('client-devices/' + encodeURIComponent(clientDevice.id) + '/approve', clientDevice);
     }
 
     getClientDevices(): Promise<IClientDevice[]> {
@@ -45,7 +49,7 @@ export class DataService {
     }
 
     updateEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<void> {
-        return this.post('employees/' + employeeWithRoles.employee.id, employeeWithRoles);
+        return this.post('employees/' + encodeURIComponent(employeeWithRoles.employee.id), employeeWithRoles);
     }
 
     setUseCache(use: boolean) {
