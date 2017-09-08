@@ -43,4 +43,13 @@ export class PermissionsMapper {
         }
         return binaryString[index] === '1';
     }
+
+    hasAnyPermission(permissionsIds: string[], binaryString: string): boolean {
+        for (let i = 0; i < permissionsIds.length; i++) {
+            if (this.hasPermission(permissionsIds[i], binaryString)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

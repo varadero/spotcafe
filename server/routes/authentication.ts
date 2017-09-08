@@ -33,42 +33,57 @@ export class AuthenticationRoutes {
         if (!tokenObj) {
             return ctx.throw(401);
         }
-        const requiredPermission = this.getRequiredPermission(ctx.method, ctx.path, ctx.state.token);
-        if (!requiredPermission) {
+        const allowingPermissions = this.getAllowingPermissions(ctx.method, ctx.path);
+        if (allowingPermissions.length === 0) {
             // Can't find permission for that method and url path - don't allow execution
             return ctx.throw(this.errorMessage.create('URL forbidden'), 403);
         }
-        const hasPermission = this.permissionsMapper.hasPermission(requiredPermission, tokenObj.permissions);
-        if (!hasPermission) {
+        const hasAnyPermission = this.permissionsMapper.hasAnyPermission(allowingPermissions, tokenObj.permissions);
+        if (!hasAnyPermission) {
             return ctx.throw(this.errorMessage.create('No permission'), 403);
         }
         return next();
     }
 
-    private getRequiredPermission(method: string, urlPath: string, token: IServerToken): string | null {
+    /**
+     * Returns array with permissions allowing access to a given method and URL
+     * @param method Koa context method
+     * @param urlPath Koa context path
+     */
+    private getAllowingPermissions(method: string, urlPath: string): string[] {
         const pids = this.permissionsMapper.permissionIds;
-        // if (method === 'GET' && urlPath === this.apiPrefix + 'employees') {
-        //     return pids.employeesView;
-        // }
-        if (method === 'POST' && urlPath === this.apiPrefix + 'client-devices/approve') {
-            return pids.clientDevicesModify;
+        if (this.apiPathIs(urlPath, 'client-devices')) {
+            return this.selectPermissionsIds(method, [pids.clientDevicesView], [pids.clientDevicesModify]);
         }
-        if (method === 'GET' && urlPath === this.apiPrefix + 'client-devices') {
-            return pids.clientDevicesView;
+        if (this.apiPathIs(urlPath, 'employees-with-roles')) {
+            return this.selectPermissionsIds(method, [pids.employeesView], [pids.employeesModify]);
         }
-        if (method === 'GET' && urlPath === this.apiPrefix + 'employees-with-roles') {
-            return pids.employeesView;
+        if (this.apiPathIs(urlPath, 'employees')) {
+            return this.selectPermissionsIds(method, [pids.employeesView], [pids.employeesModify]);
         }
-        if (method === 'POST' && urlPath === this.apiPrefix + 'employees-with-roles') {
-            return pids.employeesModify;
+        if (method === 'GET' && urlPath.startsWith(this.apiPrefix + 'roles')) {
+            return [pids.employeesView];
         }
-        if (method === 'POST' && urlPath.startsWith(this.apiPrefix + 'employees')) {
-            return pids.employeesModify;
-        }
-        if (method === 'GET' && urlPath === this.apiPrefix + 'roles') {
-            return pids.employeesView;
-        }
-        return null;
+        return [];
+    }
+
+    /**
+     * Returns true if given Koa context pat starts with API prefix followed by specific suffix
+     * @param path Koa context path
+     * @param value Endpoint value after API prefix
+     */
+    private apiPathIs(path: string, value: string): boolean {
+        return path.startsWith(this.apiPrefix + value);
+    }
+
+    /**
+     * Returns required permission for a given method
+     * @param method Koa ontext method
+     * @param viewPermissionId Permision id necessary to view the resource when method is GET
+     * @param modifyPermissionId Permission id necessary to modify the resource when method is POST
+     */
+    private selectPermissionsIds(method: string, viewPermissionsIds: string[], modifyPermissionsIds: string[]): string[] {
+        return (method === 'GET') ? viewPermissionsIds : (method === 'POST') ? modifyPermissionsIds : [];
     }
 
     private async verifyToken(token: string): Promise<IServerToken> {
