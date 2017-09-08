@@ -9,6 +9,7 @@ import { AuthService } from './core/auth.service';
 })
 export class AppComponent implements OnInit {
   isLoggedIn: boolean;
+  sidenavCollapsed = true;
 
   constructor(private dataSvc: DataService, private authSvc: AuthService) { }
 
