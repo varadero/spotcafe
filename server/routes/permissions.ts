@@ -1,20 +1,16 @@
-import * as Koa from 'koa';
 import * as route from 'koa-route';
 
 import { DatabaseProvider } from '../database-provider/database-provider';
-import { IPermission } from '../../shared/interfaces/permission';
+import { RoutesBase } from './routes-base';
 
-export class PermissionsRoutes {
+export class PermissionsRoutes extends RoutesBase {
     constructor(private dataProvider: DatabaseProvider, private apiPrefix: string) {
+        super();
     }
 
     getAllPermissions(): any {
-        return route.get(this.apiPrefix + 'permissions', this.getAllPermissionsImpl.bind(this));
-    }
-
-    private async getAllPermissionsImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<IPermission[]> {
-        const permissions = await this.dataProvider.getPermissions();
-        ctx.body = permissions;
-        return permissions;
+        return route.get(this.apiPrefix + 'permissions', async ctx => {
+            await this.handleResult(ctx, () => this.dataProvider.getPermissions());
+        });
     }
 }

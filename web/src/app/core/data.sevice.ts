@@ -8,6 +8,7 @@ import { CacheService } from './cache.service';
 import { IEmployeeWithRoles } from '../../../../shared/interfaces/employee-with-roles';
 import { IRole } from '../../../../shared/interfaces/role';
 import { IClientDevice } from '../../../../shared/interfaces/client-device';
+import { ICreateEmployeeResult } from '../../../../shared/interfaces/create-employee-result';
 
 @Injectable()
 export class DataService {
@@ -32,7 +33,7 @@ export class DataService {
         return this.get('client-devices');
     }
 
-    createEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<void> {
+    createEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<ICreateEmployeeResult> {
         return this.post('employees-with-roles', employeeWithRoles);
     }
 
@@ -41,7 +42,7 @@ export class DataService {
     }
 
     logInEmployee(username: string, password: string): Promise<any> {
-        return this.post('loginEmployee', { username: username, password: password });
+        return this.post('login-employee', { username: username, password: password });
     }
 
     getRoles(): Promise<IRole[]> {

@@ -56,7 +56,6 @@ export class App {
         this.koa.use(authRoutes.checkAuthorization());
 
         const employeesRoutes = new EmployeesRoutes(this.dbProvider, apiPrefix);
-        this.koa.use(employeesRoutes.getEmployeeWithRolesAndPermissions());
         this.koa.use(employeesRoutes.updateEmployeeWithRoles());
         this.koa.use(employeesRoutes.getEmployeesWithRoles());
         this.koa.use(employeesRoutes.createEmployeeWithRoles());

@@ -11,6 +11,7 @@ import { IRole } from '../../../shared/interfaces/role';
 import { IEmployeeWithRoles } from '../../../shared/interfaces/employee-with-roles';
 import { IEmployee } from '../../../shared/interfaces/employee';
 import { IClientDevice } from '../../../shared/interfaces/client-device';
+import { ICreateEmployeeResult } from '../../../shared/interfaces/create-employee-result';
 import { IRegisterClientDeviceResult } from '../register-client-device-result';
 
 export class MSSqlDatabaseProvider implements DatabaseProvider {
@@ -70,11 +71,11 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
                 WHERE [Id]=@Id
             )
                 BEGIN
-                    SELECT [CreatedNew]=0
+                    SELECT [CreatedNew]=CAST(0 AS bit)
                 END
                 ELSE
                 BEGIN
-                    SELECT [CreatedNew]=1
+                    SELECT [CreatedNew]=CAST(1 AS bit)
                     INSERT INTO [ClientDevices]
                     ([Id], [Name], [Address], [Approved]) VALUES
                     (@Id, @Name, @Address, 0)
@@ -92,7 +93,7 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
             { name: 'Address', value: address, type: TYPES.NVarChar }
         ];
         const registerDeviceResult = await this.dbHelper.execToObjects(sql, params);
-        const createdNew = registerDeviceResult.firstResultSet.rows[0];
+        const createdNew = (<{ createdNew: boolean }>registerDeviceResult.firstResultSet.rows[0]).createdNew;
         const device = <IClientDevice>registerDeviceResult.allResultSets[1].rows[0];
         const result = <IRegisterClientDeviceResult>{
             clientDevice: device,
@@ -111,12 +112,26 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
         return <IClientDevice[]>getResult.firstResultSet.rows;
     }
 
-    async createEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<string> {
-        const newId = this.dbHelper.generateId();
+    async createEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<ICreateEmployeeResult> {
+        let newId = this.dbHelper.generateId();
         let sql = `
-            INSERT INTO [Employees]
-            ([Id], [Username], [Password], [FirstName], [LastName], [Email], [Disabled]) VALUES
-            (@Id, @Username, @Password, @FirstName, @LastName, @Email, @Disabled)
+            SET TRANSACTION ISOLATION LEVEL SERIALIZABLE
+            BEGIN TRANSACTION
+
+            IF EXISTS(
+                SELECT TOP 1 [Username]
+                FROM [Employees]
+                WHERE [Username]=@Username
+            )
+            BEGIN
+                SELECT [AlreadyExists]=CAST(1 as bit)
+            END
+            ELSE
+            BEGIN
+                SELECT [AlreadyExists]=CAST(0 as bit)
+                INSERT INTO [Employees]
+                ([Id], [Username], [Password], [FirstName], [LastName], [Email], [Disabled]) VALUES
+                (@Id, @Username, @Password, @FirstName, @LastName, @Email, @Disabled)
         `;
         const employee = employeeWithRoles.employee;
         const passwordHash = this.dbHelper.getSha512(employee.password);
@@ -133,14 +148,22 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
             const roleId = employeeWithRoles.roles[i].id;
             const roleIdParamName = `RoleId${i}`;
             sql += `
-                INSERT INTO [EmployeesInRoles]
-                ([EmployeeId], [RoleId]) VALUES
-                (@Id, @${roleIdParamName})
+                    INSERT INTO [EmployeesInRoles]
+                    ([EmployeeId], [RoleId]) VALUES
+                    (@Id, @${roleIdParamName})
             `;
             params.push({ name: roleIdParamName, value: roleId, type: TYPES.UniqueIdentifierN });
         }
-        await this.dbHelper.execRowCount(sql, params);
-        return newId;
+        sql += `
+            END
+            COMMIT TRANSACTION
+        `;
+        const insertResult = await this.dbHelper.execToObjects(sql, params);
+        const alreadyExists = (<{ alreadyExists: boolean }>insertResult.firstResultSet.rows[0]).alreadyExists;
+        if (alreadyExists) {
+            newId = '';
+        }
+        return { createdId: newId, alreadyExists: alreadyExists };
     }
 
     async getRoles(): Promise<IRole[]> {

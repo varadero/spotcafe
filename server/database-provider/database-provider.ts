@@ -6,6 +6,7 @@ import { IEmployeeWithRoles } from '../../shared/interfaces/employee-with-roles'
 import { IRole } from '../../shared/interfaces/role';
 import { IRegisterClientDeviceResult } from './register-client-device-result';
 import { IClientDevice } from '../../shared/interfaces/client-device';
+import { ICreateEmployeeResult } from '../../shared/interfaces/create-employee-result';
 
 export abstract class DatabaseProvider {
     abstract initialize(obj: any, ...args: any[]): void;
@@ -13,7 +14,7 @@ export abstract class DatabaseProvider {
     abstract prepareDatabase(): Promise<IPrepareDatabaseResult>;
     abstract getTokenSecret(): Promise<string | null>;
     abstract getEmployeesWithRoles(): Promise<IEmployeeWithRoles[]>;
-    abstract createEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<string>;
+    abstract createEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<ICreateEmployeeResult>;
     abstract updateEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<void>;
     abstract getEmployeePermissionsIds(employeeId: string): Promise<string[]>;
     abstract getRoles(): Promise<IRole[]>;

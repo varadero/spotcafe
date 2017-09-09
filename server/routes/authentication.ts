@@ -17,7 +17,7 @@ export class AuthenticationRoutes {
     }
 
     logInEmployee(): any {
-        return route.post(this.apiPrefix + 'loginEmployee', this.logInEmployeeImpl.bind(this));
+        return route.post(this.apiPrefix + 'login-employee', this.logInEmployeeImpl.bind(this));
     }
 
     checkAuthorization() {
@@ -29,6 +29,7 @@ export class AuthenticationRoutes {
         const tokenString = authHeaderValue.split(' ')[1];
         const tokenObj = await this.verifyToken(tokenString);
         // Set token into request context in order to be available for all other middlewares
+        // TODO It is already available in ctx.state.user - set by jsonwebtoken module
         ctx.state.token = tokenObj;
         if (!tokenObj) {
             return ctx.throw(401);
@@ -87,7 +88,7 @@ export class AuthenticationRoutes {
     }
 
     private async verifyToken(token: string): Promise<IServerToken> {
-        const tokenSecret = await this.getTokenSecret();
+        const tokenSecret = this.tokenSecret || await this.getTokenSecret();
         const promise = new Promise<IServerToken>((resolve, reject) => {
             jwt.verify(token, tokenSecret || '', (err: any, decoded: object | string) => {
                 if (err) {
@@ -122,7 +123,7 @@ export class AuthenticationRoutes {
         serverToken.accountId = userWithPermissions.employee.id;
         serverToken.type = 'employee';
         serverToken.permissions = this.permissionsMapper.mapToBinaryString(allPermissionIds);
-        const tokenSecret = await this.getTokenSecret();
+        const tokenSecret = this.tokenSecret || await this.getTokenSecret();
         // Use UTC time
         const expiresIn = await this.getTokenDuration();
         const tokenString = jwt.sign(serverToken, tokenSecret || '', { expiresIn: expiresIn });
@@ -138,9 +139,9 @@ export class AuthenticationRoutes {
     }
 
     private async getTokenSecret(): Promise<string | null> {
-        if (this.tokenSecret) {
-            return Promise.resolve(this.tokenSecret);
-        }
+        // if (this.tokenSecret) {
+        //     return Promise.resolve(this.tokenSecret);
+        // }
         this.tokenSecret = await this.dataProvider.getTokenSecret();
         return this.tokenSecret;
     }

@@ -1,21 +1,16 @@
-import * as Koa from 'koa';
 import * as route from 'koa-route';
 
 import { DatabaseProvider } from '../database-provider/database-provider';
-import { IRole } from '../../shared/interfaces/role';
+import { RoutesBase } from './routes-base';
 
-
-export class RolesRoutes {
+export class RolesRoutes extends RoutesBase {
     constructor(private dataProvider: DatabaseProvider, private apiPrefix: string) {
+        super();
     }
 
     getAllRoles(): any {
-        return route.get(this.apiPrefix + 'roles', this.getAllRolesImpl.bind(this));
-    }
-
-    private async getAllRolesImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<IRole[]> {
-        const roles = await this.dataProvider.getRoles();
-        ctx.body = roles;
-        return roles;
+        return route.get(this.apiPrefix + 'roles', async ctx => {
+            await this.handleResult(ctx, () => this.dataProvider.getRoles());
+        });
     }
 }

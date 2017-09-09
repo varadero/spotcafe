@@ -38,18 +38,7 @@ export class EmployeesComponent implements OnInit {
 
     async ngOnInit(): Promise<void> {
         this.resetNewEmployeeWithRoles();
-        try {
-            this.waiting.loadEmployees = true;
-            const res = await Promise.all([this.dataSvc.getEmployeesWithRoles(), this.dataSvc.getRoles()]);
-            this.employeesWithRoles = res[0];
-            this.roles = res[1];
-            this.resetNewEmployeeWithRoles();
-            this.employeesSvc.addAllRolesToAllEmployees(this.employeesWithRoles, this.roles);
-        } catch (err) {
-            this.handleError(err, this.loadEmployeesMessagesComponent, 'Loading employees and roles');
-        } finally {
-            this.waiting.loadEmployees = false;
-        }
+        this.loadData();
     }
 
     async updateEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<void> {
@@ -60,7 +49,7 @@ export class EmployeesComponent implements OnInit {
             const username = employeeWithRoles.employee.username;
             this.addSuccessMessage(`Employee ${username} has been updated`, this.updateEmployeeMessagesComponent);
         } catch (err) {
-            this.handleError(err, this.updateEmployeeMessagesComponent, 'Update employee');
+            this.handleError(err, this.updateEmployeeMessagesComponent, 'Update employee error');
         } finally {
             this.waiting.updateEmployee = false;
         }
@@ -74,14 +63,38 @@ export class EmployeesComponent implements OnInit {
         try {
             this.waiting.createEmployee = true;
             const sanitizedEmployeeWithRoles = this.employeesSvc.getSanitizedEmployeeWithRoles(employeeWithRoles);
-            const createdEmployeeId = await this.dataSvc.createEmployeeWithRoles(sanitizedEmployeeWithRoles);
             const username = sanitizedEmployeeWithRoles.employee.username;
-            this.addSuccessMessage(`Employee ${username} has been created`, this.newEmployeeMessagesComponent);
-            this.resetNewEmployeeWithRoles();
+            const createdEmployeeResult = await this.dataSvc.createEmployeeWithRoles(sanitizedEmployeeWithRoles);
+            if (!createdEmployeeResult.alreadyExists) {
+                this.addSuccessMessage(`Employee ${username} has been created`, this.newEmployeeMessagesComponent);
+                this.resetNewEmployeeWithRoles();
+                this.loadData();
+            } else {
+                this.addErrorMessage(`Employee with user name ${username} already exists`, this.newEmployeeMessagesComponent);
+            }
         } catch (err) {
-            this.handleError(err, this.newEmployeeMessagesComponent, 'Create employee');
+            this.handleError(err, this.newEmployeeMessagesComponent, 'Create employee error');
         } finally {
             this.waiting.createEmployee = true;
+        }
+    }
+
+    private async loadData(): Promise<void> {
+        try {
+            this.waiting.loadEmployees = true;
+            // Remember currently selected employee
+            const selectedEmployeeId = this.selectedEmployeeWithRoles ? this.selectedEmployeeWithRoles.employee.id : null;
+            const res = await Promise.all([this.dataSvc.getEmployeesWithRoles(), this.dataSvc.getRoles()]);
+            this.employeesWithRoles = res[0];
+            this.roles = res[1];
+            this.resetNewEmployeeWithRoles();
+            this.employeesSvc.addAllRolesToAllEmployees(this.employeesWithRoles, this.roles);
+            // Restore selected employee after data was reloaded
+            this.selectedEmployeeWithRoles = this.employeesWithRoles.find(x => x.employee.id === selectedEmployeeId);
+        } catch (err) {
+            this.handleError(err, this.loadEmployeesMessagesComponent, 'Loading employees and roles error');
+        } finally {
+            this.waiting.loadEmployees = false;
         }
     }
 
@@ -102,6 +115,10 @@ export class EmployeesComponent implements OnInit {
 
     private addSuccessMessage(text: string, messagesComponent: DisplayMessagesComponent): void {
         messagesComponent.addSuccessMessage(text);
+    }
+
+    private addErrorMessage(text: string, messageComponent: DisplayMessagesComponent): void {
+        messageComponent.addErrorMessage(text);
     }
 
     private handleError(err: any, messagesComponent: DisplayMessagesComponent, messagePrefix: string): void {

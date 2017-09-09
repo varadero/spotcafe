@@ -23,16 +23,20 @@
 
   <div class="primary-content">
     <div *ngIf="!isLoggedIn">
-      <div>
-        You need to log in
-      </div>
-      <md-input-container>
-        <input mdInput #username placeholder="Username" value="administrator">
-      </md-input-container>
-      <md-input-container>
-        <input mdInput #password type="password" placeholder="Password" value="123456">
-      </md-input-container>
-      <button (click)="logInEmployee(username.value, password.value)" md-raised-button color="primary">Log in</button>
+      <md-card>
+        <md-card-title>
+          You need to log in
+        </md-card-title>
+        <md-card-content>
+          <md-input-container>
+            <input mdInput #username placeholder="Username" value="administrator">
+          </md-input-container>
+          <md-input-container>
+            <input mdInput #password type="password" placeholder="Password" value="123456">
+          </md-input-container>
+          <button (click)="logInEmployee(username.value, password.value)" md-raised-button color="primary">Log in</button>
+        </md-card-content>
+      </md-card>
     </div>
     <router-outlet></router-outlet>
   </div>

@@ -1,0 +1,6 @@
+CREATE UNIQUE NONCLUSTERED INDEX IX_Employees_Username ON dbo.Employees
+	(
+	Username
+	) WITH( STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+
+UPDATE [Settings] SET [Value]='2017-09-09 14:50:00' WHERE [Name]='database.version'
