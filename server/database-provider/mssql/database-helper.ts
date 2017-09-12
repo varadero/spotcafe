@@ -6,6 +6,7 @@ import * as uuidv4 from 'uuid/v4';
 import { Connection, Request, ColumnValue, TediousType, TYPES, ConnectionConfig } from 'tedious';
 import { ICreateDatabaseResult } from '../create-database-result';
 import { IPrepareDatabaseResult } from '../prepare-database-result';
+import { ConnectionPool } from './connection-pool';
 
 export class DatabaseHelper {
     private constants = {
@@ -14,21 +15,28 @@ export class DatabaseHelper {
         administratorId: 'AD0CA48F-E266-48EA-BFB7-0C03147E442C'
     };
 
-    constructor(private config: ConnectionConfig, private logger: { log: Function, error: Function }) { }
+    private connectionPool: ConnectionPool;
+
+    constructor(private config: ConnectionConfig, private logger: { log: Function, error: Function }) {
+        // TODO Get connection pool config from database or from config parameter
+        this.connectionPool = new ConnectionPool({ maxConnections: 100, idleTimeout: 60000, timeToLive: 120000 }, logger);
+    }
 
     async getTokenSecret(): Promise<string | null> {
         const conn = await this.connect();
         try {
             return await this.getDatabaseSetting(conn, 'token.secret');
         } finally {
-            conn.close();
+            this.close(conn);
         }
     }
 
     async createDatabase(administratorPassword: string): Promise<ICreateDatabaseResult> {
         const result = <ICreateDatabaseResult>{};
         if (!this.config.options || !this.config.options.database) {
-            return Promise.reject('Database is not specified');
+            const msg = 'Database is not specified';
+            this.logError(msg);
+            return Promise.reject(msg);
         }
 
         // Make a clone of configuration and clear the database name since it will not exist
@@ -47,6 +55,7 @@ export class DatabaseHelper {
                 // Don't fail on error on database creation
                 // It could be already created by previous action which failed later (ex. at update phase)
                 // Or it could be manually created by administrator
+                this.logInfo('Will not create database');
                 result.errorOnDatabaseCreation = err;
             }
             // Close current connection that created the database because it cannot be used for transactions
@@ -70,6 +79,8 @@ export class DatabaseHelper {
             await this.setEmployeePassword(conn, this.constants.administratorId, administratorPassword);
             await this.commitTransaction(conn);
             result.databaseInitialized = true;
+        } catch (err) {
+            this.logger.error(err);
         } finally {
             this.close(conn);
         }
@@ -98,8 +109,7 @@ export class DatabaseHelper {
     }
 
     async getDatabaseVersion(conn: Connection): Promise<string | null> {
-        const dbVersion = await this.getDatabaseSetting(conn, this.constants.databaseVersionSettingName);
-        return Promise.resolve(dbVersion);
+        return await this.getDatabaseSetting(conn, this.constants.databaseVersionSettingName);
     }
 
     async updateDatabase(conn: Connection): Promise<string[]> {
@@ -122,7 +132,7 @@ export class DatabaseHelper {
                 return Promise.reject(`${err}. Error while executing ${scriptFileForUpdate.fileName}`);
             }
         }
-        return Promise.resolve(scriptFilesForUpdate.map(x => x.fileName));
+        return scriptFilesForUpdate.map(x => x.fileName);
     }
 
     // async execute(
@@ -197,6 +207,10 @@ export class DatabaseHelper {
     ): Promise<IExecuteToObjectsResult> {
         const connection = await this.getConnection(conn);
         const executeResult = await this.execute(connection, sql, inputParameters, outputParameters);
+        if (!conn) {
+            // The connection was not sent as parameter - it was created locally - close it
+            this.close(connection);
+        }
         const result = <IExecuteToObjectsResult>{};
         result.allResultSets = [];
         if (executeResult.allResultSets.length > 0) {
@@ -231,7 +245,7 @@ export class DatabaseHelper {
     }
 
     /**
-     * Executres sql query for a given connection and returns number of rows affected
+     * Executes sql query for a given connection and returns number of rows affected
      * @param conn Connection
      * @param sql Sql query
      */
@@ -244,6 +258,10 @@ export class DatabaseHelper {
         const connection = await this.getConnection(conn);
         return new Promise<number>((resolve, reject) => {
             const req = new Request(sql, (err, rowCount, rows) => {
+                if (!conn) {
+                    // The connection was not sent as parameter - it was created locally - close it
+                    this.close(connection);
+                }
                 if (err) { return reject(err); }
                 return resolve(rowCount);
             });
@@ -273,6 +291,10 @@ export class DatabaseHelper {
         let colValue: ColumnValue;
         return new Promise<ColumnValue>((resolve, reject) => {
             const req = new Request(sql, (err, rowCount) => {
+                if (!conn) {
+                    // The connection was not sent as parameter - it was created locally - close it
+                    this.close(connection);
+                }
                 if (err) { return reject(err); }
                 return resolve(colValue);
             });
@@ -292,17 +314,11 @@ export class DatabaseHelper {
     }
 
     async connect(config?: ConnectionConfig): Promise<Connection> {
-        return new Promise<Connection>((resolve, reject) => {
-            const conn = new Connection(config || this.config);
-            conn.on('connect', err => {
-                if (err) { return reject(err); }
-                return resolve(conn);
-            });
-            conn.on('errorMessage', err => {
-                // TODO Log the error
-                this.logError('Connection error', err);
-            });
-        });
+        const connection = await this.connectionPool.getConnection(config || this.config);
+        if (!connection) {
+            return Promise.reject('Connection is not available');
+        }
+        return connection;
     }
 
     async beginTransaction(conn: Connection): Promise<void> {
@@ -324,7 +340,7 @@ export class DatabaseHelper {
     }
 
     close(conn: Connection): void {
-        conn.close();
+        this.connectionPool.releaseConnection(conn);
     }
 
     groupByProperties(items: any[], keyObject: { [key: string]: any }): IGroup[] {
@@ -577,15 +593,15 @@ export class DatabaseHelper {
         return result;
     }
 
-    // private logMessage(message?: any, optionalParams?: any[]) {
-    //     if (this.logger) {
-    //         this.logger.log(message, optionalParams);
-    //     }
-    // }
-
     private logError(message?: any, optionalParams?: any[]) {
         if (this.logger) {
             this.logger.error(message, optionalParams);
+        }
+    }
+
+    private logInfo(message?: any, optionalParams?: any[]) {
+        if (this.logger) {
+            this.logger.log(message, optionalParams);
         }
     }
 }
