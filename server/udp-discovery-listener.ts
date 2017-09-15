@@ -1,7 +1,7 @@
 import * as dgram from 'dgram';
 import { Subject } from 'rxjs/Subject';
 
-import { DatabaseProvider } from './database-provider/database-provider';
+import { StorageProvider } from './storage/storage-provider';
 import { Logger } from './utils/logger';
 
 export class UdpDiscoveryListener {
@@ -9,10 +9,10 @@ export class UdpDiscoveryListener {
     message$ = new Subject<{ socket: dgram.Socket, buffer: Buffer, remoteInfo: dgram.AddressInfo }>();
     bound$ = new Subject<dgram.Socket>();
 
-    constructor(private dataProvider: DatabaseProvider, private logger: Logger) { }
+    constructor(private storageProvider: StorageProvider, private logger: Logger) { }
 
     listen(): void {
-        this.dataProvider = this.dataProvider;
+        this.storageProvider = this.storageProvider;
         const socket = dgram.createSocket('udp4');
 
         socket.on('error', err => {
@@ -29,7 +29,7 @@ export class UdpDiscoveryListener {
                 const str = msg.toString('utf8');
                 const obj = <{ clientId: string, clientName: string }>JSON.parse(str);
                 this.logger.log('Client application discovery data', obj);
-                const registerResult = await this.dataProvider.registerClientDevice(obj.clientId, obj.clientName, rinfo.address);
+                const registerResult = await this.storageProvider.registerClientDevice(obj.clientId, obj.clientName, rinfo.address);
                 const discoveryResponse = {
                     approved: registerResult.clientDevice.approved
                 };
@@ -40,8 +40,6 @@ export class UdpDiscoveryListener {
                         this.logger.log(`${bytesCount} bytes sent to discovery client application at ${rinfo.address}`);
                     }
                 });
-                // const responseObj = {address:};
-                // server.send('echo', rinfo.port, rinfo.address);
             } catch (err) {
                 this.logger.error('Client application discovery data error', err);
             }

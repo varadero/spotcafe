@@ -1,15 +1,15 @@
-export interface IDatabaseConfig {
+export interface IStorageConfig {
     /**
-     * Configuration for database providers
+     * Configuration for storage providers
      */
-    databaseProviders: IDatabaseProvidersConfig;
+    storageProviders: IStorageProvidersConfig;
     /**
      * Multiple other keys containing arbitrary data
      */
     [key: string]: any;
 }
 
-export interface IDatabaseProvidersConfig {
+export interface IStorageProvidersConfig {
     /**
      * Thе name of the provider in 'providers' array to use
      */
@@ -17,16 +17,16 @@ export interface IDatabaseProvidersConfig {
     /**
      * Array with all providers
      */
-    providers: IDatabaseProviderConfig[];
+    providers: IStorageProviderConfig[];
 }
 
-export interface IDatabaseProviderConfig {
+export interface IStorageProviderConfig {
     /**
      * Name of the provider - arbitrary string unique for each provider
      */
     name: string;
     /**
-     * Module name path for database prvider - relative of 'database-provider' folder
+     * Module name path for storage provider - relative of 'storage' folder
      */
     module: string;
     /**

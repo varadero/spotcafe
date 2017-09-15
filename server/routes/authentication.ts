@@ -2,7 +2,7 @@ import * as Koa from 'koa';
 import * as route from 'koa-route';
 import * as jwt from 'jsonwebtoken';
 
-import { DatabaseProvider } from '../database-provider/database-provider';
+import { StorageProvider } from '../storage/storage-provider';
 import { IToken } from '../../shared/interfaces/token';
 import { PermissionsMapper } from '../utils/permissions-mapper';
 import { IServerToken } from './interfaces/server-token';
@@ -13,7 +13,7 @@ export class AuthenticationRoutes {
     private permissionsMapper = new PermissionsMapper();
     private errorMessage = new ErrorMessage();
 
-    constructor(private dataProvider: DatabaseProvider, private apiPrefix: string) {
+    constructor(private storageProvider: StorageProvider, private apiPrefix: string) {
     }
 
     logInEmployee(): any {
@@ -102,7 +102,8 @@ export class AuthenticationRoutes {
 
     private async logInEmployeeImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<any> {
         const credentials = <{ username: string, password: string }>ctx.request.body;
-        const userWithPermissions = await this.dataProvider.getEmployeeWithRolesAndPermissions(credentials.username, credentials.password);
+        const userWithPermissions = await this.storageProvider
+            .getEmployeeWithRolesAndPermissions(credentials.username, credentials.password);
         if (!userWithPermissions.employee) {
             // This employee was not found
             return ctx.throw(401);
@@ -142,7 +143,7 @@ export class AuthenticationRoutes {
         // if (this.tokenSecret) {
         //     return Promise.resolve(this.tokenSecret);
         // }
-        this.tokenSecret = await this.dataProvider.getTokenSecret();
+        this.tokenSecret = await this.storageProvider.getTokenSecret();
         return this.tokenSecret;
     }
 

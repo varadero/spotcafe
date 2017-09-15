@@ -31,7 +31,7 @@
                 "${workspaceRoot}/out/**/*.js"
             ],
             "args": [
-                "--create-database",
+                "--create-storage",
                 "--administrator-password=123456"
             ]
         },

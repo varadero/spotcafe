@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 
 namespace SpotCafe.Service.Discovery {
     class ServerDiscoverer {
+        public event EventHandler<DiscoveryDataReceivedEventArgs> DiscoveryDataReceived;
+
         private System.Net.Sockets.UdpClient uc;
         private string serverIp;
         private Timer discoveryTimer;
@@ -16,11 +18,12 @@ namespace SpotCafe.Service.Discovery {
         private bool discoveryStopped;
         private int discoverPort;
         private Serializer serializer;
-        public event EventHandler<DiscoveryDataReceivedEventArgs> DiscoveryDataReceived;
+        private TimeSpan searchInterval;
 
-        public ServerDiscoverer(string clientId, string clientName, string serverIp) {
+        public ServerDiscoverer(string clientId, string clientName, string serverIp, TimeSpan searchInterval) {
             serializer = new Serializer();
             this.serverIp = serverIp;
+            this.searchInterval = searchInterval;
             discoverPort = 64129;
             broadcastData = new DiscoveryBroadcastData { ClientId = clientId, ClientName = clientName };
             discoveryTimer = new Timer(new TimerCallback(DiscoveryTimerCallback), null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
@@ -28,7 +31,7 @@ namespace SpotCafe.Service.Discovery {
 
         public void StartDiscovery() {
             InitUdp();
-            discoveryTimer.Change(TimeSpan.FromSeconds(0), TimeSpan.FromSeconds(5));
+            discoveryTimer.Change(TimeSpan.FromSeconds(0), searchInterval);
             discoveryStopped = false;
         }
 
@@ -61,7 +64,7 @@ namespace SpotCafe.Service.Discovery {
         }
 
         private void StartDiscoveryTimer() {
-            discoveryTimer.Change(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+            discoveryTimer.Change(searchInterval, searchInterval);
         }
 
         private void StopDiscoveryTimer() {

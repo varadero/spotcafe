@@ -16,11 +16,11 @@ namespace SpotCafe.Service {
             spi.Account = ServiceAccount.LocalSystem;
             spi.Username = null;
             spi.Password = null;
-
+            
             si.ServiceName = Service.Name;
             si.DisplayName = Service.Name;
             si.StartType = ServiceStartMode.Automatic;
-
+            
             Installers.Add(spi);
             Installers.Add(si);
         }

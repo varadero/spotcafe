@@ -19,7 +19,7 @@ namespace SpotCafe.Service {
         }
 
         public void Log(string message, EventLogEntryType type = EventLogEntryType.Information) {
-            EventLog.WriteEntry(source, message, type);
+            // EventLog.WriteEntry(source, message, type);
         }
     }
 }

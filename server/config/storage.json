@@ -1,10 +1,10 @@
 {
-    "databaseProviders": {
+    "storageProviders": {
         "defaultProvider": "MSSQL Database Provider",
         "providers": [
             {
                 "name": "MSSQL Database Provider",
-                "module": "./mssql/mssql-database-provider.js",
+                "module": "./mssql/mssql-database-storage-provider.js",
                 "config": {
                     "userName": "admin",
                     "password": "123",

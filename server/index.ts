@@ -2,15 +2,15 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { App, IAppOptions } from './app';
-import { IDatabaseConfig } from './config/database';
-import { IAppConfig } from './config/config';
+import { IStorageConfig } from './config/storage-interfaces';
+import { IAppConfig } from './config/config-interfaces';
 
 const appConfig = loadConfig<IAppConfig>('app.json');
-const databaseConfig = loadConfig<IDatabaseConfig>('database.json');
+const storageConfig = loadConfig<IStorageConfig>('storage.json');
 
 const appOptions = <IAppOptions>{
     config: appConfig,
-    databaseConfig: databaseConfig,
+    storageConfig: storageConfig,
     cert: fs.readFileSync(getConfigFilePath('cert.pem')),
     key: fs.readFileSync(getConfigFilePath('key.pem'))
 };
@@ -18,12 +18,13 @@ const appOptions = <IAppOptions>{
 (async function () {
     try {
         const app = new App(appOptions);
-        const createDatabase = process.argv.includes('--create-database');
+        if (app) { }
+        const createStorage = process.argv.includes('--create-storage');
         const administratorPasswordArg = process.argv.find(x => x.startsWith('--administrator-password='));
         const administratorPassword = administratorPasswordArg ?
             administratorPasswordArg.substr(administratorPasswordArg.indexOf('=') + 1)
             : null;
-        const server = await app.start(createDatabase, administratorPassword);
+        const server = await app.start(createStorage, administratorPassword);
         if (server) {
             console.log(`${new Date().toISOString()}: App started`);
         }

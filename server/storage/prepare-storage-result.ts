@@ -1,6 +1,6 @@
-export interface IPrepareDatabaseResult {
+export interface IPrepareStorageResult {
     server: string;
-    database: string;
+    storage: string;
     userName: string;
     updateScriptFilesProcessed: string[];
 }

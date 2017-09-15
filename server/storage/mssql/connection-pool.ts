@@ -8,6 +8,7 @@ export class ConnectionPool {
         maxConnections: 100,
         timeToLive: 120000
     };
+    private cleanupTimer: NodeJS.Timer;
 
     constructor(private poolConfig: IConnectionPoolConfig, private logger: { log: Function, error: Function }) {
         this.poolConfig = <IConnectionPoolConfig>{};
@@ -18,13 +19,13 @@ export class ConnectionPool {
         this.poolConfig.maxConnections = poolConfig.maxConnections || this.defaultPoolConfig.maxConnections;
         this.poolConfig.timeToLive = poolConfig.timeToLive || this.defaultPoolConfig.timeToLive;
         this.items = [];
-        setInterval(() => {
+        this.cleanupTimer = setInterval(() => {
             this.cleanUpPool();
         }, this.poolConfig.timeToLive);
     }
 
     async getConnection(config: ConnectionConfig): Promise<Connection | null> {
-        let connectedItem = this.getFirstConectedPoolItem();
+        let connectedItem = this.getFirstConectedPoolItem(config);
         if (!connectedItem) {
             // No free connection pool item is found
             const maxConnections = this.poolConfig.maxConnections || 100;
@@ -43,6 +44,7 @@ export class ConnectionPool {
                 connectedItem.sequenceNumber = this.poolItemsCreated;
                 connectedItem.createdAt = new Date().getTime();
                 connectedItem.connection = newConnection;
+                connectedItem.config = config;
                 connectedItem.inUse = true;
                 connectedItem.lastPulledAt = connectedItem.createdAt;
                 connectedItem.usedCount = 1;
@@ -78,6 +80,20 @@ export class ConnectionPool {
         }
     }
 
+    dispose(): void {
+        clearInterval(this.cleanupTimer);
+        for (let i = this.items.length - 1; i >= 0; i--) {
+            const connection = this.items[i].connection;
+            connection.reset(err => { });
+            connection.removeAllListeners('connect');
+            connection.removeAllListeners('errorMessage');
+            connection.removeAllListeners('end');
+            connection.removeAllListeners();
+            connection.close();
+            this.items.splice(i, 1);
+        }
+    }
+
     /**
      * Creates new connection with given configuration
      * @param config Connection configuration
@@ -91,19 +107,20 @@ export class ConnectionPool {
                 return reject(err);
             }
             conn.on('connect', err => {
+                conn.removeAllListeners();
                 if (err) { return reject(err); }
                 return resolve(conn);
             });
-            conn.on('errorMessage', err => {
-                this.logError('Connection error message', err);
-            });
+            // conn.on('errorMessage', err => {
+            //     this.logError('Connection error message', err);
+            // });
         });
     }
 
-    private getFirstConectedPoolItem(): IConnectionPoolItem | null {
+    private getFirstConectedPoolItem(config: ConnectionConfig): IConnectionPoolItem | null {
         const now = new Date().getTime();
         const timeToLive = this.poolConfig.timeToLive || this.defaultPoolConfig.timeToLive;
-        const firstNotInUse = this.items.find(x => !x.inUse && !x.disposing && ((now - x.createdAt) < timeToLive));
+        const firstNotInUse = this.items.find(x => !x.inUse && !x.disposing && x.config === config && ((now - x.createdAt) < timeToLive));
         if (firstNotInUse) {
             return firstNotInUse;
         }
@@ -119,11 +136,14 @@ export class ConnectionPool {
             if (!item.inUse && !item.disposing && (now - item.lastReleasedAt) > idleTimeout) {
                 item.disposing = true;
                 const connection = item.connection;
-                connection.on('end', () => {
-                    const index = this.items.findIndex(x => x.connection === connection);
-                    this.items.splice(index, 1);
-                });
-                connection.close();
+                // connection.on('end', () => {
+                //     const index = this.items.findIndex(x => x.connection === connection);
+                //     this.items.splice(index, 1);
+                // });
+                try {
+                    connection.close();
+                } catch (err) { }
+                this.items.splice(i, 1);
             }
         }
     }
@@ -150,6 +170,7 @@ export interface IConnectionPoolConfig {
 interface IConnectionPoolItem {
     sequenceNumber: number;
     connection: Connection;
+    config: ConnectionConfig;
     createdAt: number;
     lastPulledAt: number;
     lastReleasedAt: number;

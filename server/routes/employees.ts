@@ -1,6 +1,6 @@
 import * as route from 'koa-route';
 
-import { DatabaseProvider } from '../database-provider/database-provider';
+import { StorageProvider } from '../storage/storage-provider';
 import { IServerToken } from './interfaces/server-token';
 import { IEmployeeWithRoles } from '../../shared/interfaces/employee-with-roles';
 import { RoutesBase } from './routes-base';
@@ -9,7 +9,7 @@ import { ICreateEmployeeResult } from '../../shared/interfaces/create-employee-r
 
 export class EmployeesRoutes extends RoutesBase {
 
-    constructor(private dataProvider: DatabaseProvider, private apiPrefix: string) {
+    constructor(private storageProvider: StorageProvider, private apiPrefix: string) {
         super();
     }
 
@@ -21,7 +21,7 @@ export class EmployeesRoutes extends RoutesBase {
 
     getEmployeesWithRoles(): any {
         return route.get(this.apiPrefix + 'employees-with-roles', async ctx => {
-            await this.handleResult(ctx, () => this.dataProvider.getEmployeesWithRoles());
+            await this.handleResult(ctx, () => this.storageProvider.getEmployeesWithRoles());
         });
     }
 
@@ -41,7 +41,7 @@ export class EmployeesRoutes extends RoutesBase {
         if (!employeeWithRoles.employee.username) {
             return { error: { message: 'User name is required', number: 400 } };
         }
-        const createdEmployeeResult = await this.dataProvider.createEmployeeWithRoles(employeeWithRoles);
+        const createdEmployeeResult = await this.storageProvider.createEmployeeWithRoles(employeeWithRoles);
         return { value: createdEmployeeResult };
     }
 
@@ -52,6 +52,6 @@ export class EmployeesRoutes extends RoutesBase {
         if (employeeWithRoles.employee.disabled && employeeWithRoles.employee.id.toUpperCase() === serverToken.accountId.toUpperCase()) {
             return { error: { message: 'Can\'t disable own account', number: 403 } };
         }
-        await this.dataProvider.updateEmployeeWithRoles(employeeWithRoles);
+        await this.storageProvider.updateEmployeeWithRoles(employeeWithRoles);
     }
 }

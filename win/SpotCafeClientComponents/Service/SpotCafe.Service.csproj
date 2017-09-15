@@ -34,6 +34,7 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
+    <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Xml.Linq" />
@@ -46,6 +47,7 @@
   <ItemGroup>
     <Compile Include="Discovery\DiscoveryDataReceivedEventArgs.cs" />
     <Compile Include="Discovery\DiscoveryResponse.cs" />
+    <Compile Include="Interop.cs" />
     <Compile Include="Serializer.cs" />
     <Compile Include="Discovery\ServerDiscoverer.cs" />
     <Compile Include="Discovery\DiscoveryBroadcastData.cs" />
@@ -62,6 +64,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Service.resx">
+      <DependentUpon>Service.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

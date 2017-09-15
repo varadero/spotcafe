@@ -1,19 +1,19 @@
-import { IDatabaseConfig, IDatabaseProviderConfig } from '../config/database';
-import { DatabaseProvider } from './database-provider';
+import { IStorageConfig, IStorageProviderConfig } from '../config/storage-interfaces';
+import { StorageProvider } from './storage-provider';
 
 
-export class DatabaseProviderHelper {
+export class StorageProviderHelper {
     /**
-     * Creates ne instance of database provider configured in connection-data.json
-     * @param databaseConfig {IDatabaseConfig} Database configuration
-     * @param  logger {any} A logger object with functions log and error
+     * Creates ne instance of storage provider configured in connection-data.json
+     * @param storageConfig {IStorageConfig} Storage configuration
+     * @param logger {any} A logger object with functions log and error
      */
-    getProvider(databaseConfig: IDatabaseConfig, logger: any): DatabaseProvider {
+    getProvider(storageConfig: IStorageConfig, logger: any): StorageProvider {
         // Find default provider configuration
-        const defaultProviderName = databaseConfig.databaseProviders.defaultProvider;
-        let providerConfig: IDatabaseProviderConfig | null = null;
-        for (let i = 0; i < databaseConfig.databaseProviders.providers.length; i++) {
-            const currentProviderConfig = databaseConfig.databaseProviders.providers[i];
+        const defaultProviderName = storageConfig.storageProviders.defaultProvider;
+        let providerConfig: IStorageProviderConfig | null = null;
+        for (let i = 0; i < storageConfig.storageProviders.providers.length; i++) {
+            const currentProviderConfig = storageConfig.storageProviders.providers[i];
             if (currentProviderConfig.name === defaultProviderName) {
                 providerConfig = currentProviderConfig;
                 break;
@@ -25,10 +25,10 @@ export class DatabaseProviderHelper {
 
         const loadedModule = require(providerConfig.module);
         // The loaded module contains all exported members
-        // We need to find property which is a function and which name ends with 'DatabaseProvider' by convention
+        // We need to find property which is a function and which name ends with 'StorageProvider' by convention
         const loadedModulePropNames = Object.getOwnPropertyNames(loadedModule);
         let providerClassConstructor: any = null;
-        const profiderNameSuffix = 'DatabaseProvider';
+        const profiderNameSuffix = 'StorageProvider';
         for (let i = 0; i < loadedModulePropNames.length; i++) {
             const modulePropName = loadedModulePropNames[i];
             if (typeof loadedModule[modulePropName] === 'function' && modulePropName.endsWith(profiderNameSuffix)) {
@@ -37,9 +37,9 @@ export class DatabaseProviderHelper {
             }
         }
 
-        let providerInstance: DatabaseProvider;
+        let providerInstance: StorageProvider;
         if (providerClassConstructor) {
-            // Database rovider class constructor is found - make new instance
+            // Storage provider class constructor is found - make new instance
             providerInstance = new providerClassConstructor();
         } else {
             // Exported class with specified convention name is not found

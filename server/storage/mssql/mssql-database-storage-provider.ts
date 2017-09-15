@@ -1,8 +1,8 @@
 import { ConnectionConfig, TYPES } from 'tedious';
 
-import { DatabaseProvider } from '../database-provider';
-import { IPrepareDatabaseResult } from '../prepare-database-result';
-import { ICreateDatabaseResult } from '../create-database-result';
+import { StorageProvider } from '../storage-provider';
+import { IPrepareStorageResult } from '../prepare-storage-result';
+import { ICreateStorageResult } from '../create-storage-result';
 import { DatabaseHelper, IRequestParameter, IGroup } from './database-helper';
 import { IPermission } from '../../../shared/interfaces/permission';
 import { IEmployeeWithRolesAndPermissions } from '../../../shared/interfaces/employee-with-roles-and-permissions';
@@ -13,16 +13,60 @@ import { IEmployee } from '../../../shared/interfaces/employee';
 import { IClientDevice } from '../../../shared/interfaces/client-device';
 import { ICreateEmployeeResult } from '../../../shared/interfaces/create-employee-result';
 import { IRegisterClientDeviceResult } from '../register-client-device-result';
+import { IClientFilesData } from '../client-files-data';
 
-export class MSSqlDatabaseProvider implements DatabaseProvider {
+export class MSSqlDatabaseStorageProvider implements StorageProvider {
     private config: ConnectionConfig;
     private dbHelper: DatabaseHelper;
     private logger: { log: Function, error: Function };
 
-    initialize(obj: any, logger: any): void {
+    initialize(config: any, logger: any): void {
         this.logger = logger;
-        this.config = <ConnectionConfig>(obj);
+        this.config = <ConnectionConfig>(config);
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
+    }
+
+    async setClientFiles(clientFiles: IClientFilesData): Promise<void> {
+        const sql = `
+            SET TRANSACTION ISOLATION LEVEL SERIALIZABLE
+            BEGIN TRANSACTION
+
+            IF EXISTS (
+                SELECT TOP 1 [Name] FROM [Settings]
+                WHERE [Name]=@Name
+            )
+                BEGIN
+                    UPDATE [Settings]
+                    SET [Value]=@Value
+                    WHERE [Name]=@Name
+                END
+                ELSE
+                BEGIN
+                    INSERT INTO [Settings]
+                    ([Name], [Value]) VALUES
+                    (@Name, @Value)
+                END
+
+            COMMIT TRANSACTION
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'Name', value: 'client.files', type: TYPES.NVarChar },
+            { name: 'Value', value: JSON.stringify(clientFiles), type: TYPES.NVarChar }
+        ];
+        await this.dbHelper.execRowCount(sql, params);
+    }
+
+    async getClientFiles(): Promise<IClientFilesData> {
+        const sql = `
+            SELECT TOP 1 [Value]
+            FROM [Settings]
+            WHERE [Name]=@Name
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'Name', value: 'client.files', type: TYPES.NVarChar }
+        ];
+        const firstResultSet = await this.dbHelper.execToObjects(sql, params);
+        return <IClientFilesData>firstResultSet.firstResultSet.rows[0];
     }
 
     async updateClientDevice(clientDevice: IClientDevice): Promise<void> {
@@ -297,11 +341,11 @@ export class MSSqlDatabaseProvider implements DatabaseProvider {
         return permissions.firstResultSet.rows;
     }
 
-    async createDatabase(administratorPassword: string): Promise<ICreateDatabaseResult> {
-        return this.dbHelper.createDatabase(administratorPassword);
+    async createStorage(administratorPassword: string): Promise<ICreateStorageResult> {
+        return await this.dbHelper.createDatabase(administratorPassword);
     }
 
-    async prepareDatabase(): Promise<IPrepareDatabaseResult> {
+    async prepareStorage(): Promise<IPrepareStorageResult> {
         return this.dbHelper.prepareDatabase();
     }
 

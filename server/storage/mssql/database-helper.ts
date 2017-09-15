@@ -4,8 +4,8 @@ import * as crypto from 'crypto';
 import * as uuidv4 from 'uuid/v4';
 
 import { Connection, Request, ColumnValue, TediousType, TYPES, ConnectionConfig } from 'tedious';
-import { ICreateDatabaseResult } from '../create-database-result';
-import { IPrepareDatabaseResult } from '../prepare-database-result';
+import { ICreateStorageResult } from '../create-storage-result';
+import { IPrepareStorageResult } from '../prepare-storage-result';
 import { ConnectionPool } from './connection-pool';
 
 export class DatabaseHelper {
@@ -31,11 +31,12 @@ export class DatabaseHelper {
         }
     }
 
-    async createDatabase(administratorPassword: string): Promise<ICreateDatabaseResult> {
-        const result = <ICreateDatabaseResult>{};
+    async createDatabase(administratorPassword: string): Promise<ICreateStorageResult> {
+        const result = <ICreateStorageResult>{};
         if (!this.config.options || !this.config.options.database) {
             const msg = 'Database is not specified';
             this.logError(msg);
+            this.connectionPool.dispose();
             return Promise.reject(msg);
         }
 
@@ -56,7 +57,7 @@ export class DatabaseHelper {
                 // It could be already created by previous action which failed later (ex. at update phase)
                 // Or it could be manually created by administrator
                 this.logInfo('Will not create database');
-                result.errorOnDatabaseCreation = err;
+                result.errorOnStorageCreation = err;
             }
             // Close current connection that created the database because it cannot be used for transactions
             this.close(conn);
@@ -78,17 +79,19 @@ export class DatabaseHelper {
             await this.prepareDatabaseWithExistingConnection(conn);
             await this.setEmployeePassword(conn, this.constants.administratorId, administratorPassword);
             await this.commitTransaction(conn);
-            result.databaseInitialized = true;
+            this.close(conn);
+            result.storageInitialized = true;
         } catch (err) {
             this.logger.error(err);
         } finally {
+            this.connectionPool.dispose();
             this.close(conn);
         }
 
         return Promise.resolve(result);
     }
 
-    async prepareDatabase(): Promise<IPrepareDatabaseResult> {
+    async prepareDatabase(): Promise<IPrepareStorageResult> {
         const conn = await this.connect(this.config);
         let updateFilesProcessed: string[];
         try {
@@ -100,8 +103,8 @@ export class DatabaseHelper {
             this.close(conn);
         }
 
-        return Promise.resolve(<IPrepareDatabaseResult>{
-            database: this.config.options ? this.config.options.database : '',
+        return Promise.resolve(<IPrepareStorageResult>{
+            storage: this.config.options ? this.config.options.database : '',
             server: this.config.server,
             userName: this.config.userName,
             updateScriptFilesProcessed: updateFilesProcessed
@@ -499,10 +502,10 @@ export class DatabaseHelper {
      * Prepares database in the context of existing conection
      * @param conn Connection with started transaction
      */
-    private async prepareDatabaseWithExistingConnection(conn: Connection): Promise<IPrepareDatabaseResult> {
+    private async prepareDatabaseWithExistingConnection(conn: Connection): Promise<IPrepareStorageResult> {
         const updateFilesProcessed = await this.updateDatabase(conn);
-        return Promise.resolve(<IPrepareDatabaseResult>{
-            database: this.config.options ? this.config.options.database : '',
+        return Promise.resolve(<IPrepareStorageResult>{
+            storage: this.config.options ? this.config.options.database : '',
             server: this.config.server,
             userName: this.config.userName,
             updateScriptFilesProcessed: updateFilesProcessed

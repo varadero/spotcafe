@@ -1,6 +1,7 @@
 import * as https from 'https';
 import * as http from 'http';
 import * as path from 'path';
+import * as fs from 'fs';
 import * as Koa from 'koa';
 import * as koaStatic from 'koa-static';
 import * as bodyParser from 'koa-bodyparser';
@@ -8,35 +9,36 @@ import * as bodyParser from 'koa-bodyparser';
 import { UdpDiscoveryListener } from './udp-discovery-listener';
 import { notFound } from './middleware/not-found';
 import { requireToken } from './middleware/require-token';
-import { DatabaseProvider } from './database-provider/database-provider';
-import { DatabaseProviderHelper } from './database-provider/database-provider-helper';
+import { StorageProvider } from './storage/storage-provider';
+import { StorageProviderHelper } from './storage/storage-provider-helper';
 import { Logger } from './utils/logger';
-import { IAppConfig } from './config/config';
-import { IDatabaseConfig } from './config/database';
-import { IPrepareDatabaseResult } from './database-provider/prepare-database-result';
+import { IAppConfig } from './config/config-interfaces';
+import { IStorageConfig } from './config/storage-interfaces';
+import { IPrepareStorageResult } from './storage/prepare-storage-result';
 import { AuthenticationRoutes } from './routes/authentication';
 import { PermissionsRoutes } from './routes/permissions';
-import { ICreateDatabaseResult } from './database-provider/create-database-result';
+import { ICreateStorageResult } from './storage/create-storage-result';
 import { EmployeesRoutes } from './routes/employees';
 import { RolesRoutes } from './routes/roles';
 import { ClientDevicesRoutes } from './routes/client-devices';
+import { IClientFilesData } from './storage/client-files-data';
 
 export class App {
     private logger = new Logger();
     private koa: Koa;
-    private dbProvider: DatabaseProvider;
+    private storageProvider: StorageProvider;
     private server: https.Server | http.Server;
 
     constructor(private options: IAppOptions) { }
 
     /**
-     * Prepares database (eventually updates it) and starts listening for connections
-     * @param createDatabase {boolean} If true, application will try to crete database
-     * @param administratorPassword {string} If createDatabase is true, must contain the password
+     * Prepares storage (eventually updates it) and starts listening for connections
+     * @param createStorage {boolean} If true, application will try to crete storage
+     * @param administratorPassword {string} If createStorage is true, must contain the password
      * for application administrator user which will be created as the first user
      */
-    start(createDatabase: boolean, administratorPassword?: string | null): Promise<https.Server | http.Server | null> {
-        return this.startImpl(createDatabase, administratorPassword);
+    start(createStorage: boolean, administratorPassword?: string | null): Promise<https.Server | http.Server | null> {
+        return this.startImpl(createStorage, administratorPassword);
     }
 
     private createKoa(tokenSecret: string | null): void {
@@ -49,52 +51,86 @@ export class App {
         this.koa.use(notFound({ root: webFolder, serve: 'index.html', ignorePrefix: apiPrefix }));
         this.koa.use(bodyParser());
 
-        const authRoutes = new AuthenticationRoutes(this.dbProvider, apiPrefix);
+        const authRoutes = new AuthenticationRoutes(this.storageProvider, apiPrefix);
         this.koa.use(authRoutes.logInEmployee());
 
         this.koa.use(requireToken({ secret: tokenSecret || '' }));
         this.koa.use(authRoutes.checkAuthorization());
 
-        const employeesRoutes = new EmployeesRoutes(this.dbProvider, apiPrefix);
+        const employeesRoutes = new EmployeesRoutes(this.storageProvider, apiPrefix);
         this.koa.use(employeesRoutes.updateEmployeeWithRoles());
         this.koa.use(employeesRoutes.getEmployeesWithRoles());
         this.koa.use(employeesRoutes.createEmployeeWithRoles());
 
-        const rolesRoute = new RolesRoutes(this.dbProvider, apiPrefix);
+        const rolesRoute = new RolesRoutes(this.storageProvider, apiPrefix);
         this.koa.use(rolesRoute.getAllRoles());
 
-        const permissionsRoutes = new PermissionsRoutes(this.dbProvider, apiPrefix);
+        const permissionsRoutes = new PermissionsRoutes(this.storageProvider, apiPrefix);
         this.koa.use(permissionsRoutes.getAllPermissions());
 
-        const clientDevicesRoutes = new ClientDevicesRoutes(this.dbProvider, apiPrefix);
+        const clientDevicesRoutes = new ClientDevicesRoutes(this.storageProvider, apiPrefix);
         this.koa.use(clientDevicesRoutes.getClientDevices());
         this.koa.use(clientDevicesRoutes.approveClientDevice());
         this.koa.use(clientDevicesRoutes.updateClientDevice());
     }
 
+    /**
+     * Reads all files in 'client-files' folder and saves them in storage setting 'client.files'
+     * This setting will be delivered to windows service on startup to create client files locally on windows machines and start desktop app
+     * Specified in 'startupName'. If not secified, the default file name 'SpotCafe.Desktop.exe' will be used
+     */
+    private async setClientFiles(): Promise<void> {
+        const result: IClientFilesData = <IClientFilesData>{
+            files: [],
+            startupName: ''
+        };
+        const dir = path.join(__dirname, 'client-files');
+        if (!fs.existsSync(dir)) {
+            return Promise.resolve(void 0);
+        }
+        if (!fs.statSync(dir).isDirectory()) {
+            return Promise.resolve(void 0);
+        }
+        const clientFiles = fs.readdirSync(dir);
+        for (let i = 0; i < clientFiles.length; i++) {
+            const fileName = clientFiles[i];
+            const filePath = path.join(dir, fileName);
+            if (fs.statSync(filePath).isFile()) {
+                const base64 = fs.readFileSync(filePath).toString('base64');
+                result.files.push({ name: fileName, base64Content: base64 });
+            }
+        }
+        if (result.files.length > 0) {
+            await this.storageProvider.setClientFiles(result);
+        } else {
+            return Promise.resolve(void 0);
+        }
+    }
+
     private startDiscoveryListener(): void {
-        const listener = new UdpDiscoveryListener(this.dbProvider, this.logger);
+        const listener = new UdpDiscoveryListener(this.storageProvider, this.logger);
         listener.listen();
     }
 
-    private createDatabaseProvider(): DatabaseProvider {
-        const dbHelper = new DatabaseProviderHelper();
-        return dbHelper.getProvider(this.options.databaseConfig, this.logger);
+    private createStorageProvider(): StorageProvider {
+        const storageHelper = new StorageProviderHelper();
+        return storageHelper.getProvider(this.options.storageConfig, this.logger);
     }
 
     private async startImpl(
-        createDatabase: boolean,
+        createStorage: boolean,
         administratorPassword?: string | null
     ): Promise<https.Server | http.Server | null> {
-        if (createDatabase && !administratorPassword) {
-            return Promise.reject('When database must be created, application administrator password must be supplied');
+        if (createStorage && !administratorPassword) {
+            return Promise.reject('When store must be created, application administrator password must be supplied');
         }
 
-        await this.prepareDatabase(createDatabase, administratorPassword);
-        if (createDatabase) {
-            // Creating database will not start the server
+        await this.prepareStorage(createStorage, administratorPassword);
+        if (createStorage) {
+            // Creating storage will not start the server
             return null;
         }
+        await this.setClientFiles();
         this.server = await this.startWebServer();
         await this.startDiscoveryListener();
         return this.server;
@@ -109,55 +145,55 @@ export class App {
         return server;
     }
 
-    private async prepareDatabase(
-        createDatabase: boolean,
+    private async prepareStorage(
+        createStorage: boolean,
         administratorPassword?: string | null
-    ): Promise<{ createDb: ICreateDatabaseResult | null, prepare: IPrepareDatabaseResult | null }> {
-        this.logger.log('Creating database provider');
-        this.dbProvider = this.createDatabaseProvider();
+    ): Promise<{ createResult: ICreateStorageResult | null, prepareResult: IPrepareStorageResult | null }> {
+        this.logger.log('Creating storage provider');
+        this.storageProvider = this.createStorageProvider();
         const numberOfRetries = 1000000;
         const delayBetweenRetries = 5000;
-        let prepareDbResult: IPrepareDatabaseResult | null = null;
-        let createDbResult: ICreateDatabaseResult | null = null;
+        let prepareStorageResult: IPrepareStorageResult | null = null;
+        let createStorageResult: ICreateStorageResult | null = null;
         for (let i = 0; i < numberOfRetries; i++) {
             try {
-                if (createDatabase && administratorPassword) {
-                    // Create database
-                    this.logger.log('Creating database');
-                    createDbResult = await this.dbProvider.createDatabase(administratorPassword);
-                    if (createDbResult.errorOnDatabaseCreation) {
-                        this.logger.log('The database creation error occured. It can be ignored if the database already exists.');
-                        this.logger.log(createDbResult.errorOnDatabaseCreation);
+                if (createStorage && administratorPassword) {
+                    // Create storage
+                    this.logger.log('Creating storage');
+                    createStorageResult = await this.storageProvider.createStorage(administratorPassword);
+                    if (createStorageResult.errorOnStorageCreation) {
+                        this.logger.log('The storage creation error occured. It can be ignored if the storage already exists.');
+                        this.logger.log(createStorageResult.errorOnStorageCreation);
                     }
-                    prepareDbResult = createDbResult.prepareDatabaseResult;
+                    prepareStorageResult = createStorageResult.prepareStorageResult;
                 } else {
-                    // Database creation is not requested - only prepare it
-                    prepareDbResult = await this.dbProvider.prepareDatabase();
+                    // Storage creation is not requested - only prepare it
+                    prepareStorageResult = await this.storageProvider.prepareStorage();
                 }
                 break;
             } catch (err) {
-                this.logger.error('Database error. Trying again.');
+                this.logger.error('Storage error. Trying again.');
                 this.logger.error(err);
                 await this.delay(delayBetweenRetries);
             }
         }
-        if (prepareDbResult) {
-            this.logger.log('Database prepared');
-            this.logger.log(`Server: ${prepareDbResult.server}`);
-            this.logger.log(`Database: ${prepareDbResult.database}`);
-            this.logger.log(`Database user name: ${prepareDbResult.userName}`);
-            this.logger.log(`Update script files processed: ${prepareDbResult.updateScriptFilesProcessed}`);
+        if (prepareStorageResult) {
+            this.logger.log('Storage prepared');
+            this.logger.log(`Server: ${prepareStorageResult.server}`);
+            this.logger.log(`Storage: ${prepareStorageResult.storage}`);
+            this.logger.log(`Storage user name: ${prepareStorageResult.userName}`);
+            this.logger.log(`Update script files processed: ${prepareStorageResult.updateScriptFilesProcessed}`);
         }
-        if (createDatabase) {
-            if (createDbResult && createDbResult.databaseInitialized) {
-                this.logger.log('Database creation finished');
+        if (createStorage) {
+            if (createStorageResult && createStorageResult.storageInitialized) {
+                this.logger.log('Storage creation finished');
             }
         }
-        return { createDb: createDbResult, prepare: prepareDbResult };
+        return { createResult: createStorageResult, prepareResult: prepareStorageResult };
     }
 
     private async startServer(): Promise<https.Server | http.Server> {
-        const tokenSecret = await this.dbProvider.getTokenSecret();
+        const tokenSecret = await this.storageProvider.getTokenSecret();
         this.createKoa(tokenSecret);
 
         let result: Promise<https.Server | http.Server>;
@@ -194,7 +230,7 @@ export class App {
 
 export interface IAppOptions {
     config: IAppConfig;
-    databaseConfig: IDatabaseConfig;
+    storageConfig: IStorageConfig;
     key: any;
     cert: any;
 }
