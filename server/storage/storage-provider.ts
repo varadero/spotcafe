@@ -25,6 +25,6 @@ export abstract class StorageProvider {
     abstract getClientDevices(): Promise<IClientDevice[]>;
     abstract approveClientDevice(clientDevice: IClientDevice): Promise<void>;
     abstract updateClientDevice(clientDevice: IClientDevice): Promise<void>;
-    abstract getClientFiles(): Promise<IClientFilesData>;
+    abstract getClientFiles(): Promise<IClientFilesData | null>;
     abstract setClientFiles(clientFiles: IClientFilesData): Promise<void>;
 }

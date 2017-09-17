@@ -92,6 +92,7 @@ namespace SpotCafe.Service.Discovery {
                 uc = new System.Net.Sockets.UdpClient(0, AddressFamily.InterNetwork);
                 freePort = ((IPEndPoint)uc.Client.LocalEndPoint).Port;
             }
+            uc.MulticastLoopback = false;
 
             try {
                 await StartReceiving();

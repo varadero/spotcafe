@@ -115,6 +115,22 @@ export class DatabaseHelper {
         return await this.getDatabaseSetting(conn, this.constants.databaseVersionSettingName);
     }
 
+    async getDatabaseSetting(conn: Connection | null, settingName: string): Promise<string | null> {
+        const sql = `
+            SELECT TOP 1 [Value]
+            FROM [${this.constants.settingsTableName}]
+            WHERE [Name]=@Name
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'Name', value: settingName, type: TYPES.NVarChar }
+        ];
+        const scalarResult = await this.executeScalar(conn, sql, params);
+        if (scalarResult) {
+            return Promise.resolve(scalarResult.value);
+        }
+        return Promise.resolve(null);
+    }
+
     async updateDatabase(conn: Connection): Promise<string[]> {
         const dbVersion = await this.getDatabaseVersion(conn);
         if (!dbVersion) {
@@ -476,22 +492,6 @@ export class DatabaseHelper {
             { name: 'Id', value: employeeId, type: TYPES.UniqueIdentifier }
         ];
         return await this.executeRowCount(conn, insertAdministratorUserSql, params);
-    }
-
-    private async getDatabaseSetting(conn: Connection, settingName: string): Promise<string | null> {
-        const sql = `
-            SELECT TOP 1 [Value]
-            FROM [${this.constants.settingsTableName}]
-            WHERE [Name]=@Name
-        `;
-        const params: IRequestParameter[] = [
-            { name: 'Name', value: settingName, type: TYPES.NVarChar }
-        ];
-        const scalarResult = await this.executeScalar(conn, sql, params);
-        if (scalarResult) {
-            return Promise.resolve(scalarResult.value);
-        }
-        return Promise.resolve(null);
     }
 
     private readTextFileSync(file: string): string {

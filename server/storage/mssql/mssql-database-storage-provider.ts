@@ -56,17 +56,13 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         await this.dbHelper.execRowCount(sql, params);
     }
 
-    async getClientFiles(): Promise<IClientFilesData> {
-        const sql = `
-            SELECT TOP 1 [Value]
-            FROM [Settings]
-            WHERE [Name]=@Name
-        `;
-        const params: IRequestParameter[] = [
-            { name: 'Name', value: 'client.files', type: TYPES.NVarChar }
-        ];
-        const firstResultSet = await this.dbHelper.execToObjects(sql, params);
-        return <IClientFilesData>firstResultSet.firstResultSet.rows[0];
+    async getClientFiles(): Promise<IClientFilesData | null> {
+        const setting = await this.dbHelper.getDatabaseSetting(null, 'client.files');
+        if (setting) {
+            return <IClientFilesData>JSON.parse(setting);
+        } else {
+            return null;
+        }
     }
 
     async updateClientDevice(clientDevice: IClientDevice): Promise<void> {

@@ -1,5 +1,8 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
+# Project files
+SpotCafe.Desktop.zip
+
 # compiled output
 /dist
 /tmp

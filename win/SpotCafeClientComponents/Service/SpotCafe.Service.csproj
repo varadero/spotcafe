@@ -20,6 +20,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -34,6 +35,7 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceProcess" />
@@ -45,9 +47,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ClientFileInfo.cs" />
+    <Compile Include="ClientFilesData.cs" />
     <Compile Include="Discovery\DiscoveryDataReceivedEventArgs.cs" />
     <Compile Include="Discovery\DiscoveryResponse.cs" />
     <Compile Include="Interop.cs" />
+    <Compile Include="REST\RestClient.cs" />
     <Compile Include="Serializer.cs" />
     <Compile Include="Discovery\ServerDiscoverer.cs" />
     <Compile Include="Discovery\DiscoveryBroadcastData.cs" />

@@ -11,7 +11,7 @@ export class ClientFilesRoutes extends RoutesBase {
 
     getClientFiles(): any {
         return route.get(this.apiPrefix + 'client-files', async ctx => {
-            await this.handleResult(ctx, () => this.storageProvider.getClientDevices());
+            await this.handleResult(ctx, () => this.storageProvider.getClientFiles());
         });
     }
 }

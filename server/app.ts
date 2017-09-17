@@ -22,6 +22,7 @@ import { EmployeesRoutes } from './routes/employees';
 import { RolesRoutes } from './routes/roles';
 import { ClientDevicesRoutes } from './routes/client-devices';
 import { IClientFilesData } from './storage/client-files-data';
+import { ClientFilesRoutes } from './routes/client-files';
 
 export class App {
     private logger = new Logger();
@@ -50,6 +51,9 @@ export class App {
         this.koa.use(koaStatic(webFolder));
         this.koa.use(notFound({ root: webFolder, serve: 'index.html', ignorePrefix: apiPrefix }));
         this.koa.use(bodyParser());
+
+        const clientFilesRouts = new ClientFilesRoutes(this.storageProvider, apiPrefix);
+        this.koa.use(clientFilesRouts.getClientFiles());
 
         const authRoutes = new AuthenticationRoutes(this.storageProvider, apiPrefix);
         this.koa.use(authRoutes.logInEmployee());
@@ -92,6 +96,16 @@ export class App {
             return Promise.resolve(void 0);
         }
         const clientFiles = fs.readdirSync(dir);
+        for (let i = 0; i < clientFiles.length; i++) {
+            if (!clientFiles[i].endsWith('.zip')) {
+                let msg = `The client file '${path.join(dir, clientFiles[i])}' is not .zip.`;
+                msg += ` All files in '${dir}' folder must be .zip,`;
+                msg += ' otherwise none of the client files will be available for the client machines';
+                this.logger.error(msg);
+                break;
+            }
+        }
+
         for (let i = 0; i < clientFiles.length; i++) {
             const fileName = clientFiles[i];
             const filePath = path.join(dir, fileName);

@@ -11,6 +11,8 @@ namespace SpotCafe.Service {
         [DataMember]
         public string ClientId { get; set; }
         [DataMember]
-        public string ServiceIp { get; set; }
+        public string ServerIp { get; set; }
+        [DataMember]
+        public string ServerCertificateThumbprint { get; set; }
     }
 }
