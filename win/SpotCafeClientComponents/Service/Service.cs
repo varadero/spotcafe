@@ -32,12 +32,10 @@ namespace SpotCafe.Service {
         private SessionChangeDescription lastSessionChangeDescription;
         private Interop.PROCESS_INFORMATION lastClientAppExecuteResult;
         private bool useConsoleSession = false;
-        private Dictionary<uint, Nullable<Interop.PROCESS_INFORMATION>> executeResults;
         private bool clientFilesExtracted;
 
         public Service() {
             InitializeComponent();
-            executeResults = new Dictionary<uint, Interop.PROCESS_INFORMATION?>();
             ServiceName = Name;
         }
 
@@ -109,11 +107,6 @@ namespace SpotCafe.Service {
             }
             if (sessionId > 0) {
                 var procs = Process.GetProcessesByName(clientFileNameToStart).Where(x => !x.HasExited);
-                var existingExecuteResult = GetExecuteResult(sessionId);
-                if (existingExecuteResult != null) {
-                    Log($"There is already application with Id={existingExecuteResult.Value.dwProcessId} executed on SessionId={sessionId}");
-                    return;
-                }
                 // TODO
                 // When user is switched, a new session is created user selection screen
                 // This session is created only for user selection screen and it seems that all applications created in that session
@@ -123,27 +116,9 @@ namespace SpotCafe.Service {
                 // This will make our lastClientAppExecuteResult invalid
                 Log($"Executing {pathToApp} on session {sessionId}");
                 lastClientAppExecuteResult = ExecuteProcessOnLoggedUserDesktop(sessionId, pathToApp);
-                SetExecuteResult(sessionId, lastClientAppExecuteResult);
                 Log($"App execute result: ProcessId={lastClientAppExecuteResult.dwProcessId}");
             }
-            // TODO Start a timer to check if the lastClientAppExecuteResult hProcess (and the process with name "SpotCafe.Desktop.exe' and correct path) is still alive and if not - call this method again 
-            // TODO Information for PROCESS_INFORMATION structure From MSDN: If the function succeeds, be sure to call the CloseHandle function to close the hProcess and hThread handles when you are finished with them
-        }
-
-        private void SetExecuteResult(uint sessionId, Interop.PROCESS_INFORMATION pi) {
-            if (GetExecuteResult(sessionId) == null) {
-                executeResults.Add(sessionId, pi);
-            } else {
-                executeResults[sessionId] = pi;
-            }
-        }
-
-        private Interop.PROCESS_INFORMATION? GetExecuteResult(uint sessionId) {
-            if (executeResults.TryGetValue(sessionId, out Interop.PROCESS_INFORMATION? pi)) {
-                return pi;
-            } else {
-                return null;
-            }
+            // TODO Start a timer to check if the client Mutex exists and if not - call this method again 
         }
 
         private bool ServiceCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) {
@@ -305,7 +280,7 @@ namespace SpotCafe.Service {
             // 
             // Service
             // 
-            this.CanHandleSessionChangeEvent = true;
+            CanHandleSessionChangeEvent = true;
         }
     }
 }

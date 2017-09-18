@@ -13,7 +13,7 @@ namespace SpotCafe.Desktop {
     public partial class MainForm : Form {
         public MainForm() {
             InitializeComponent();
-            Text = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            //Text = Assembly.GetExecutingAssembly().GetName().Version.ToString() + "-" + Application.CommonAppDataPath;
         }
     }
 }
