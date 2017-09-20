@@ -66,8 +66,9 @@ export class App {
         this.koa.use(employeesRoutes.getEmployeesWithRoles());
         this.koa.use(employeesRoutes.createEmployeeWithRoles());
 
-        const rolesRoute = new RolesRoutes(this.storageProvider, apiPrefix);
-        this.koa.use(rolesRoute.getAllRoles());
+        const rolesRoutes = new RolesRoutes(this.storageProvider, apiPrefix);
+        this.koa.use(rolesRoutes.getAllRoles());
+        this.koa.use(rolesRoutes.getAllRolesWithPermissionIds());
 
         const permissionsRoutes = new PermissionsRoutes(this.storageProvider, apiPrefix);
         this.koa.use(permissionsRoutes.getAllPermissions());

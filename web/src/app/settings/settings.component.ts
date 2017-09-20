@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 
-import { DataService } from '../core/data.sevice';
+import { DataService } from '../core/data.service';
 
 @Component({
   templateUrl: './settings.component.html'

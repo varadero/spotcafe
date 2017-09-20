@@ -8,6 +8,7 @@ import { IRegisterClientDeviceResult } from './register-client-device-result';
 import { IClientDevice } from '../../shared/interfaces/client-device';
 import { ICreateEmployeeResult } from '../../shared/interfaces/create-employee-result';
 import { IClientFilesData } from './client-files-data';
+import { IRoleWithPermissionsIds } from '../../shared/interfaces/role-with-permissions-ids';
 
 export abstract class StorageProvider {
     abstract initialize(config: any, ...args: any[]): void;
@@ -20,6 +21,7 @@ export abstract class StorageProvider {
     abstract getEmployeePermissionsIds(employeeId: string): Promise<string[]>;
     abstract getRoles(): Promise<IRole[]>;
     abstract getPermissions(): Promise<IPermission[]>;
+    abstract getRolesWithPermissionsIds(): Promise<IRoleWithPermissionsIds[]>;
     abstract getEmployeeWithRolesAndPermissions(username: string, password: string): Promise<IEmployeeWithRolesAndPermissions>;
     abstract registerClientDevice(id: string, name: string, address: string): Promise<IRegisterClientDeviceResult>;
     abstract getClientDevices(): Promise<IClientDevice[]>;

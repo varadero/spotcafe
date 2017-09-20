@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 
-import { DataService } from './core/data.sevice';
+import { DataService } from './core/data.service';
 import { AuthService } from './core/auth.service';
 
 @Component({
@@ -18,7 +18,7 @@ export class AppComponent implements OnInit {
       this.isLoggedIn = !!token;
     });
     this.authSvc.unauthorized$.subscribe(url => {
-      // TODO Show toaster with unauthorized mesage
+      // TODO Show toaster with unauthorized message
     });
   }
 

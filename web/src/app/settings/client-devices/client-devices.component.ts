@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 
 import { IClientDevice } from '../../../../../shared/interfaces/client-device';
-import { DataService } from '../../core/data.sevice';
+import { DataService } from '../../core/data.service';
 import { DisplayMessagesComponent } from '../../shared/display-messages.component';
 
 @Component({

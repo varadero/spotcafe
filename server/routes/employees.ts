@@ -50,7 +50,7 @@ export class EmployeesRoutes extends RoutesBase {
         serverToken: IServerToken
     ): Promise<IRouteActionResult<any> | void> {
         if (employeeWithRoles.employee.disabled && employeeWithRoles.employee.id.toUpperCase() === serverToken.accountId.toUpperCase()) {
-            return { error: { message: 'Can\'t disable own account', number: 403 } };
+            return { error: { message: `Can't disable own account`, number: 403 } };
         }
         await this.storageProvider.updateEmployeeWithRoles(employeeWithRoles);
     }

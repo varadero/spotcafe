@@ -6,12 +6,15 @@ import { SettingsComponent } from './settings.component';
 import { EmployeesComponent } from './employees/employees.component';
 import { EmployeesService } from './employees/employees.services';
 import { ClientDevicesComponent } from './client-devices/client-devices.component';
+import { RolesComponent } from './roles/roles.component';
+import { RolesService } from './roles/roles.service';
 
 @NgModule({
     declarations: [
         SettingsComponent,
         EmployeesComponent,
-        ClientDevicesComponent
+        ClientDevicesComponent,
+        RolesComponent
     ],
     imports: [
         SharedModule,
@@ -21,7 +24,8 @@ import { ClientDevicesComponent } from './client-devices/client-devices.componen
         SettingsRoutingModule
     ],
     providers: [
-        EmployeesService
+        EmployeesService,
+        RolesService
     ]
 })
 export class SettingsModule { }

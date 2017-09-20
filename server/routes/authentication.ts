@@ -62,9 +62,16 @@ export class AuthenticationRoutes {
         if (this.apiPathIs(urlPath, 'employees')) {
             return this.selectPermissionsIds(method, [pids.employeesView], [pids.employeesModify]);
         }
-        if (method === 'GET' && urlPath.startsWith(this.apiPrefix + 'roles')) {
-            return [pids.employeesView];
+        if (this.apiPathIs(urlPath, 'roles-with-permissions-ids')) {
+            return this.selectPermissionsIds(method, [pids.rolesView], [pids.rolesModify]);
         }
+        if (method === 'GET' && urlPath.startsWith(this.apiPrefix + 'roles')) {
+            return [pids.employeesView, pids.rolesView];
+        }
+        if (this.apiPathIs(urlPath, 'permissions')) {
+            return this.selectPermissionsIds(method, [pids.permissionsView], [pids.permissionsModify]);
+        }
+
         return [];
     }
 

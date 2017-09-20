@@ -1,10 +1,10 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 
-import { DataService } from '../../core/data.sevice';
+import { DataService } from '../../core/data.service';
 import { DisplayMessagesComponent } from '../../shared/display-messages.component';
 import { IRole } from '../../../../../shared/interfaces/role';
 import { IEmployeeWithRoles } from '../../../../../shared/interfaces/employee-with-roles';
-import { EmployeesService, INewEmployeeWithRoles, INewEmployeeErrors, ISelectableRole } from './employees.services';
+import { EmployeesService, INewEmployeeWithRoles, INewEmployeeErrors } from './employees.services';
 import { IEmployee } from '../../../../../shared/interfaces/employee';
 
 @Component({

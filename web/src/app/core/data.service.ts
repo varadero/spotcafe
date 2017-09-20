@@ -9,6 +9,8 @@ import { IEmployeeWithRoles } from '../../../../shared/interfaces/employee-with-
 import { IRole } from '../../../../shared/interfaces/role';
 import { IClientDevice } from '../../../../shared/interfaces/client-device';
 import { ICreateEmployeeResult } from '../../../../shared/interfaces/create-employee-result';
+import { IRoleWithPermissionsIds } from '../../../../shared/interfaces/role-with-permissions-ids';
+import { IPermission } from '../../../../shared/interfaces/permission';
 
 @Injectable()
 export class DataService {
@@ -20,6 +22,14 @@ export class DataService {
         private authSvc: AuthService,
         private cacheSvc: CacheService
     ) { }
+
+    getPermissions(): Promise<IPermission[]> {
+        return this.get('permissions');
+    }
+
+    getRolesWithPermissionsIds(): Promise<IRoleWithPermissionsIds[]> {
+        return this.get('roles-with-permissions-ids');
+    }
 
     updateClientDevice(clientDevice: IClientDevice): Promise<void> {
         return this.post('client-devices/' + encodeURIComponent(clientDevice.id), clientDevice);

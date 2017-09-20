@@ -362,20 +362,51 @@ export class DatabaseHelper {
         this.connectionPool.releaseConnection(conn);
     }
 
-    groupByProperties(items: any[], keyObject: { [key: string]: any }): IGroup[] {
+    groupAndRename(
+        items: any[],
+        keyObjectMap: { [key: string]: string },
+        itemsObjectMap: { [key: string]: string },
+        keyPropertyName: string,
+        itemsPropertyName: string
+    ) {
+        const grouped = this.groupByProperties(items, keyObjectMap, itemsObjectMap);
+        const result = this.getGroupsWithChangedProperties(grouped, keyPropertyName, itemsPropertyName);
+        return result;
+    }
+
+    groupByProperties(
+        items: any[],
+        keyObjectMap: { [key: string]: string },
+        itemsObjectMap: { [key: string]: string }
+    ): IGroup[] {
         const result: IGroup[] = [];
-        const keyPropNames = Object.getOwnPropertyNames(keyObject);
+        const keyObjectMapPropNames = Object.getOwnPropertyNames(keyObjectMap);
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
-            const keyPropsAsObject = this.getPropsAsObject(keyPropNames, item);
-            const existingGroup = this.getGroupByKey(keyPropsAsObject, result);
-            const restPropsAsObject = this.getRestPropsAsObject(keyPropNames, item);
+            const keyPropsAsObject = this.getPropsAsObject(keyObjectMapPropNames, item);
+            const grpKey = this.mapToObject(keyPropsAsObject, keyObjectMap);
+            const existingGroup = this.getGroupByKey(grpKey, result);
+            const restPropsAsObject = this.getRestPropsAsObject(keyObjectMapPropNames, item);
+            const mappedItem = this.mapToObject(restPropsAsObject, itemsObjectMap);
             if (existingGroup) {
-                existingGroup.items.push(restPropsAsObject);
+                existingGroup.items.push(mappedItem);
             } else {
-                const newGroup = <IGroup>{ key: keyPropsAsObject, items: [restPropsAsObject] };
+                const newGroup = <IGroup>{ key: grpKey, items: [mappedItem] };
                 result.push(newGroup);
             }
+        }
+        return result;
+    }
+
+    getGroupsWithChangedProperties(groups: IGroup[], keyPropertyName: string, itemsPropertyName: string): any[] {
+        const result: any[] = [];
+        for (let i = 0; i < groups.length; i++) {
+            const grp = groups[i];
+            const renamedGrp = {
+                [keyPropertyName]: grp.key,
+                [itemsPropertyName]: grp.items
+            };
+            result.push(renamedGrp);
         }
         return result;
     }
@@ -398,6 +429,29 @@ export class DatabaseHelper {
             if (!excludePropNames.includes(propName)) {
                 result[propName] = obj[propName];
             }
+        }
+        return result;
+    }
+
+    /**
+     * Maps specified source object to resulting object with possible renaming of properties specified in mapObject
+     * @param sourceObject Source object
+     * @param mapObject Object containing properties with names from source object
+     *  and values for the property names for the destination object. If the value is falsy,
+     *  source property will be used as name for the destination property
+     * @param mapObjectPropertyNames For performane reasons only - array with property names of mapObject
+     */
+    private mapToObject(
+        sourceObject: any,
+        mapObject: { [key: string]: string },
+        mapObjectPropertyNames?: string[]
+    ): any {
+        const result: { [key: string]: any } = {};
+        const mapObjectPropNames = mapObjectPropertyNames || Object.getOwnPropertyNames(mapObject);
+        for (let i = 0; i < mapObjectPropNames.length; i++) {
+            const srcPropName = mapObjectPropNames[i];
+            const dstPropName = mapObject[srcPropName] || srcPropName;
+            result[dstPropName] = sourceObject[srcPropName];
         }
         return result;
     }

@@ -13,4 +13,10 @@ export class RolesRoutes extends RoutesBase {
             await this.handleResult(ctx, () => this.storageProvider.getRoles());
         });
     }
+
+    getAllRolesWithPermissionIds(): any {
+        return route.get(this.apiPrefix + 'roles-with-permissions-ids', async ctx => {
+            await this.handleResult(ctx, () => this.storageProvider.getRolesWithPermissionsIds());
+        });
+    }
 }

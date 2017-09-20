@@ -3,10 +3,10 @@ import { ConnectionConfig, TYPES } from 'tedious';
 import { StorageProvider } from '../storage-provider';
 import { IPrepareStorageResult } from '../prepare-storage-result';
 import { ICreateStorageResult } from '../create-storage-result';
-import { DatabaseHelper, IRequestParameter, IGroup } from './database-helper';
+import { DatabaseHelper, IRequestParameter } from './database-helper';
 import { IPermission } from '../../../shared/interfaces/permission';
 import { IEmployeeWithRolesAndPermissions } from '../../../shared/interfaces/employee-with-roles-and-permissions';
-import { IRoleWithPermissions } from '../../../shared/interfaces/role-with-permissions';
+// import { IRoleWithPermissions } from '../../../shared/interfaces/role-with-permissions';
 import { IRole } from '../../../shared/interfaces/role';
 import { IEmployeeWithRoles } from '../../../shared/interfaces/employee-with-roles';
 import { IEmployee } from '../../../shared/interfaces/employee';
@@ -14,6 +14,8 @@ import { IClientDevice } from '../../../shared/interfaces/client-device';
 import { ICreateEmployeeResult } from '../../../shared/interfaces/create-employee-result';
 import { IRegisterClientDeviceResult } from '../register-client-device-result';
 import { IClientFilesData } from '../client-files-data';
+import { IRoleWithPermissionsIds } from '../../../shared/interfaces/role-with-permissions-ids';
+import { IRoleWithPermissions } from '../../../shared/interfaces/role-with-permissions';
 
 export class MSSqlDatabaseStorageProvider implements StorageProvider {
     private config: ConnectionConfig;
@@ -24,6 +26,34 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         this.logger = logger;
         this.config = <ConnectionConfig>(config);
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
+    }
+
+    async getRolesWithPermissionsIds(): Promise<IRoleWithPermissionsIds[]> {
+        const sql = `
+            SELECT r.[Id] AS [RoleId], r.[Name] AS [RoleName], r.[Description] AS [RoleDescription],
+            p.[Id] AS [PermissionId]
+            FROM [Roles] r
+            INNER JOIN [PermissionsInRoles] pir ON pir.[RoleId] = r.[Id]
+            INNER JOIN [Permissions] p ON p.[Id] = pir.[PermissionId]
+        `;
+        const rolesWithPermissionsResult = await this.dbHelper.execToObjects(sql);
+        const rolesWithPermissions = <IRoleWithPermissions[]>this.dbHelper.groupAndRename(
+            rolesWithPermissionsResult.firstResultSet.rows,
+            { roleId: 'id', roleName: 'name', roleDescription: 'description' },
+            { permissionId: 'id' },
+            'role',
+            'permissions'
+        );
+        const result: IRoleWithPermissionsIds[] = [];
+        for (let i = 0; i < rolesWithPermissions.length; i++) {
+            const item = rolesWithPermissions[i];
+            const roleWithPermissionsIds: IRoleWithPermissionsIds = {
+                role: item.role,
+                permissionsIds: item.permissions.map(x => x.id)
+            };
+            result.push(roleWithPermissionsIds);
+        }
+        return result;
     }
 
     async setClientFiles(clientFiles: IClientFilesData): Promise<void> {
@@ -217,7 +247,6 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
     }
 
     async getEmployeesWithRoles(): Promise<IEmployeeWithRoles[]> {
-        // TODO Return only ids of roles, not entire role object
         const sql = `
             SELECT e.[Id], e.[Username], e.[FirstName], e.[LastName], e.[Email], e.[Disabled],
                    r.[Id] AS [RoleId], r.[Name] AS [RoleName], r.[Description] AS [RoleDescription]
@@ -227,12 +256,24 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             ORDER BY [Username]
         `;
         const employeeWithRolesResult = await this.dbHelper.execToObjects(sql);
-        const keyObject = { id: '', username: '', firstName: '', lastName: '', email: '', disabled: false };
-        const grouped = this.dbHelper.groupByProperties(employeeWithRolesResult.firstResultSet.rows, keyObject);
-        const employeesWithRoles = this.compileEmployeesWithRoles(grouped);
+        const keyObjectMap = {
+            id: '',
+            username: '',
+            firstName: '',
+            lastName: '',
+            email: '',
+            disabled: ''
+        };
+        const itemsObjectMap = {
+            roleId: 'id',
+            roleName: 'name',
+            roleDescription: 'description'
+        };
+        const grouped = this.dbHelper.groupByProperties(employeeWithRolesResult.firstResultSet.rows, keyObjectMap, itemsObjectMap);
+        const renamed = this.dbHelper.getGroupsWithChangedProperties(grouped, 'employee', 'roles');
         // Remove roles with id=null
-        employeesWithRoles.forEach(x => x.roles = x.roles.filter(y => y.id));
-        return employeesWithRoles;
+        renamed.forEach(x => x.roles = (<any[]>x.roles).filter(y => y.id));
+        return renamed;
     }
 
     async updateEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<void> {
@@ -283,16 +324,6 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         return <string[]>employeePermissionsResult.firstResultSet.rows;
     }
 
-    // async getEmployees(): Promise<IEmployeeWithRoles[]> {
-    //     const sql = `
-    //         SELECT [Id], [Username], [FirstName], [LastName], [Email], [Disabled]
-    //         FROM [Employees]
-    //         ORDER BY [FirstName], [LastName]
-    //     `;
-    //     const employeesResult = await this.dbHelper.execToObjects(sql);
-    //     return <IEmployeeWithRoles[]>employeesResult.firstResultSet.rows;
-    // }
-
     async getTokenSecret(): Promise<string | null> {
         return this.dbHelper.getTokenSecret();
     }
@@ -318,13 +349,19 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             { name: 'EmployeeId', value: employee.id, type: TYPES.NVarChar }
         ];
         const rolesWithPermissionsResult = await this.dbHelper.execToObjects(sql, userWithPermissionsParams);
-        const keyObject = { roleId: '', roleName: '', roleDescription: '' };
-        const grouped = this.dbHelper.groupByProperties(rolesWithPermissionsResult.firstResultSet.rows, keyObject);
-        const rolesWithPermissions = this.compileRolesWithPermissions(grouped);
-        return Promise.resolve(<IEmployeeWithRolesAndPermissions>{
+        const keyObjectMap = { roleId: 'id', roleName: 'name', roleDescription: 'description' };
+        const itemsObjectMap = { permissionId: 'id', permissionName: 'name', permissionDescription: 'description' };
+        const groupedRolesWithPermissions = this.dbHelper.groupAndRename(
+            rolesWithPermissionsResult.firstResultSet.rows,
+            keyObjectMap,
+            itemsObjectMap,
+            'role',
+            'permissions'
+        );
+        return <IEmployeeWithRolesAndPermissions>{
             employee: employee,
-            rolesWithPermissions: rolesWithPermissions
-        });
+            rolesWithPermissions: <any>groupedRolesWithPermissions
+        };
     }
 
     async getPermissions(): Promise<IPermission[]> {
@@ -343,53 +380,6 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
 
     async prepareStorage(): Promise<IPrepareStorageResult> {
         return this.dbHelper.prepareDatabase();
-    }
-
-    private compileEmployeesWithRoles(grouped: IGroup[]): IEmployeeWithRoles[] {
-        const result: IEmployeeWithRoles[] = [];
-        for (let i = 0; i < grouped.length; i++) {
-            const grp = grouped[i];
-            const grpEmployee = <IEmployee>grp.key;
-            const employeeWithRoles = <IEmployeeWithRoles>{ employee: grpEmployee, roles: [] };
-            for (let j = 0; j < grp.items.length; j++) {
-                const grpRole = grp.items[j] as { roleId: string, roleName: string, roleDescription: string };
-                const role: IRole = {
-                    id: grpRole.roleId,
-                    name: grpRole.roleName,
-                    description: grpRole.roleDescription
-                };
-                employeeWithRoles.roles.push(role);
-            }
-            result.push(employeeWithRoles);
-        }
-        return result;
-    }
-
-    private compileRolesWithPermissions(grouped: IGroup[]): IRoleWithPermissions[] {
-        const rolesWithPermissions: IRoleWithPermissions[] = [];
-        for (let i = 0; i < grouped.length; i++) {
-            const grp = grouped[i];
-            const grpRole = grp.key as { roleId: string, roleName: string, roleDescription: string };
-            const role: IRole = {
-                id: grpRole.roleId,
-                name: grpRole.roleName,
-                description: grpRole.roleDescription
-            };
-            const roleWithPermissions = <IRoleWithPermissions>{};
-            roleWithPermissions.role = role;
-            roleWithPermissions.permissions = [];
-            for (let j = 0; j < grp.items.length; j++) {
-                const grpPermission = grp.items[j] as { permissionId: string, permissionName: string, permissionDescription: string };
-                const permission: IPermission = {
-                    id: grpPermission.permissionId,
-                    name: grpPermission.permissionName,
-                    description: grpPermission.permissionDescription
-                };
-                roleWithPermissions.permissions.push(permission);
-            }
-            rolesWithPermissions.push(roleWithPermissions);
-        }
-        return rolesWithPermissions;
     }
 
     private async getEmployeeByUsernameAndPassword(username: string, password: string): Promise<IEmployee | null> {

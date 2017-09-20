@@ -1,39 +1,33 @@
 <div class="settings-feature">
     <md-card>
-        <md-card-title>Existing employees</md-card-title>
-        <spotcafe-messages #loadEmployeesMessagesComponent></spotcafe-messages>
-        <md-select *ngIf="employeesWithRoles && roles" class="employee-drop-down" [(ngModel)]="selectedEmployeeWithRoles">
-            <md-option *ngFor="let employeeWithRole of employeesWithRoles" [value]="employeeWithRole">{{employeeWithRole.employee.username}} ({{employeeWithRole.employee.firstName}} {{employeeWithRole.employee.lastName}})</md-option>
+        <md-card-title>Existing roles</md-card-title>
+        <md-select *ngIf="rolesWithPermissions && permissions" class="roles-drop-down" [(ngModel)]="selectedRoleWithPermissions">
+            <md-option *ngFor="let roleWithPermissions of rolesWithPermissions" [value]="roleWithPermissions">{{roleWithPermissions.role.name}}</md-option>
         </md-select>
-        <div *ngIf="selectedEmployeeWithRoles">
+        <div *ngIf="selectedRoleWithPermissions">
             <md-form-field>
-                <input mdInput [(ngModel)]="selectedEmployeeWithRoles.employee.firstName" placeholder="First name" />
+                <input mdInput [(ngModel)]="selectedRoleWithPermissions.role.name" placeholder="Name" />
             </md-form-field>
             <md-form-field>
-                <input mdInput [(ngModel)]="selectedEmployeeWithRoles.employee.lastName" placeholder="Last name" />
+                <input mdInput [(ngModel)]="selectedRoleWithPermissions.role.description" placeholder="Description" />
             </md-form-field>
-            <md-form-field>
-                <input mdInput [(ngModel)]="selectedEmployeeWithRoles.employee.email" placeholder="Email" />
-            </md-form-field>
-            <md-checkbox [(ngModel)]="selectedEmployeeWithRoles.employee.disabled">Disabled</md-checkbox>
             <md-card>
-                <md-card-subtitle>Roles</md-card-subtitle>
+                <md-card-subtitle>Permissions</md-card-subtitle>
                 <md-list>
-                    <md-list-item *ngFor="let role of selectedEmployeeWithRoles.roles">
-                        <md-checkbox [(ngModel)]="role.selected">
-                            {{role.name}} : {{role.description}}
+                    <md-list-item *ngFor="let permission of selectedRoleWithPermissions.permissions">
+                        <md-checkbox [(ngModel)]="permission.selected">
+                            {{permission.name}} : {{permission.description}}
                         </md-checkbox>
                     </md-list-item>
                 </md-list>
             </md-card>
             <md-card-actions>
-                <spotcafe-messages #updateEmployeeMessagesComponent></spotcafe-messages>
-                <button md-raised-button (click)="updateEmployeeWithRoles(selectedEmployeeWithRoles)" color="primary">Update employee {{selectedEmployeeWithRoles.employee.username}}</button>
+                <button md-raised-button (click)="updateRoleWithPermissions(selectedRoleWithPermissions)" color="primary">Update role {{selectedRoleWithPermissions.role.name}}</button>
             </md-card-actions>
         </div>
     </md-card>
-    <md-card>
-        <md-card-title>New employee</md-card-title>
+    <!-- <md-card>
+        <md-card-title>New role</md-card-title>
         <md-form-field>
             <input mdInput [(ngModel)]="newEmployeeWithRoles.employee.username" maxlength="250" placeholder="User name" />
             <md-error>User name is required</md-error>
@@ -74,5 +68,5 @@
             <spotcafe-messages #newEmployeeMessagesComponent></spotcafe-messages>
             <button md-raised-button (click)="createEmployeeWithRoles(newEmployeeWithRoles)" color="primary">Create {{newEmployeeWithRoles.employee.username}}</button>
         </md-card-actions>
-    </md-card>
+    </md-card> -->
 </div>

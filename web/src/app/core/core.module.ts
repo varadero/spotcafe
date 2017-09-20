@@ -3,7 +3,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { BrowserModule } from '@angular/platform-browser';
 
 import { MaterialSubsetModule } from '../shared/material-subset.module';
-import { DataService } from './data.sevice';
+import { DataService } from './data.service';
 import { AuthService } from './auth.service';
 import { CacheService } from './cache.service';
 
