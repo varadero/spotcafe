@@ -8,18 +8,21 @@ using System.Threading.Tasks;
 
 namespace SpotCafe.Service {
     class Logger {
-        private static string source;
+        private string eventSource;
 
-        public Logger() {
-            AssemblyTitleAttribute attributes = (AssemblyTitleAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyTitleAttribute), false);
-            source = attributes?.Title ?? "SpotCafe.Service";
-            if (!EventLog.SourceExists(source)) {
-                EventLog.CreateEventSource(source, "Application");
+        public Logger(string eventSource) {
+            this.eventSource = eventSource;
+            if (!EventLog.SourceExists(eventSource)) {
+                EventLog.CreateEventSource(eventSource, "Application");
             }
         }
 
-        public void Log(string message, EventLogEntryType type = EventLogEntryType.Information) {
-            EventLog.WriteEntry(source, message, type);
+        public void Log(string message, int eventId) {
+            EventLog.WriteEntry(eventSource, message, EventLogEntryType.Information, eventId);
+        }
+
+        public void Log(string message, EventLogEntryType type, int eventId) {
+            EventLog.WriteEntry(eventSource, message, type, eventId);
         }
     }
 }

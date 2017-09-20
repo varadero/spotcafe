@@ -12,11 +12,12 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.ServiceProcess;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SpotCafe.Service {
     class Service : ServiceBase {
-        public static readonly string Name = "SpotCafe.Service";
+        public static readonly string Name = "SpotCafe Service";
 
         private Logger logger;
         private ServerDiscoverer discoverer;
@@ -28,15 +29,21 @@ namespace SpotCafe.Service {
         private TimeSpan downloadClientFilesDelayBetweenRetries = TimeSpan.FromSeconds(6);
         private ClientFilesData clientFiles = null;
         private const string clientFileNameToStart = "SpotCafe.Desktop.exe";
+        private string clientAppFullPath;
         private string pathForClientFiles;
         private SessionChangeDescription lastSessionChangeDescription;
-        private Interop.PROCESS_INFORMATION lastClientAppExecuteResult;
+        private Interop.PROCESS_INFORMATION lastSuccessClientAppExecuteResult;
         private bool useConsoleSession = false;
         private bool clientFilesExtracted;
+        private Timer keepClientAppAliveTimer;
+        private TimeSpan keepClientAppAliveTimerInterval = TimeSpan.FromSeconds(10);
+        private const string clientAppMutexName = @"Global\7D23335A-9D10-4462-B1AF-A2C729C1B509";
+        private TimeSpan discoverySearchInterval = TimeSpan.FromSeconds(10);
 
         public Service() {
             InitializeComponent();
-            ServiceName = Name;
+            keepClientAppAliveTimer = new Timer(new TimerCallback(KeepClientAppAlive));
+            base.ServiceName = Name;
         }
 
         public void Start(string[] args) {
@@ -46,7 +53,7 @@ namespace SpotCafe.Service {
         protected override void OnStart(string[] args) {
             serializer = new Serializer();
             try {
-                logger = new Logger();
+                logger = new Logger(Name);
             } catch (Exception ex) {
                 Console.WriteLine($"Error when creating logger: {ex}");
             }
@@ -54,19 +61,18 @@ namespace SpotCafe.Service {
             var interop = new Interop();
             if (args != null && args.Length > 0) {
                 var argsText = string.Join(" ", args);
-                Log("Starting up with arguments " + argsText);
+                Log($"Starting up with arguments {argsText}", LogEventIds.StartingUpWithArguments);
                 useConsoleSession = args.Contains("/use-console-session");
             } else {
-                Log("Starting up without arguments");
+                Log("Starting up without arguments", LogEventIds.StartingUpWithoutArguments);
             }
 
             configFileFullPath = Path.GetFullPath("SpotCafe.Service.Configuration.json");
             pathForClientFiles = Path.GetFullPath("SpotCafeClientFiles");
-            Log($"Config file: {configFileFullPath}");
-            Log($"Path for client files: {pathForClientFiles}");
+            Log($"Config file: {configFileFullPath} ; path for client files: {pathForClientFiles}", LogEventIds.ConfigFile);
 
             serviceConfig = GetServiceConfiguration();
-            discoverer = new ServerDiscoverer(serviceConfig.ClientId, Environment.MachineName, serviceConfig.ServerIp, TimeSpan.FromMilliseconds(10000));
+            discoverer = new ServerDiscoverer(serviceConfig.ClientId, Environment.MachineName, serviceConfig.ServerIp, discoverySearchInterval);
             discoverer.DiscoveryDataReceived += Discoverer_DataReceived;
             StartServerDiscovery();
             base.OnStart(args);
@@ -74,29 +80,27 @@ namespace SpotCafe.Service {
 
         protected override void OnSessionChange(SessionChangeDescription changeDescription) {
             lastSessionChangeDescription = changeDescription;
-            Log($"Session change Reason={changeDescription.Reason} SessionID={changeDescription.SessionId}");
+            Log($"Session change Reason={changeDescription.Reason} SessionID={changeDescription.SessionId}", LogEventIds.SessionChange);
             if (clientFilesExtracted) {
                 ExecuteStartupClientFileIfLoggedIn();
             } else {
-                Log($"Client files still not extracted");
+                LogWarning($"Client files still not extracted", LogEventIds.ClienFilesStillNotExtracted);
             }
             base.OnSessionChange(changeDescription);
         }
 
         protected override void OnStop() {
-            Log("Stopping");
+            Log("Stopping", LogEventIds.Stopping);
             base.OnStop();
         }
 
         protected override void OnShutdown() {
-            Log("Shutting down");
+            Log("Shutting down", LogEventIds.ShuttingDown);
             base.OnShutdown();
         }
 
         private void ExecuteStartupClientFileIfLoggedIn() {
             // TODO Execute startup client file also if the service is started while the user is already logged in...
-            var appToRun = (clientFiles != null && !string.IsNullOrWhiteSpace(clientFiles.StartupName)) ? clientFiles.StartupName : clientFileNameToStart;
-            var pathToApp = Path.Combine(pathForClientFiles, appToRun);
             uint sessionId = 0;
             if (useConsoleSession) {
                 sessionId = Interop.WTSGetActiveConsoleSessionId();
@@ -106,7 +110,6 @@ namespace SpotCafe.Service {
                 }
             }
             if (sessionId > 0) {
-                var procs = Process.GetProcessesByName(clientFileNameToStart).Where(x => !x.HasExited);
                 // TODO
                 // When user is switched, a new session is created user selection screen
                 // This session is created only for user selection screen and it seems that all applications created in that session
@@ -114,18 +117,47 @@ namespace SpotCafe.Service {
                 // We shouldn't create anything in that session - probably by allowing only one instance of client file
                 // Until we find a way to detect such sessions, we will rely on single-instance logic of the client app
                 // This will make our lastClientAppExecuteResult invalid
-                Log($"Executing {pathToApp} on session {sessionId}");
-                lastClientAppExecuteResult = ExecuteProcessOnLoggedUserDesktop(sessionId, pathToApp);
-                Log($"App execute result: ProcessId={lastClientAppExecuteResult.dwProcessId}");
+                Log($"Executing {clientAppFullPath} on session {sessionId}", LogEventIds.ExecutingClientApp);
+                var procInfo = ExecuteProcessOnLoggedUserDesktop(sessionId, clientAppFullPath);
+                if (procInfo.dwProcessId != 0) {
+                    lastSuccessClientAppExecuteResult = procInfo;
+                    Log($"App execute result: ProcessId={procInfo.dwProcessId}", LogEventIds.ClientAppExecuteResult);
+                } else {
+                    LogError($"App execute failed. Last error number {Marshal.GetLastWin32Error()} and HRESULT {Marshal.GetHRForLastWin32Error()}", LogEventIds.ClientAppExecutionFailed);
+                }
             }
-            // TODO Start a timer to check if the client Mutex exists and if not - call this method again 
+            // Start a timer to check if the client Mutex exists and if not - call this method again 
+            StartKeepClientAppAliveTimer();
+        }
+
+        private void KeepClientAppAlive(object state) {
+            StopKeepClientAppAliveTimer();
+            try {
+                var mutex = Mutex.OpenExisting(clientAppMutexName);
+                mutex.Dispose();
+            } catch (WaitHandleCannotBeOpenedException) {
+                LogWarning($"Client mutex not found", LogEventIds.ClientAppMutexNotFound);
+                ExecuteStartupClientFileIfLoggedIn();
+                return;
+            } catch (Exception ex) {
+                LogError($"Error on opening client application mutex: {ex}", LogEventIds.ClientAppMutexOpenError);
+            }
+            StartKeepClientAppAliveTimer();
+        }
+
+        private void StartKeepClientAppAliveTimer() {
+            keepClientAppAliveTimer.Change(keepClientAppAliveTimerInterval, keepClientAppAliveTimerInterval);
+        }
+
+        private void StopKeepClientAppAliveTimer() {
+            keepClientAppAliveTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
         }
 
         private bool ServiceCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) {
             if (!string.IsNullOrWhiteSpace(serviceConfig.ServerCertificateThumbprint)) {
                 var certThumbprint = certificate.GetCertHashString();
                 if (certThumbprint != serviceConfig.ServerCertificateThumbprint) {
-                    Log($"Certificate thumbprint {certThumbprint} does not match configuration thumbprint {serviceConfig.ServerCertificateThumbprint}", EventLogEntryType.Error);
+                    LogError($"Certificate thumbprint {certThumbprint} does not match configuration thumbprint {serviceConfig.ServerCertificateThumbprint}", LogEventIds.ServiceCertificateThumbprintError);
                     return false;
                 }
             }
@@ -133,9 +165,8 @@ namespace SpotCafe.Service {
         }
 
         private async void Discoverer_DataReceived(object sender, DiscoveryDataReceivedEventArgs e) {
-            Log("Data received from discoverer");
             var text = Encoding.UTF8.GetString(e.Data);
-            Log($"Discovery data received from {e.RemoteEndPoint.Address}: {text}");
+            Log($"Discovery data received from {e.RemoteEndPoint.Address}: {text}", LogEventIds.DataReceivedFromDiscoverer);
             try {
                 // If data contains necessary information - stop further discovering
                 if (e.Response != null && e.Response.Approved) {
@@ -144,18 +175,25 @@ namespace SpotCafe.Service {
                     remoteEndPoint = e.RemoteEndPoint;
                     clientFiles = await DownloadClientFiles();
                     if (clientFiles != null) {
+                        var appToRun = (clientFiles != null && !string.IsNullOrWhiteSpace(clientFiles.StartupName)) ? clientFiles.StartupName : clientFileNameToStart;
+                        clientAppFullPath = Path.Combine(pathForClientFiles, appToRun);
                         ExecuteStartupClientFileIfLoggedIn();
                     } else {
 
                     }
                 }
             } catch (Exception ex) {
-                Log($"Discovery data is not a valid JSON: {ex}", EventLogEntryType.Error);
+                LogError($"Discovery data is not a valid JSON: {ex}", LogEventIds.DiscoveryDataNotValidJson);
             }
         }
 
         private bool IsSessionChangeReasonShouldStartClientApp(SessionChangeDescription changeDescription) {
-            var reasons = new SessionChangeReason[] { SessionChangeReason.SessionLogon, SessionChangeReason.ConsoleConnect };
+            var reasons = new SessionChangeReason[] {
+                SessionChangeReason.SessionLogon,
+                SessionChangeReason.ConsoleConnect,
+                SessionChangeReason.RemoteConnect,
+                SessionChangeReason.SessionUnlock
+            };
             if (changeDescription.SessionId != 0 && reasons.Contains(changeDescription.Reason)) {
                 return true;
             }
@@ -176,26 +214,32 @@ namespace SpotCafe.Service {
         }
 
         private async Task<ClientFilesData> DownloadClientFiles() {
-            var client = new RestClient(remoteEndPoint.Address.ToString(), "api");
+            var serviceHost = remoteEndPoint.Address.ToString();
+            var client = new RestClient(serviceHost, "api");
             for (var i = 0; i < downloadClientFilesTriesCount; i++) {
                 try {
+                    Log($"Downloading client files from {serviceHost}", LogEventIds.DownloadingClientFiles);
                     var clientFilesResponse = await client.GetClientFiles();
                     clientFiles = serializer.Deserialize<ClientFilesData>(clientFilesResponse);
                     break;
                 } catch (Exception ex) {
-                    Log($"Error {i + 1}/{downloadClientFilesTriesCount} on loading client files: {ex}", EventLogEntryType.Error);
+                    LogError($"Error {i + 1}/{downloadClientFilesTriesCount} on loading client files: {ex}", LogEventIds.ErrorDownloadingClientFiles);
                     await Task.Delay(downloadClientFilesDelayBetweenRetries);
                 }
             }
             if (clientFiles != null && clientFiles.Files != null && clientFiles.Files.Length > 0) {
                 // Client files were downloaded - extract them
                 try {
+                    Log($"Extracting client files to {pathForClientFiles}", LogEventIds.ExtractingClientFiles);
                     Directory.CreateDirectory(pathForClientFiles);
                     ExtractClientFiles(clientFiles, pathForClientFiles);
                     clientFilesExtracted = true;
                 } catch (Exception ex) {
-                    Log($"Can't extract client files. Will try to use local ones if exists. Error {ex}");
+                    // TODO Implement using existing files on client files extraction error
+                    LogError($"Can't extract client files. Will try to use local ones if exists. Error {ex}", LogEventIds.ExtractingClientFiles);
                 }
+            } else {
+                LogError("There is no client files data", LogEventIds.DownloadingClientFiles);
             }
             return clientFiles;
         }
@@ -229,51 +273,58 @@ namespace SpotCafe.Service {
         }
 
         private void StartServerDiscovery() {
+            Log("Starting server discovery", LogEventIds.StartServerDiscovery);
             discoverer.StartDiscovery();
         }
 
-        private void SaveServiceConfiguration() {
+        private void SaveServiceConfiguration(ServiceConfiguration config) {
             try {
-                File.WriteAllText(configFileFullPath, serializer.Serialize(serviceConfig));
+                File.WriteAllText(configFileFullPath, serializer.Serialize(config));
+                Log($"Configuration written to {configFileFullPath} with ClientId={config.ClientId}", LogEventIds.SaveServiceConfiguration);
             } catch (Exception ex) {
-                Log($"Can't save configuration: {ex}", EventLogEntryType.Error);
+                LogError($"Can't save configuration. It must be manually selected, otherwise new ClientId will be generated on each start-up. Error: {ex}", LogEventIds.SaveServiceConfigurationError);
             }
         }
 
         private ServiceConfiguration GetServiceConfiguration() {
             ServiceConfiguration config;
             try {
-                Log($"Loading configuration from {configFileFullPath}");
+                Log($"Loading service configuration from {configFileFullPath}", LogEventIds.LoadingServiceConfiguration);
                 config = serializer.Deserialize<ServiceConfiguration>(File.ReadAllText(configFileFullPath));
                 if (config != null) {
-                    Log($"Configuration ClientId={config.ClientId}");
+                    Log($"Configuration ClientId={config.ClientId}", LogEventIds.LoadingServiceConfiguration);
                 } else {
-                    Log($"Configuration is null");
+                    LogWarning($"Configuration is null", LogEventIds.LoadingServiceConfiguration);
                 }
             } catch (Exception loadEx) {
-                Log($"Can't load configuration. Will create default config file: {loadEx}", EventLogEntryType.Error);
+                LogWarning($"Can't load configuration. Will create default config file: {loadEx}", LogEventIds.LoadingServiceConfiguration);
                 config = new ServiceConfiguration {
                     ClientId = Guid.NewGuid().ToString()
                 };
-                try {
-                    File.WriteAllText(configFileFullPath, serializer.Serialize(config));
-                    Log($"Configuration written to {configFileFullPath}");
-                    Log($"Configuration ClientId={config.ClientId}");
-                } catch (Exception writeEx) {
-                    // Probably no access for writing
-                    Log($"Can't save configuration. It must be manually selected, otherwise new ClientId will be generated on each start-up. Error: {writeEx}", EventLogEntryType.Error);
-                }
+                SaveServiceConfiguration(config);
             }
             return config;
         }
 
-        private void Log(string message, EventLogEntryType type = EventLogEntryType.Information) {
+        private void Log(string message, EventLogEntryType type, int eventId) {
             Console.WriteLine($"{DateTime.Now}: {type}: {message}");
             if (logger != null) {
                 try {
-                    logger.Log(message, type);
+                    logger.Log(message, type, eventId);
                 } catch { }
             }
+        }
+
+        private void Log(string message, int eventId) {
+            Log(message, EventLogEntryType.Information, eventId);
+        }
+
+        private void LogError(string message, int eventId) {
+            Log(message, EventLogEntryType.Error, eventId);
+        }
+
+        private void LogWarning(string message, int eventId) {
+            Log(message, EventLogEntryType.Warning, eventId);
         }
 
         private void InitializeComponent() {

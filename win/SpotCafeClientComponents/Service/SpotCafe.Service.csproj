@@ -52,6 +52,7 @@
     <Compile Include="Discovery\DiscoveryDataReceivedEventArgs.cs" />
     <Compile Include="Discovery\DiscoveryResponse.cs" />
     <Compile Include="Interop.cs" />
+    <Compile Include="LogEventIds.cs" />
     <Compile Include="REST\RestClient.cs" />
     <Compile Include="Serializer.cs" />
     <Compile Include="Discovery\ServerDiscoverer.cs" />

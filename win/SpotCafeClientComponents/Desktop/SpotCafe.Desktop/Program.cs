@@ -13,6 +13,7 @@ namespace SpotCafe.Desktop {
     static class Program {
         private static Logger logger;
         private static Mutex mutex;
+        private const string mutexName = @"Global\7D23335A-9D10-4462-B1AF-A2C729C1B509";
 
         /// <summary>
         /// The main entry point for the application.
@@ -24,11 +25,16 @@ namespace SpotCafe.Desktop {
                 logger = new Logger(logFileFullPath);
             } catch { }
             if (Process.GetCurrentProcess().SessionId == 0) {
+                Log($"Will not start in session {Process.GetCurrentProcess().SessionId} of user {Environment.UserName}");
+                return;
+            }
+            var inputDesktopName = Interop.GetInputDesktopName();
+            if (!string.Equals(inputDesktopName, "default", StringComparison.OrdinalIgnoreCase)) {
+                Log($"Will not start on input desktop '{inputDesktopName}'");
                 return;
             }
 
-            Log($"Starting in session {Process.GetCurrentProcess().SessionId} of user {Environment.UserName}");
-
+            Log($"Starting in session {Process.GetCurrentProcess().SessionId} of user {Environment.UserName} on desktop {inputDesktopName}");
             if (!RegisterMutex()) {
                 // Already running
                 Log("Application is already running");
@@ -41,8 +47,6 @@ namespace SpotCafe.Desktop {
         }
 
         static bool RegisterMutex() {
-            var appGuid = new Guid("7D23335A-9D10-4462-B1AF-A2C729C1B509");
-            var mutexName = "Global\\" + appGuid;
             var mutexIsNew = false;
             try {
                 mutex = Mutex.OpenExisting(mutexName);

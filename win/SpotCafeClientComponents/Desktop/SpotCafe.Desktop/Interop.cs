@@ -22,12 +22,28 @@ namespace SpotCafe.Desktop {
             out uint lpnLengthNeeded
         );
 
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern IntPtr OpenInputDesktop(uint dwFlags, bool fInherit, uint dwDesiredAccess);
+
         public enum ObjectInformationIndex {
             UOI_NAME = 2
         }
 
+        public enum DesktopAccess : uint {
+            DESKTOP_READOBJECTS = 1
+        }
+
+        public static string GetInputDesktopName() {
+            var inputDesktopHandle = OpenInputDesktop(0, false, (uint)DesktopAccess.DESKTOP_READOBJECTS);
+            return GetDesktopName(inputDesktopHandle);
+        }
+
         public static string GetProcessDesktopName() {
             var desktopHandle = GetThreadDesktop(GetCurrentThreadId());
+            return GetDesktopName(desktopHandle);
+        }
+
+        public static string GetDesktopName(IntPtr desktopHandle) {
             var pvInfo = new byte[100];
             var objInfoResult = GetUserObjectInformation(desktopHandle, (int)ObjectInformationIndex.UOI_NAME, pvInfo, (uint)pvInfo.Length, out uint lengthNeeded);
             if (!objInfoResult) {
