@@ -45,11 +45,12 @@ export class RolesComponent implements OnInit {
         };
         try {
             await this.dataSvc.updateRoleWithPermissionsIds(roleWithPermissionsIds);
+            this.addSuccessMessage(`Role ${roleWithPermissions.role.name} has been updated`, this.updateRoleMessagesComponent);
+            this.loadData();
         } catch (err) {
             this.handleError(err, this.updateRoleMessagesComponent, 'Updating role error:');
         } finally {
         }
-        this.loadData();
     }
 
     private async loadData(): Promise<void> {
@@ -66,6 +67,10 @@ export class RolesComponent implements OnInit {
         } catch (err) {
         } finally {
         }
+    }
+
+    private addSuccessMessage(text: string, messagesComponent: DisplayMessagesComponent): void {
+        messagesComponent.addSuccessMessage(text);
     }
 
     private addErrorMessage(text: string, messageComponent: DisplayMessagesComponent): void {
