@@ -77,7 +77,7 @@ export class EmployeesComponent implements OnInit {
         } catch (err) {
             this.handleError(err, this.newEmployeeMessagesComponent, 'Create employee error:');
         } finally {
-            this.waiting.createEmployee = true;
+            this.waiting.createEmployee = false;
         }
     }
 
