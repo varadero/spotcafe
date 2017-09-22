@@ -6,6 +6,7 @@ import { IEmployeeWithRoles } from '../../shared/interfaces/employee-with-roles'
 import { RoutesBase } from './routes-base';
 import { IRouteActionResult } from './interfaces/route-action-result';
 import { ICreateEmployeeResult } from '../../shared/interfaces/create-employee-result';
+import { PermissionsMapper } from '../utils/permissions-mapper';
 
 export class EmployeesRoutes extends RoutesBase {
 
@@ -52,6 +53,15 @@ export class EmployeesRoutes extends RoutesBase {
         if (employeeWithRoles.employee.disabled && employeeWithRoles.employee.id.toUpperCase() === serverToken.accountId.toUpperCase()) {
             return { error: { message: `Can't disable own account`, number: 403 } };
         }
-        await this.storageProvider.updateEmployeeWithRoles(employeeWithRoles);
+        if (employeeWithRoles.employee.id.toUpperCase() === PermissionsMapper.administratorEmployeeId.toUpperCase()) {
+            // This is the administrator
+            if (employeeWithRoles.employee.disabled) {
+                return { error: { message: `Can't disable administrator account`, number: 403 } };
+            }
+            // Update only employee data but not the roles
+            await this.storageProvider.updateEmployee(employeeWithRoles.employee);
+        } else {
+            await this.storageProvider.updateEmployeeWithRoles(employeeWithRoles);
+        }
     }
 }

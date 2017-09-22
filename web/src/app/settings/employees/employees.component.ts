@@ -6,6 +6,7 @@ import { IRole } from '../../../../../shared/interfaces/role';
 import { IEmployeeWithRoles } from '../../../../../shared/interfaces/employee-with-roles';
 import { EmployeesService, INewEmployeeWithRoles, INewEmployeeErrors } from './employees.services';
 import { IEmployee } from '../../../../../shared/interfaces/employee';
+import { ErrorsService } from '../../shared/errors.service';
 
 @Component({
     templateUrl: './employees.component.html'
@@ -33,7 +34,8 @@ export class EmployeesComponent implements OnInit {
 
     constructor(
         private dataSvc: DataService,
-        private employeesSvc: EmployeesService
+        private employeesSvc: EmployeesService,
+        private errorsSvc: ErrorsService
     ) { }
 
     async ngOnInit(): Promise<void> {
@@ -49,7 +51,7 @@ export class EmployeesComponent implements OnInit {
             const username = employeeWithRoles.employee.username;
             this.addSuccessMessage(`Employee ${username} has been updated`, this.updateEmployeeMessagesComponent);
         } catch (err) {
-            this.handleError(err, this.updateEmployeeMessagesComponent, 'Update employee error');
+            this.handleError(err, this.updateEmployeeMessagesComponent, 'Update employee error:');
         } finally {
             this.waiting.updateEmployee = false;
         }
@@ -73,7 +75,7 @@ export class EmployeesComponent implements OnInit {
                 this.addErrorMessage(`Employee with user name ${username} already exists`, this.newEmployeeMessagesComponent);
             }
         } catch (err) {
-            this.handleError(err, this.newEmployeeMessagesComponent, 'Create employee error');
+            this.handleError(err, this.newEmployeeMessagesComponent, 'Create employee error:');
         } finally {
             this.waiting.createEmployee = true;
         }
@@ -92,7 +94,7 @@ export class EmployeesComponent implements OnInit {
             // Restore selected employee after data was reloaded
             this.selectedEmployeeWithRoles = this.employeesWithRoles.find(x => x.employee.id === selectedEmployeeId);
         } catch (err) {
-            this.handleError(err, this.loadEmployeesMessagesComponent, 'Loading employees and roles error');
+            this.handleError(err, this.loadEmployeesMessagesComponent, 'Loading employees and roles error:');
         } finally {
             this.waiting.loadEmployees = false;
         }
@@ -122,10 +124,7 @@ export class EmployeesComponent implements OnInit {
     }
 
     private handleError(err: any, messagesComponent: DisplayMessagesComponent, messagePrefix: string): void {
-        if (err.error && err.error.message) {
-            messagesComponent.addErrorMessage(`${messagePrefix} ${err.error.message}`);
-        } else {
-            messagesComponent.addErrorMessage(`${messagePrefix} ${err.status} ${err.statusText}`);
-        }
+        const errMessage = this.errorsSvc.getNetworkErrorMessage(err, messagePrefix);
+        messagesComponent.addErrorMessage(errMessage);
     }
 }

@@ -28,13 +28,62 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
     }
 
+    async updateEmployee(employee: IEmployee): Promise<void> {
+        const sql = `
+            UPDATE [Employees]
+            SET [FirstName]=@FirstName,
+                [LastName]=@LastName,
+                [Email]=@Email,
+                [Disabled]=@Disabled
+            WHERE [Id]=@Id
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'FirstName', value: employee.firstName, type: TYPES.NVarChar },
+            { name: 'LastName', value: employee.lastName, type: TYPES.NVarChar },
+            { name: 'Email', value: employee.email, type: TYPES.NVarChar },
+            { name: 'Disabled', value: employee.disabled, type: TYPES.Bit },
+            { name: 'Id', value: employee.id, type: TYPES.UniqueIdentifierN }
+        ];
+        await this.dbHelper.execRowCount(sql, params);
+    }
+
+    async updateRoleWithPermissionsIds(roleWithPermissionsIds: IRoleWithPermissionsIds): Promise<void> {
+        let sql = `
+                UPDATE [Roles]
+                SET [Name]=@Name,
+                    [Description]=@Description
+                WHERE [Id]=@Id
+
+                DELETE FROM [PermissionsInRoles]
+                WHERE [RoleId]=@Id
+        `;
+        const role = roleWithPermissionsIds.role;
+        const params: IRequestParameter[] = [
+            { name: 'Name', value: role.name, type: TYPES.NVarChar },
+            { name: 'Description', value: role.description, type: TYPES.NVarChar },
+            { name: 'Id', value: role.id, type: TYPES.UniqueIdentifierN },
+        ];
+        for (let i = 0; i < roleWithPermissionsIds.permissionsIds.length; i++) {
+            const permissionId = roleWithPermissionsIds.permissionsIds[i];
+            const permissionIdParamName = `PermissionId${i}`;
+            sql += `
+                INSERT INTO [PermissionsInRoles]
+                ([PermissionId], [RoleId]) VALUES
+                (@${permissionIdParamName}, @Id)
+            `;
+            params.push({ name: permissionIdParamName, value: permissionId, type: TYPES.UniqueIdentifierN });
+        }
+        sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
+        await this.dbHelper.execRowCount(sql, params);
+    }
+
     async getRolesWithPermissionsIds(): Promise<IRoleWithPermissionsIds[]> {
         const sql = `
             SELECT r.[Id] AS [RoleId], r.[Name] AS [RoleName], r.[Description] AS [RoleDescription],
             p.[Id] AS [PermissionId]
             FROM [Roles] r
-            INNER JOIN [PermissionsInRoles] pir ON pir.[RoleId] = r.[Id]
-            INNER JOIN [Permissions] p ON p.[Id] = pir.[PermissionId]
+            LEFT OUTER JOIN [PermissionsInRoles] pir ON pir.[RoleId] = r.[Id]
+            LEFT OUTER JOIN [Permissions] p ON p.[Id] = pir.[PermissionId]
         `;
         const rolesWithPermissionsResult = await this.dbHelper.execToObjects(sql);
         const rolesWithPermissions = <IRoleWithPermissions[]>this.dbHelper.groupAndRename(
@@ -49,7 +98,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             const item = rolesWithPermissions[i];
             const roleWithPermissionsIds: IRoleWithPermissionsIds = {
                 role: item.role,
-                permissionsIds: item.permissions.map(x => x.id)
+                permissionsIds: item.permissions.filter(x => x.id).map(x => x.id)
             };
             result.push(roleWithPermissionsIds);
         }
@@ -57,10 +106,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
     }
 
     async setClientFiles(clientFiles: IClientFilesData): Promise<void> {
-        const sql = `
-            SET TRANSACTION ISOLATION LEVEL SERIALIZABLE
-            BEGIN TRANSACTION
-
+        let sql = `
             IF EXISTS (
                 SELECT TOP 1 [Name] FROM [Settings]
                 WHERE [Name]=@Name
@@ -76,13 +122,12 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
                     ([Name], [Value]) VALUES
                     (@Name, @Value)
                 END
-
-            COMMIT TRANSACTION
         `;
         const params: IRequestParameter[] = [
             { name: 'Name', value: 'client.files', type: TYPES.NVarChar },
             { name: 'Value', value: JSON.stringify(clientFiles), type: TYPES.NVarChar }
         ];
+        sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
         await this.dbHelper.execRowCount(sql, params);
     }
 
@@ -132,10 +177,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
     }
 
     async registerClientDevice(id: string, name: string, address: string): Promise<IRegisterClientDeviceResult> {
-        const sql = `
-            SET TRANSACTION ISOLATION LEVEL SERIALIZABLE
-            BEGIN TRANSACTION
-
+        let sql = `
             IF EXISTS (
                 SELECT TOP 1 [Id] FROM [ClientDevices]
                 WHERE [Id]=@Id
@@ -154,14 +196,13 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             SELECT TOP 1 [Id], [Name], [Address], [Description], [Approved], [ApprovedAt]
             FROM [ClientDevices]
             WHERE [Id]=@Id
-
-            COMMIT TRANSACTION
         `;
         const params: IRequestParameter[] = [
             { name: 'Id', value: id, type: TYPES.NVarChar },
             { name: 'Name', value: name, type: TYPES.NVarChar },
             { name: 'Address', value: address, type: TYPES.NVarChar }
         ];
+        sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
         const registerDeviceResult = await this.dbHelper.execToObjects(sql, params);
         const createdNew = (<{ createdNew: boolean }>registerDeviceResult.firstResultSet.rows[0]).createdNew;
         const device = <IClientDevice>registerDeviceResult.allResultSets[1].rows[0];
@@ -185,9 +226,6 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
     async createEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<ICreateEmployeeResult> {
         let newId = this.dbHelper.generateId();
         let sql = `
-            SET TRANSACTION ISOLATION LEVEL SERIALIZABLE
-            BEGIN TRANSACTION
-
             IF EXISTS(
                 SELECT TOP 1 [Username]
                 FROM [Employees]
@@ -226,8 +264,8 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         }
         sql += `
             END
-            COMMIT TRANSACTION
         `;
+        sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
         const insertResult = await this.dbHelper.execToObjects(sql, params);
         const alreadyExists = (<{ alreadyExists: boolean }>insertResult.firstResultSet.rows[0]).alreadyExists;
         if (alreadyExists) {

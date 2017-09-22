@@ -43,6 +43,14 @@ export class RolesService {
         }
         return null;
     }
+
+    getRoleErrors(role: IRole): IRoleErrors {
+        const errors: IRoleErrors = <IRoleErrors>{};
+        errors.nameIsEmpty = (!role.name || !role.name.trim());
+        errors.hasErrors = (errors.nameIsEmpty);
+        return errors;
+    }
+
     // addAllPermissionsToAllRoles(employeesWithRoles: IEmployeeWithRoles[], allRoles: IRole[]): void {
     //     for (let i = 0; i < employeesWithRoles.length; i++) {
     //         const employeeWithRole = employeesWithRoles[i];
@@ -77,4 +85,9 @@ export class RolesService {
 
 export interface ISelectablePermission extends IPermission {
     selected: boolean;
+}
+
+export interface IRoleErrors {
+    hasErrors: boolean;
+    nameIsEmpty: boolean;
 }
