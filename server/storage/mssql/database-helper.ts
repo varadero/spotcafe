@@ -34,10 +34,10 @@ export class DatabaseHelper {
     async createDatabase(administratorPassword: string): Promise<ICreateStorageResult> {
         const result = <ICreateStorageResult>{};
         if (!this.config.options || !this.config.options.database) {
-            const msg = 'Database is not specified';
-            this.logError(msg);
+            const errMsg = 'Database is not specified';
+            this.logError(errMsg);
             this.connectionPool.dispose();
-            return Promise.reject(msg);
+            return Promise.reject(errMsg);
         }
 
         // Make a clone of configuration and clear the database name since it will not exist
@@ -132,9 +132,12 @@ export class DatabaseHelper {
     }
 
     async updateDatabase(conn: Connection): Promise<string[]> {
+        let errMsg: string;
         const dbVersion = await this.getDatabaseVersion(conn);
         if (!dbVersion) {
-            return Promise.reject(`Can't read database version`);
+            errMsg = `Can't read database version`;
+            this.logError(errMsg);
+            return Promise.reject(errMsg);
         }
         const scriptsFolder = path.join(__dirname, './schema/scripts/update');
         const scriptFilesForUpdate = this.getScriptFilesForDatabaseUpdate(dbVersion, scriptsFolder);
@@ -148,7 +151,9 @@ export class DatabaseHelper {
             try {
                 await this.executeRowCount(conn, fileContent);
             } catch (err) {
-                return Promise.reject(`${err}. Error while executing ${scriptFileForUpdate.fileName}`);
+                errMsg = `${err}. Error while executing ${scriptFileForUpdate.fileName}`;
+                this.logError(errMsg);
+                return Promise.reject(errMsg);
             }
         }
         return scriptFilesForUpdate.map(x => x.fileName);
@@ -192,7 +197,10 @@ export class DatabaseHelper {
             result.allResultSets = [];
             let rows: ColumnValue[][] = [];
             const req = new Request(sql, (err, rowCount) => {
-                if (err) { return reject(err); }
+                if (err) {
+                    this.logError(err, sql);
+                    return reject(err);
+                }
                 if (rows.length > 0) {
                     // Add rows of a single result set
                     // Because 'done' event will not be fired for single result sets and allResultSets is empty
@@ -281,7 +289,10 @@ export class DatabaseHelper {
                     // The connection was not sent as parameter - it was created locally - close it
                     this.close(connection);
                 }
-                if (err) { return reject(err); }
+                if (err) {
+                    this.logError(err, sql);
+                    return reject(err);
+                }
                 return resolve(rowCount);
             });
             this.addRequestParameters(req, inputParameters);
@@ -314,7 +325,10 @@ export class DatabaseHelper {
                     // The connection was not sent as parameter - it was created locally - close it
                     this.close(connection);
                 }
-                if (err) { return reject(err); }
+                if (err) {
+                    this.logError(err, sql);
+                    return reject(err);
+                }
                 return resolve(colValue);
             });
             this.addRequestParameters(req, inputParameters);
@@ -335,7 +349,9 @@ export class DatabaseHelper {
     async connect(config?: ConnectionConfig): Promise<Connection> {
         const connection = await this.connectionPool.getConnection(config || this.config);
         if (!connection) {
-            return Promise.reject('Connection is not available');
+            const errMsg = 'Connection is not available';
+            this.logError(errMsg);
+            return Promise.reject(errMsg);
         }
         return connection;
     }
@@ -343,7 +359,10 @@ export class DatabaseHelper {
     async beginTransaction(conn: Connection): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             conn.beginTransaction(err => {
-                if (err) { return reject(err); }
+                if (err) {
+                    this.logError(err);
+                    return reject(err);
+                }
                 return resolve();
             });
         });
@@ -352,7 +371,10 @@ export class DatabaseHelper {
     async commitTransaction(conn: Connection): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             conn.commitTransaction(err => {
-                if (err) { return reject(err); }
+                if (err) {
+                    this.logError(err);
+                    return reject(err);
+                }
                 return resolve();
             });
         });
@@ -409,6 +431,30 @@ export class DatabaseHelper {
             result.push(renamedGrp);
         }
         return result;
+    }
+
+    encloseInBeginTryTransactionBlocks(sql: string): string {
+        const wrappedSql = `
+            SET TRANSACTION ISOLATION LEVEL SERIALIZABLE
+            BEGIN TRY
+                BEGIN TRANSACTION
+                ${sql}
+                COMMIT TRANSACTION
+            END TRY
+            BEGIN CATCH
+                ROLLBACK TRANSACTION
+                DECLARE @ErrorMessage NVARCHAR(4000);
+                DECLARE @ErrorSeverity INT;
+                DECLARE @ErrorState INT;
+                SELECT @ErrorMessage = ERROR_MESSAGE(),
+                    @ErrorSeverity = ERROR_SEVERITY(),
+                    @ErrorState = ERROR_STATE();
+                RAISERROR (@ErrorMessage,
+                        @ErrorSeverity,
+                        @ErrorState);
+            END CATCH
+        `;
+        return wrappedSql;
     }
 
     generateId(): string {
@@ -578,9 +624,10 @@ export class DatabaseHelper {
             const settingsTableName = this.constants.settingsTableName;
             const stringToMatch = `UPDATE [${settingsTableName}] SET [Value]='${fileVersion}' WHERE [Name]='${databaseVersionSettingName}'`;
             if (fileContent.indexOf(stringToMatch) === -1) {
-                const msg = `Script file ${scriptFileForUpdate.fileName} doesn't update database to correct version.`
+                const errMsg = `Script file ${scriptFileForUpdate.fileName} doesn't update database to correct version.`
                     + `Expected ${scriptFileForUpdate.version}.`;
-                return Promise.reject(msg);
+                this.logError(errMsg);
+                return Promise.reject(errMsg);
             }
         }
         return Promise.resolve();
@@ -650,15 +697,15 @@ export class DatabaseHelper {
         return result;
     }
 
-    private logError(message?: any, optionalParams?: any[]) {
+    private logError(message?: any, ...optionalParams: any[]) {
         if (this.logger) {
-            this.logger.error(message, optionalParams);
+            this.logger.error(message, ...optionalParams);
         }
     }
 
-    private logInfo(message?: any, optionalParams?: any[]) {
+    private logInfo(message?: any, ...optionalParams: any[]) {
         if (this.logger) {
-            this.logger.log(message, optionalParams);
+            this.logger.log(message, ...optionalParams);
         }
     }
 }

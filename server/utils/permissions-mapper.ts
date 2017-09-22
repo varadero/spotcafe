@@ -1,4 +1,7 @@
 export class PermissionsMapper {
+    static administratorEmployeeId = 'AD0CA48F-E266-48EA-BFB7-0C03147E442C';
+    static administratorRoleId = 'D2595A95-630C-4E66-9B2E-1F804154FDF5';
+
     permissionIds: {
         employeesView: string;
         employeesModify: string;
@@ -9,6 +12,7 @@ export class PermissionsMapper {
         permissionsView: string;
         permissionsModify: string;
     };
+
     private permissionsOrder: string[] = [];
 
     constructor() {

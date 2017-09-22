@@ -22,6 +22,7 @@
                 </md-list>
             </md-card>
             <md-card-actions>
+                <spotcafe-messages #updateRoleMessagesComponent></spotcafe-messages>
                 <button md-raised-button (click)="updateRoleWithPermissions(selectedRoleWithPermissions)" color="primary">Update role {{selectedRoleWithPermissions.role.name}}</button>
             </md-card-actions>
         </div>

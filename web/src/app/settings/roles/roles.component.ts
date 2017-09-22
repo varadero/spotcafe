@@ -1,10 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 
 import { DataService } from '../../core/data.service';
 import { IRoleWithPermissions } from '../../../../../shared/interfaces/role-with-permissions';
 import { IRoleWithPermissionsIds } from '../../../../../shared/interfaces/role-with-permissions-ids';
 import { IPermission } from '../../../../../shared/interfaces/permission';
-import { RolesService } from './roles.service';
+import { RolesService, ISelectablePermission, IRoleErrors } from './roles.service';
+import { DisplayMessagesComponent } from '../../shared/display-messages.component';
+import { ErrorsService } from '../../shared/errors.service';
 
 @Component({
     templateUrl: './roles.component.html'
@@ -13,13 +15,40 @@ export class RolesComponent implements OnInit {
     selectedRoleWithPermissions: IRoleWithPermissions;
     rolesWithPermissions: IRoleWithPermissions[];
     permissions: IPermission[];
+    existingRoleErrors: IRoleErrors = {
+        hasErrors: false,
+        nameIsEmpty: false
+    };
+
+    @ViewChild('updateRoleMessagesComponent') private updateRoleMessagesComponent: DisplayMessagesComponent;
 
     constructor(
         private dataSvc: DataService,
-        private rolesService: RolesService) {
-    }
+        private rolesService: RolesService,
+        private errorsSvc: ErrorsService
+    ) { }
 
     ngOnInit(): void {
+        this.loadData();
+    }
+
+    async updateRoleWithPermissions(roleWithPermissions: IRoleWithPermissions): Promise<void> {
+        this.existingRoleErrors = this.rolesService.getRoleErrors(roleWithPermissions.role);
+        if (this.existingRoleErrors.hasErrors) {
+            return;
+        }
+
+        const selectablePermissions = <ISelectablePermission[]>roleWithPermissions.permissions;
+        const roleWithPermissionsIds: IRoleWithPermissionsIds = {
+            role: roleWithPermissions.role,
+            permissionsIds: selectablePermissions.filter(x => x.selected).map(x => x.id)
+        };
+        try {
+            await this.dataSvc.updateRoleWithPermissionsIds(roleWithPermissionsIds);
+        } catch (err) {
+            this.handleError(err, this.updateRoleMessagesComponent, 'Updating role error:');
+        } finally {
+        }
         this.loadData();
     }
 
@@ -35,25 +64,16 @@ export class RolesComponent implements OnInit {
             this.rolesWithPermissions = this.rolesService.createRolesWithPermissions(rolesWithPermissionsIds, this.permissions);
             this.selectedRoleWithPermissions = this.rolesWithPermissions.find(x => x.role.id === selectedRoleId);
         } catch (err) {
-
         } finally {
-
         }
-        // try {
-        //     this.waiting.loadEmployees = true;
-        //     // Remember currently selected employee
-        //     const selectedEmployeeId = this.selectedEmployeeWithRoles ? this.selectedEmployeeWithRoles.employee.id : null;
-        //     const res = await Promise.all([this.dataSvc.getEmployeesWithRoles(), this.dataSvc.getRoles()]);
-        //     this.employeesWithRoles = res[0];
-        //     this.roles = res[1];
-        //     this.resetNewEmployeeWithRoles();
-        //     this.employeesSvc.addAllRolesToAllEmployees(this.employeesWithRoles, this.roles);
-        //     // Restore selected employee after data was reloaded
-        //     this.selectedEmployeeWithRoles = this.employeesWithRoles.find(x => x.employee.id === selectedEmployeeId);
-        // } catch (err) {
-        //     this.handleError(err, this.loadEmployeesMessagesComponent, 'Loading employees and roles error');
-        // } finally {
-        //     this.waiting.loadEmployees = false;
-        // }
+    }
+
+    private addErrorMessage(text: string, messageComponent: DisplayMessagesComponent): void {
+        messageComponent.addErrorMessage(text);
+    }
+
+    private handleError(err: any, messagesComponent: DisplayMessagesComponent, messagePrefix: string): void {
+        const errMessage = this.errorsSvc.getNetworkErrorMessage(err, messagePrefix);
+        messagesComponent.addErrorMessage(errMessage);
     }
 }

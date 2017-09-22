@@ -23,6 +23,10 @@ export class DataService {
         private cacheSvc: CacheService
     ) { }
 
+    updateRoleWithPermissionsIds(roleWithPermissionsIds: IRoleWithPermissionsIds): Promise<void> {
+        return this.post('roles-with-permissions-ids/' + encodeURIComponent(roleWithPermissionsIds.role.id), roleWithPermissionsIds);
+    }
+
     getPermissions(): Promise<IPermission[]> {
         return this.get('permissions');
     }
@@ -67,20 +71,20 @@ export class DataService {
         this.useCache = use;
     }
 
-    private execGetWithCache<T>(url: string): Promise<T> {
-        return this.execWithCache(() => this.get(url), url);
-    }
+    // private execGetWithCache<T>(url: string): Promise<T> {
+    //     return this.execWithCache(() => this.get(url), url);
+    // }
 
-    private execWithCache<T>(fn: () => Promise<T>, cacheKey: string): Promise<T> {
-        const existing = this.getFromCache<T>(cacheKey);
-        if (existing) {
-            return Promise.resolve(existing);
-        }
-        return fn().then(res => {
-            this.setToCache(cacheKey, res);
-            return res;
-        });
-    }
+    // private execWithCache<T>(fn: () => Promise<T>, cacheKey: string): Promise<T> {
+    //     const existing = this.getFromCache<T>(cacheKey);
+    //     if (existing) {
+    //         return Promise.resolve(existing);
+    //     }
+    //     return fn().then(res => {
+    //         this.setToCache(cacheKey, res);
+    //         return res;
+    //     });
+    // }
 
     private get(url: string): Promise<any> {
         const headers = this.getHeaders();
