@@ -6,11 +6,25 @@ import { IPermission } from '../../../../../shared/interfaces/permission';
 
 @Injectable()
 export class RolesService {
+    clonePermissions(permissions: IPermission[]): ISelectablePermission[] {
+        const selectablePermissions: ISelectablePermission[] = [];
+        for (let i = 0; i < permissions.length; i++) {
+            const permission = permissions[i];
+            selectablePermissions.push({
+                description: permission.description,
+                id: permission.id,
+                name: permission.name,
+                selected: false
+            });
+        }
+        return selectablePermissions;
+    }
+
     createRolesWithPermissions(
         rolesWithPermissionsIds: IRoleWithPermissionsIds[],
         allPermissions: IPermission[]
-    ): IRoleWithPermissions[] {
-        const result: IRoleWithPermissions[] = [];
+    ): IRoleWithSelectablePermissions[] {
+        const result: IRoleWithSelectablePermissions[] = [];
         for (let i = 0; i < rolesWithPermissionsIds.length; i++) {
             const roleWithPermissionsIds = rolesWithPermissionsIds[i];
             const role = <IRole>{
@@ -34,6 +48,14 @@ export class RolesService {
         return result;
     }
 
+    getSanitizedRoleWithPermissions(roleWithSelectablePermissions: IRoleWithSelectablePermissions): IRoleWithPermissionsIds {
+        const result: IRoleWithPermissionsIds = {
+            permissionsIds: roleWithSelectablePermissions.permissions.filter(x => x.selected).map(x => x.id),
+            role: { ...roleWithSelectablePermissions.role }
+        };
+        return result;
+    }
+
     getPermissionById(permissions: IPermission[], permissionId: string): IPermission {
         for (let i = 0; i < permissions.length; i++) {
             const permission = permissions[i];
@@ -50,41 +72,15 @@ export class RolesService {
         errors.hasErrors = (errors.nameIsEmpty);
         return errors;
     }
-
-    // addAllPermissionsToAllRoles(employeesWithRoles: IEmployeeWithRoles[], allRoles: IRole[]): void {
-    //     for (let i = 0; i < employeesWithRoles.length; i++) {
-    //         const employeeWithRole = employeesWithRoles[i];
-    //         const employeeRoles = <ISelectableRole[]>employeeWithRole.roles;
-    //         employeeRoles.forEach(x => x.selected = true);
-    //         this.addMissingRoles(employeeWithRole.roles, allRoles);
-    //     }
-    // }
-
-    // addMissingRoles(roles: IRole[], allRoles: IRole[]): void {
-    //     for (let i = 0; i < allRoles.length; i++) {
-    //         const role = allRoles[i];
-    //         const existingRole = this.getRoleById(roles, role.id);
-    //         if (!existingRole) {
-    //             const selectableRole = <ISelectableRole>role;
-    //             selectableRole.selected = false;
-    //             roles.push(selectableRole);
-    //         }
-    //     }
-    // }
-
-    // private getRoleById(roles: IRole[], roleId: string): IRole {
-    //     for (let i = 0; i < roles.length; i++) {
-    //         const role = roles[i];
-    //         if (role.id === roleId) {
-    //             return role;
-    //         }
-    //     }
-    //     return null;
-    // }
 }
 
 export interface ISelectablePermission extends IPermission {
     selected: boolean;
+}
+
+export interface IRoleWithSelectablePermissions {
+    role: IRole;
+    permissions: ISelectablePermission[];
 }
 
 export interface IRoleErrors {

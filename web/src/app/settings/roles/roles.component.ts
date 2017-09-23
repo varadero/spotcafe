@@ -4,7 +4,7 @@ import { DataService } from '../../core/data.service';
 import { IRoleWithPermissions } from '../../../../../shared/interfaces/role-with-permissions';
 import { IRoleWithPermissionsIds } from '../../../../../shared/interfaces/role-with-permissions-ids';
 import { IPermission } from '../../../../../shared/interfaces/permission';
-import { RolesService, ISelectablePermission, IRoleErrors } from './roles.service';
+import { RolesService, ISelectablePermission, IRoleErrors, IRoleWithSelectablePermissions } from './roles.service';
 import { DisplayMessagesComponent } from '../../shared/display-messages.component';
 import { ErrorsService } from '../../shared/errors.service';
 
@@ -12,15 +12,21 @@ import { ErrorsService } from '../../shared/errors.service';
     templateUrl: './roles.component.html'
 })
 export class RolesComponent implements OnInit {
-    selectedRoleWithPermissions: IRoleWithPermissions;
-    rolesWithPermissions: IRoleWithPermissions[];
-    permissions: IPermission[];
+    selectedRoleWithPermissions: IRoleWithSelectablePermissions;
+    newRoleWithPermissions: IRoleWithSelectablePermissions;
+    rolesWithPermissions: IRoleWithSelectablePermissions[];
+    permissions: ISelectablePermission[];
     existingRoleErrors: IRoleErrors = {
+        hasErrors: false,
+        nameIsEmpty: false
+    };
+    newRoleErrors: IRoleErrors = {
         hasErrors: false,
         nameIsEmpty: false
     };
 
     @ViewChild('updateRoleMessagesComponent') private updateRoleMessagesComponent: DisplayMessagesComponent;
+    @ViewChild('newRoleMessagesComponent') private newRoleMessagesComponent: DisplayMessagesComponent;
 
     constructor(
         private dataSvc: DataService,
@@ -29,6 +35,7 @@ export class RolesComponent implements OnInit {
     ) { }
 
     ngOnInit(): void {
+        this.resetNewRoleWithPermissions();
         this.loadData();
     }
 
@@ -53,6 +60,40 @@ export class RolesComponent implements OnInit {
         }
     }
 
+    async createRoleWithPermissions(newRoleWithPermissions: IRoleWithSelectablePermissions): Promise<void> {
+        this.newRoleErrors = this.rolesService.getRoleErrors(newRoleWithPermissions.role);
+        if (this.newRoleErrors.hasErrors) {
+            return;
+        }
+
+        try {
+            const sanitizedEmployeeWithRoles = this.rolesService.getSanitizedRoleWithPermissions(newRoleWithPermissions);
+            const roleName = sanitizedEmployeeWithRoles.role.name;
+            const createdRoleResult = await this.dataSvc.createRoleWithPermissionsIds(sanitizedEmployeeWithRoles);
+            if (!createdRoleResult.alreadyExists) {
+                this.addSuccessMessage(`Role ${roleName} has been created`, this.newRoleMessagesComponent);
+                this.resetNewRoleWithPermissions();
+                this.loadData();
+            } else {
+                this.addErrorMessage(`Role with name ${roleName} already exists`, this.newRoleMessagesComponent);
+            }
+        } catch (err) {
+            this.handleError(err, this.newRoleMessagesComponent, 'Create role error:');
+        } finally {
+        }
+    }
+
+    private resetNewRoleWithPermissions(): void {
+        this.newRoleWithPermissions = <IRoleWithSelectablePermissions>{
+            role: {
+                description: '',
+                id: '',
+                name: ''
+            },
+            permissions: []
+        };
+    }
+
     private async loadData(): Promise<void> {
         try {
             // Remember currently selected role with permissions
@@ -61,9 +102,10 @@ export class RolesComponent implements OnInit {
                 this.dataSvc.getRolesWithPermissionsIds(),
                 this.dataSvc.getPermissions()]
             );
-            this.permissions = permissions;
+            this.permissions = this.rolesService.clonePermissions(permissions);
             this.rolesWithPermissions = this.rolesService.createRolesWithPermissions(rolesWithPermissionsIds, this.permissions);
             this.selectedRoleWithPermissions = this.rolesWithPermissions.find(x => x.role.id === selectedRoleId);
+            this.newRoleWithPermissions.permissions = this.rolesService.clonePermissions(permissions);
         } catch (err) {
         } finally {
         }

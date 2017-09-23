@@ -16,6 +16,7 @@ import { IRegisterClientDeviceResult } from '../register-client-device-result';
 import { IClientFilesData } from '../client-files-data';
 import { IRoleWithPermissionsIds } from '../../../shared/interfaces/role-with-permissions-ids';
 import { IRoleWithPermissions } from '../../../shared/interfaces/role-with-permissions';
+import { ICreateRoleWithPermissionsIdsResult } from '../../../shared/interfaces/create-role-with-permissions-ids-result';
 
 export class MSSqlDatabaseStorageProvider implements StorageProvider {
     private config: ConnectionConfig;
@@ -26,6 +27,56 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         this.logger = logger;
         this.config = <ConnectionConfig>(config);
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
+    }
+
+    async createRoleWithPermissionsIds(roleWithPermissionsIds: IRoleWithPermissionsIds): Promise<ICreateRoleWithPermissionsIdsResult> {
+        let newId = this.dbHelper.generateId();
+        let sql = `
+            IF EXISTS(
+                SELECT TOP 1 [Name]
+                FROM [Roles]
+                WHERE [Name]=@Name
+            )
+            BEGIN
+                SELECT [AlreadyExists]=CAST(1 as bit)
+            END
+            ELSE
+            BEGIN
+                SELECT [AlreadyExists]=CAST(0 as bit)
+                INSERT INTO [Roles]
+                ([Id], [Name], [Description]) VALUES
+                (@Id, @Name, @Description)
+        `;
+        const role = roleWithPermissionsIds.role;
+        const params: IRequestParameter[] = [
+            { name: 'Id', value: newId, type: TYPES.UniqueIdentifierN },
+            { name: 'Name', value: role.name, type: TYPES.NVarChar },
+            { name: 'Description', value: role.description, type: TYPES.NVarChar },
+        ];
+        for (let i = 0; i < roleWithPermissionsIds.permissionsIds.length; i++) {
+            const permissionId = roleWithPermissionsIds.permissionsIds[i];
+            const permissionIdParamName = `PermissionId${i}`;
+            sql += `
+                INSERT INTO [PermissionsInRoles]
+                ([PermissionId], [RoleId]) VALUES
+                (@${permissionIdParamName}, @Id)
+            `;
+            params.push({ name: permissionIdParamName, value: permissionId, type: TYPES.UniqueIdentifierN });
+        }
+        sql += `
+            END
+        `;
+        sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
+        const insertResult = await this.dbHelper.execToObjects(sql, params);
+        const alreadyExists = (<{ alreadyExists: boolean }>insertResult.firstResultSet.rows[0]).alreadyExists;
+        if (alreadyExists) {
+            newId = '';
+        }
+
+        return <ICreateRoleWithPermissionsIdsResult>{
+            createdId: newId,
+            alreadyExists: alreadyExists
+        };
     }
 
     async updateEmployee(employee: IEmployee): Promise<void> {
@@ -271,7 +322,11 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         if (alreadyExists) {
             newId = '';
         }
-        return { createdId: newId, alreadyExists: alreadyExists };
+
+        return <ICreateEmployeeResult>{
+            createdId: newId,
+            alreadyExists: alreadyExists
+        };
     }
 
     async getRoles(): Promise<IRole[]> {

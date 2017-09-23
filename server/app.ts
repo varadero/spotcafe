@@ -70,6 +70,7 @@ export class App {
         this.koa.use(rolesRoutes.getAllRoles());
         this.koa.use(rolesRoutes.getAllRolesWithPermissionIds());
         this.koa.use(rolesRoutes.updateRoleWithPermissionsIds());
+        this.koa.use(rolesRoutes.createRoleWithPermissionsIds());
 
         const permissionsRoutes = new PermissionsRoutes(this.storageProvider, apiPrefix);
         this.koa.use(permissionsRoutes.getAllPermissions());
@@ -141,9 +142,13 @@ export class App {
             return Promise.reject('When store must be created, application administrator password must be supplied');
         }
 
-        await this.prepareStorage(createStorage, administratorPassword);
+        const prepareStorageResult = await this.prepareStorage(createStorage, administratorPassword);
         if (createStorage) {
             // Creating storage will not start the server
+            return null;
+        }
+        if (!prepareStorageResult.prepareResult) {
+            // Can't prepare storage
             return null;
         }
         await this.setClientFiles();
@@ -167,31 +172,25 @@ export class App {
     ): Promise<{ createResult: ICreateStorageResult | null, prepareResult: IPrepareStorageResult | null }> {
         this.logger.log('Creating storage provider');
         this.storageProvider = this.createStorageProvider();
-        const numberOfRetries = 1000000;
-        const delayBetweenRetries = 5000;
         let prepareStorageResult: IPrepareStorageResult | null = null;
         let createStorageResult: ICreateStorageResult | null = null;
-        for (let i = 0; i < numberOfRetries; i++) {
-            try {
-                if (createStorage && administratorPassword) {
-                    // Create storage
-                    this.logger.log('Creating storage');
-                    createStorageResult = await this.storageProvider.createStorage(administratorPassword);
-                    if (createStorageResult.errorOnStorageCreation) {
-                        this.logger.log('The storage creation error occured. It can be ignored if the storage already exists.');
-                        this.logger.log(createStorageResult.errorOnStorageCreation);
-                    }
-                    prepareStorageResult = createStorageResult.prepareStorageResult;
-                } else {
-                    // Storage creation is not requested - only prepare it
-                    prepareStorageResult = await this.storageProvider.prepareStorage();
+        try {
+            if (createStorage && administratorPassword) {
+                // Create storage
+                this.logger.log('Creating storage');
+                createStorageResult = await this.storageProvider.createStorage(administratorPassword);
+                if (createStorageResult.errorOnStorageCreation) {
+                    this.logger.log('The storage creation error occured. It can be ignored if the storage already exists.');
+                    this.logger.log(createStorageResult.errorOnStorageCreation);
                 }
-                break;
-            } catch (err) {
-                this.logger.error('Storage error. Trying again.');
-                this.logger.error(err);
-                await this.delay(delayBetweenRetries);
+                prepareStorageResult = createStorageResult.prepareStorageResult;
+            } else {
+                // Storage creation is not requested - only prepare it
+                prepareStorageResult = await this.storageProvider.prepareStorage();
             }
+        } catch (err) {
+            this.logger.error('Storage error.');
+            this.logger.error(err);
         }
         if (prepareStorageResult) {
             this.logger.log('Storage prepared');
@@ -237,11 +236,11 @@ export class App {
         return result;
     }
 
-    private delay(ms: number): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            setTimeout(() => resolve(), ms);
-        });
-    }
+    // private delay(ms: number): Promise<void> {
+    //     return new Promise<void>((resolve, reject) => {
+    //         setTimeout(() => resolve(), ms);
+    //     });
+    // }
 }
 
 export interface IAppOptions {

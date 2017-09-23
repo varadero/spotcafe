@@ -22,52 +22,37 @@
                 </md-list>
             </md-card>
             <md-card-actions>
+                <spotcafe-messages *ngIf="existingRoleErrors.nameIsEmpty" [staticMessage]="{text:
+                        'Name can not be empty', type: 'error'}"></spotcafe-messages>
                 <spotcafe-messages #updateRoleMessagesComponent></spotcafe-messages>
                 <button md-raised-button (click)="updateRoleWithPermissions(selectedRoleWithPermissions)" color="primary">Update role {{selectedRoleWithPermissions.role.name}}</button>
             </md-card-actions>
         </div>
     </md-card>
-    <!-- <md-card>
+    <md-card>
         <md-card-title>New role</md-card-title>
         <md-form-field>
-            <input mdInput [(ngModel)]="newEmployeeWithRoles.employee.username" maxlength="250" placeholder="User name" />
-            <md-error>User name is required</md-error>
+            <input mdInput [(ngModel)]="newRoleWithPermissions.role.name" maxlength="250" placeholder="Name" />
+            <md-error>Name is required</md-error>
         </md-form-field>
         <md-form-field>
-            <input mdInput [(ngModel)]="newEmployeeWithRoles.employee.firstName" placeholder="First name" />
+            <input mdInput [(ngModel)]="newRoleWithPermissions.role.description" placeholder="Description" />
         </md-form-field>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newEmployeeWithRoles.employee.lastName" placeholder="Last name" />
-        </md-form-field>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newEmployeeWithRoles.employee.email" placeholder="Email" />
-        </md-form-field>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newEmployeeWithRoles.employee.password" type="password" placeholder="Password" />
-        </md-form-field>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newEmployeeWithRoles.confirmPassword" type="password" placeholder="Confirm password" />
-        </md-form-field>
-        <md-checkbox [(ngModel)]="newEmployeeWithRoles.employee.disabled">Disabled</md-checkbox>
         <md-card>
             <md-card-subtitle>Roles</md-card-subtitle>
             <md-list>
-                <md-list-item *ngFor="let role of newEmployeeWithRoles.roles">
-                    <md-checkbox [(ngModel)]="role.selected">
-                        {{role.name}} : {{role.description}}
+                <md-list-item *ngFor="let permission of newRoleWithPermissions.permissions">
+                    <md-checkbox [(ngModel)]="permission.selected">
+                        {{permission.name}} : {{permission.description}}
                     </md-checkbox>
                 </md-list-item>
             </md-list>
         </md-card>
         <md-card-actions>
-            <spotcafe-messages *ngIf="newEmployeeErrors.usernameNotSupplied" [staticMessage]="{text:
-                    'User name can not be empty', type: 'error'}"></spotcafe-messages>
-            <spotcafe-messages *ngIf="newEmployeeErrors.passwordsDontMatch" [staticMessage]="{text:
-                    'Passwords do not match', type: 'error'}"></spotcafe-messages>
-            <spotcafe-messages *ngIf="newEmployeeErrors.passwordTooShort" [staticMessage]="{text:
-                        'Password must be at least 6 characters', type: 'error'}"></spotcafe-messages>
-            <spotcafe-messages #newEmployeeMessagesComponent></spotcafe-messages>
-            <button md-raised-button (click)="createEmployeeWithRoles(newEmployeeWithRoles)" color="primary">Create {{newEmployeeWithRoles.employee.username}}</button>
+            <spotcafe-messages *ngIf="newRoleErrors.nameIsEmpty" [staticMessage]="{text:
+                    'Name can not be empty', type: 'error'}"></spotcafe-messages>
+            <spotcafe-messages #newRoleMessagesComponent></spotcafe-messages>
+            <button md-raised-button (click)="createRoleWithPermissions(newRoleWithPermissions)" color="primary">Create role {{newRoleWithPermissions.role.name}}</button>
         </md-card-actions>
-    </md-card> -->
+    </md-card>
 </div>

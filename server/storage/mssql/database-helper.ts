@@ -92,15 +92,26 @@ export class DatabaseHelper {
     }
 
     async prepareDatabase(): Promise<IPrepareStorageResult> {
-        const conn = await this.connect(this.config);
+        // This should not use connection pooling
+        // Every time new connection must be created, otherwise a single connection could be used
+        // And in case of an error, some of the statements could be already executed
+        // Database version changed and next executions (repetitions because of errors) could read
+        // Changed data before the error. The goal is everything in the database to be rolled back
+        // In case this function is reexecuted
+
+        let conn: Connection | null = null;
         let updateFilesProcessed: string[];
         try {
             // Update database in transaction
+            conn = await this.connectNoCache(this.config);
             await this.beginTransaction(conn);
             updateFilesProcessed = await this.updateDatabase(conn);
             await this.commitTransaction(conn);
         } finally {
-            this.close(conn);
+            if (conn) {
+                conn.close();
+            }
+            this.connectionPool.dispose();
         }
 
         return Promise.resolve(<IPrepareStorageResult>{
@@ -354,6 +365,10 @@ export class DatabaseHelper {
             return Promise.reject(errMsg);
         }
         return connection;
+    }
+
+    async connectNoCache(config?: ConnectionConfig): Promise<Connection> {
+        return await this.connectionPool.connectNewConnection(config || this.config);
     }
 
     async beginTransaction(conn: Connection): Promise<void> {

@@ -10,26 +10,38 @@ import { ICreateEmployeeResult } from '../../shared/interfaces/create-employee-r
 import { IClientFilesData } from './client-files-data';
 import { IRoleWithPermissionsIds } from '../../shared/interfaces/role-with-permissions-ids';
 import { IEmployee } from '../../shared/interfaces/employee';
+import { ICreateRoleWithPermissionsIdsResult } from '../../shared/interfaces/create-role-with-permissions-ids-result';
 
 export abstract class StorageProvider {
     abstract initialize(config: any, ...args: any[]): void;
+
     abstract createStorage(administratorPassword: string): Promise<ICreateStorageResult>;
+
     abstract prepareStorage(): Promise<IPrepareStorageResult>;
+
     abstract getTokenSecret(): Promise<string | null>;
+
     abstract getEmployeesWithRoles(): Promise<IEmployeeWithRoles[]>;
     abstract createEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<ICreateEmployeeResult>;
     abstract updateEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<void>;
+
     abstract updateEmployee(employee: IEmployee): Promise<void>;
     abstract getEmployeePermissionsIds(employeeId: string): Promise<string[]>;
+    abstract getEmployeeWithRolesAndPermissions(username: string, password: string): Promise<IEmployeeWithRolesAndPermissions>;
+
     abstract getRoles(): Promise<IRole[]>;
+
     abstract getPermissions(): Promise<IPermission[]>;
+
     abstract getRolesWithPermissionsIds(): Promise<IRoleWithPermissionsIds[]>;
     abstract updateRoleWithPermissionsIds(roleWithPermissionsIds: IRoleWithPermissionsIds): Promise<void>;
-    abstract getEmployeeWithRolesAndPermissions(username: string, password: string): Promise<IEmployeeWithRolesAndPermissions>;
+    abstract createRoleWithPermissionsIds(roleWithPermissionsIds: IRoleWithPermissionsIds): Promise<ICreateRoleWithPermissionsIdsResult>;
+
     abstract registerClientDevice(id: string, name: string, address: string): Promise<IRegisterClientDeviceResult>;
     abstract getClientDevices(): Promise<IClientDevice[]>;
     abstract approveClientDevice(clientDevice: IClientDevice): Promise<void>;
     abstract updateClientDevice(clientDevice: IClientDevice): Promise<void>;
+
     abstract getClientFiles(): Promise<IClientFilesData | null>;
     abstract setClientFiles(clientFiles: IClientFilesData): Promise<void>;
 }

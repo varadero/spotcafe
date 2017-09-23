@@ -4,7 +4,13 @@ import { DataService } from '../../core/data.service';
 import { DisplayMessagesComponent } from '../../shared/display-messages.component';
 import { IRole } from '../../../../../shared/interfaces/role';
 import { IEmployeeWithRoles } from '../../../../../shared/interfaces/employee-with-roles';
-import { EmployeesService, INewEmployeeWithRoles, INewEmployeeErrors } from './employees.services';
+import {
+    EmployeesService,
+    INewEmployeeErrors,
+    IEmployeeWithSelectableRoles,
+    ISelectableRole,
+    INewEmployeeWithSelectableRoles
+} from './employees.services';
 import { IEmployee } from '../../../../../shared/interfaces/employee';
 import { ErrorsService } from '../../shared/errors.service';
 
@@ -12,10 +18,10 @@ import { ErrorsService } from '../../shared/errors.service';
     templateUrl: './employees.component.html'
 })
 export class EmployeesComponent implements OnInit {
-    employeesWithRoles: IEmployeeWithRoles[];
-    selectedEmployeeWithRoles: IEmployeeWithRoles;
+    employeesWithRoles: IEmployeeWithSelectableRoles[];
+    selectedEmployeeWithRoles: IEmployeeWithSelectableRoles;
     roles: IRole[] = [];
-    newEmployeeWithRoles: INewEmployeeWithRoles;
+    newEmployeeWithRoles: INewEmployeeWithSelectableRoles;
     newEmployeeErrors: INewEmployeeErrors = {
         hasErrors: false,
         usernameNotSupplied: false,
@@ -44,6 +50,10 @@ export class EmployeesComponent implements OnInit {
     }
 
     async updateEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<void> {
+        this.newEmployeeErrors = this.employeesSvc.getEmployeeErrors(employeeWithRoles.employee);
+        if (this.newEmployeeErrors.hasErrors) {
+            return;
+        }
         this.waiting.updateEmployee = true;
         try {
             const sanitizedEmployeeWithRoles = this.employeesSvc.getSanitizedEmployeeWithRoles(employeeWithRoles);
@@ -57,7 +67,7 @@ export class EmployeesComponent implements OnInit {
         }
     }
 
-    async createEmployeeWithRoles(employeeWithRoles: INewEmployeeWithRoles): Promise<void> {
+    async createEmployeeWithRoles(employeeWithRoles: INewEmployeeWithSelectableRoles): Promise<void> {
         this.newEmployeeErrors = this.employeesSvc.getNewEmployeeErrors(employeeWithRoles);
         if (this.newEmployeeErrors.hasErrors) {
             return;
@@ -87,7 +97,15 @@ export class EmployeesComponent implements OnInit {
             // Remember currently selected employee
             const selectedEmployeeId = this.selectedEmployeeWithRoles ? this.selectedEmployeeWithRoles.employee.id : null;
             const res = await Promise.all([this.dataSvc.getEmployeesWithRoles(), this.dataSvc.getRoles()]);
-            this.employeesWithRoles = res[0];
+            this.employeesWithRoles = res[0].map(x => <IEmployeeWithSelectableRoles>{
+                employee: x.employee,
+                roles: x.roles.map(y => <ISelectableRole>{
+                    description: y.description,
+                    id: y.id,
+                    name: y.name,
+                    selected: true
+                })
+            });
             this.roles = res[1];
             this.resetNewEmployeeWithRoles();
             this.employeesSvc.addAllRolesToAllEmployees(this.employeesWithRoles, this.roles);
@@ -101,7 +119,7 @@ export class EmployeesComponent implements OnInit {
     }
 
     private resetNewEmployeeWithRoles(): void {
-        this.newEmployeeWithRoles = <INewEmployeeWithRoles>{
+        this.newEmployeeWithRoles = <INewEmployeeWithSelectableRoles>{
             employee: {
                 disabled: false,
                 email: '',

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 
 import { IRole } from '../../../../../shared/interfaces/role';
 import { IEmployeeWithRoles } from '../../../../../shared/interfaces/employee-with-roles';
+import { IEmployee } from '../../../../../shared/interfaces/employee';
 
 @Injectable()
 export class EmployeesService {
@@ -31,12 +32,11 @@ export class EmployeesService {
         return result;
     }
 
-    getNewEmployeeErrors(employeeWithRoles: INewEmployeeWithRoles): INewEmployeeErrors {
-        const result: INewEmployeeErrors = <INewEmployeeErrors>{};
+    getNewEmployeeErrors(employeeWithRoles: INewEmployeeWithSelectableRoles): INewEmployeeErrors {
         const employee = employeeWithRoles.employee;
-        if (!employee.username || !employee.username.trim()) {
-            result.usernameNotSupplied = true;
-        }
+        // Get employee errors
+        const result: INewEmployeeErrors = this.getEmployeeErrors(employee);
+        // Add specific errors for new employee
         if (!employee.password
             || !employee.password.trim()
             || employee.password !== employeeWithRoles.confirmPassword) {
@@ -46,6 +46,14 @@ export class EmployeesService {
             result.passwordTooShort = true;
         }
         result.hasErrors = result.passwordsDontMatch || result.passwordTooShort || result.usernameNotSupplied;
+        return result;
+    }
+
+    getEmployeeErrors(employee: IEmployee): INewEmployeeErrors {
+        const result: INewEmployeeErrors = <INewEmployeeErrors>{};
+        if (!employee.username || !employee.username.trim()) {
+            result.usernameNotSupplied = true;
+        }
         return result;
     }
 
@@ -81,7 +89,7 @@ export class EmployeesService {
     }
 }
 
-export interface INewEmployeeWithRoles extends IEmployeeWithRoles {
+export interface INewEmployeeWithSelectableRoles extends IEmployeeWithSelectableRoles {
     confirmPassword: string;
 }
 
@@ -90,6 +98,11 @@ export interface INewEmployeeErrors {
     usernameNotSupplied: boolean;
     passwordsDontMatch: boolean;
     passwordTooShort: boolean;
+}
+
+export interface IEmployeeWithSelectableRoles {
+    employee: IEmployee;
+    roles: ISelectableRole[];
 }
 
 export interface ISelectableRole extends IRole {

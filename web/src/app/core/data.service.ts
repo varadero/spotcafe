@@ -10,6 +10,7 @@ import { IRole } from '../../../../shared/interfaces/role';
 import { IClientDevice } from '../../../../shared/interfaces/client-device';
 import { ICreateEmployeeResult } from '../../../../shared/interfaces/create-employee-result';
 import { IRoleWithPermissionsIds } from '../../../../shared/interfaces/role-with-permissions-ids';
+import { ICreateRoleWithPermissionsIdsResult } from '../../../../shared/interfaces/create-role-with-permissions-ids-result';
 import { IPermission } from '../../../../shared/interfaces/permission';
 
 @Injectable()
@@ -22,6 +23,10 @@ export class DataService {
         private authSvc: AuthService,
         private cacheSvc: CacheService
     ) { }
+
+    createRoleWithPermissionsIds(roleWithPermissionsIds: IRoleWithPermissionsIds): Promise<ICreateRoleWithPermissionsIdsResult> {
+        return this.post('roles-with-permissions-ids', roleWithPermissionsIds);
+    }
 
     updateRoleWithPermissionsIds(roleWithPermissionsIds: IRoleWithPermissionsIds): Promise<void> {
         return this.post('roles-with-permissions-ids/' + encodeURIComponent(roleWithPermissionsIds.role.id), roleWithPermissionsIds);

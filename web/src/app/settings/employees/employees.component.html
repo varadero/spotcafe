@@ -72,7 +72,7 @@
             <spotcafe-messages *ngIf="newEmployeeErrors.passwordTooShort" [staticMessage]="{text:
                         'Password must be at least 6 characters', type: 'error'}"></spotcafe-messages>
             <spotcafe-messages #newEmployeeMessagesComponent></spotcafe-messages>
-            <button md-raised-button (click)="createEmployeeWithRoles(newEmployeeWithRoles)" color="primary">Create {{newEmployeeWithRoles.employee.username}}</button>
+            <button md-raised-button (click)="createEmployeeWithRoles(newEmployeeWithRoles)" color="primary">Create employee {{newEmployeeWithRoles.employee.username}}</button>
         </md-card-actions>
     </md-card>
 </div>

@@ -37,7 +37,7 @@ export class ConnectionPool {
             }
             let newConnection: Connection | null = null;
             try {
-                newConnection = await this.connect(config);
+                newConnection = await this.connectNewConnection(config);
                 // Connection was successfully created
                 this.poolItemsCreated++;
                 connectedItem = <IConnectionPoolItem>{};
@@ -98,7 +98,7 @@ export class ConnectionPool {
      * Creates new connection with given configuration
      * @param config Connection configuration
      */
-    private async connect(config: ConnectionConfig): Promise<Connection> {
+    async connectNewConnection(config: ConnectionConfig): Promise<Connection> {
         return new Promise<Connection>((resolve, reject) => {
             let conn: Connection;
             try {
