@@ -12,6 +12,7 @@ import { ICreateEmployeeResult } from '../../../../shared/interfaces/create-empl
 import { IRoleWithPermissionsIds } from '../../../../shared/interfaces/role-with-permissions-ids';
 import { ICreateRoleWithPermissionsIdsResult } from '../../../../shared/interfaces/create-role-with-permissions-ids-result';
 import { IPermission } from '../../../../shared/interfaces/permission';
+import { IClientDeviceStatus } from '../../../../shared/interfaces/client-device-status';
 
 @Injectable()
 export class DataService {
@@ -23,6 +24,10 @@ export class DataService {
         private authSvc: AuthService,
         private cacheSvc: CacheService
     ) { }
+
+    getClientDevicesStatus(): Promise<IClientDeviceStatus[]> {
+        return this.get('client-devices-status');
+    }
 
     createRoleWithPermissionsIds(roleWithPermissionsIds: IRoleWithPermissionsIds): Promise<ICreateRoleWithPermissionsIdsResult> {
         return this.post('roles-with-permissions-ids', roleWithPermissionsIds);

@@ -1,13 +1,13 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-import { ComputersComponent } from './computers/computers.component';
+import { ClientDevicesStatusComponent } from './client-devices-status/client-devices-status.component';
 
 const routes: Routes = [
-    { path: 'computers', component: ComputersComponent },
+    { path: 'client-devices-status', component: ClientDevicesStatusComponent },
     { path: 'reports', loadChildren: 'app/reports/reports.module#ReportsModule' },
     { path: 'settings', loadChildren: 'app/settings/settings.module#SettingsModule' },
-    { path: '', redirectTo: 'computers', pathMatch: 'full' }
+    { path: '', redirectTo: 'client-devices-status', pathMatch: 'full' }
 ];
 
 @NgModule({

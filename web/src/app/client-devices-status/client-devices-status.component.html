@@ -1,0 +1,15 @@
+<div class="card-container">
+  <md-card *ngFor="let device of clientDevicesStatus" class="device-status-card" [ngClass]="{'client-device-in-use': device.isStarted, 'client-device-free': !device.isStarted}">
+    <md-card-title>
+      <div class="device-status-name">{{device.name}}</div>
+      <div class="device-status-bill">{{device.bill}}</div>
+      <div class="device-status-duration">{{device.durationText}}</div>
+    </md-card-title>
+    <md-card-content>
+    </md-card-content>
+    <md-card-actions>
+      <button md-button color="primary" class="device-status-start-button" [style.visibility]="device.isStarted ? 'hidden': ''"><md-icon>play_arrow</md-icon>Start</button>
+      <button md-raised-button color="accent" [style.visibility]="device.isStarted ? '' : 'hidden'"><md-icon>stop</md-icon>Stop</button>
+    </md-card-actions>
+  </md-card>
+</div>

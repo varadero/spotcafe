@@ -38,7 +38,8 @@ html, body, app-root, md-sidenav-container, .primary-content {
     margin-top: 6px;
 }
 
-.settings-container {
+.card-container md-card {
+    margin-top: 4px;
     margin-left: 6px;
     margin-right: 6px;
 }
@@ -61,4 +62,41 @@ html, body, app-root, md-sidenav-container, .primary-content {
 
 .roles-drop-down {
     width: 20em;
+}
+
+.device-status-card {
+    margin-top: 4px;
+}
+
+.device-status-card .device-status-name {
+    width: 9em;
+    display: inline-block;
+    word-break: break-all;
+}
+
+.device-status-card .device-status-bill {
+    width: 7rem;
+    display: inline-block;
+    word-break: break-all;
+    text-align: end;
+}
+
+.device-status-card .device-status-duration {
+    font-size: 70%;
+    width: 5rem;
+    display: inline-block;
+    word-break: break-all;
+    text-align: end;
+}
+
+.client-device-in-use {
+    background-color: rgba(0,255,255,0.1);
+}
+
+.client-device-free {
+    background-color: white;
+}
+
+.device-status-start-button {
+    background-color: rgba(0,255,0,0.2);
 }

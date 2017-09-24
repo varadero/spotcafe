@@ -11,7 +11,8 @@ import {
     MdInputModule,
     MdSelectModule,
     MdFormFieldModule,
-    MdSnackBarModule
+    MdSnackBarModule,
+    MdGridListModule
 } from '@angular/material';
 
 const allModules = [
@@ -25,7 +26,8 @@ const allModules = [
     MdInputModule,
     MdSelectModule,
     MdFormFieldModule,
-    MdSnackBarModule
+    MdSnackBarModule,
+    MdGridListModule
 ];
 
 @NgModule({

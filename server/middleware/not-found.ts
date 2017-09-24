@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as Koa from 'koa';
 
-export function notFound(options: INotFoundOptions) {
+export function notFound(options: INotFoundOptions): any {
     // TODO Make it async - look at https://github.com/evheniy/koa-2-error-handler/blob/master/lib/error.js
     return function (ctx: Koa.Context, next: () => Promise<any>): any {
         if (ctx.method !== 'GET') {

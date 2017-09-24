@@ -6,5 +6,6 @@ export interface IHttpServerConfig {
     host: string;
     port: number;
     secure: boolean;
+    redirectHttpToHttps: boolean;
     webAppFolder: string;
 }

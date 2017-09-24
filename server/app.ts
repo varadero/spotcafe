@@ -9,6 +9,8 @@ import * as bodyParser from 'koa-bodyparser';
 import { UdpDiscoveryListener } from './udp-discovery-listener';
 import { notFound } from './middleware/not-found';
 import { requireToken } from './middleware/require-token';
+import { requestLogger } from './middleware/request-logger';
+import { redirectToHttps } from './middleware/redirect-to-https';
 import { StorageProvider } from './storage/storage-provider';
 import { StorageProviderHelper } from './storage/storage-provider-helper';
 import { Logger } from './utils/logger';
@@ -23,6 +25,7 @@ import { RolesRoutes } from './routes/roles';
 import { ClientDevicesRoutes } from './routes/client-devices';
 import { IClientFilesData } from './storage/client-files-data';
 import { ClientFilesRoutes } from './routes/client-files';
+import { ClientDevicesStatusRoutes } from './routes/client-devices-status';
 
 export class App {
     private logger = new Logger();
@@ -48,6 +51,9 @@ export class App {
 
         const webFolder = path.join(__dirname, this.options.config.httpServer.webAppFolder);
         this.logger.log(`Serving from '${webFolder}'`);
+
+        this.koa.use(requestLogger(this.logger));
+
         this.koa.use(koaStatic(webFolder));
         this.koa.use(notFound({ root: webFolder, serve: 'index.html', ignorePrefix: apiPrefix }));
         this.koa.use(bodyParser());
@@ -79,6 +85,9 @@ export class App {
         this.koa.use(clientDevicesRoutes.getClientDevices());
         this.koa.use(clientDevicesRoutes.approveClientDevice());
         this.koa.use(clientDevicesRoutes.updateClientDevice());
+
+        const clientDevicesStatesRoutes = new ClientDevicesStatusRoutes(this.storageProvider, apiPrefix);
+        this.koa.use(clientDevicesStatesRoutes.getClientDevicesStatus());
     }
 
     /**
@@ -212,7 +221,12 @@ export class App {
         this.createKoa(tokenSecret);
 
         let result: Promise<https.Server | http.Server>;
-        if (this.options.config.httpServer.secure) {
+        const httpConf = this.options.config.httpServer;
+        if (httpConf.secure) {
+            if (httpConf.redirectHttpToHttps) {
+                http.createServer(redirectToHttps(httpConf.port)).listen(80, httpConf.host);
+            }
+
             const httpsServerOptions = <https.ServerOptions>{
                 key: this.options.key,
                 cert: this.options.cert
@@ -221,14 +235,14 @@ export class App {
 
             result = new Promise<https.Server>((resolve, reject) => {
                 const server = https.createServer(httpsServerOptions, this.koa.callback())
-                    .listen(this.options.config.httpServer.port, this.options.config.httpServer.host, () => {
+                    .listen(httpConf.port, httpConf.host, () => {
                         resolve(<https.Server>server);
                     });
             });
         } else {
             result = new Promise<https.Server>((resolve, reject) => {
                 const server = http.createServer(this.koa.callback())
-                    .listen(this.options.config.httpServer.port, this.options.config.httpServer.host, () => {
+                    .listen(httpConf.port, httpConf.host, () => {
                         resolve(<any>server);
                     });
             });

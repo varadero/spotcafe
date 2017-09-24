@@ -11,6 +11,7 @@ export class PermissionsMapper {
         rolesModify: string;
         permissionsView: string;
         permissionsModify: string;
+        clientDevicesStatusView: string;
     };
 
     private permissionsOrder: string[] = [];
@@ -27,6 +28,7 @@ export class PermissionsMapper {
         po.push(pids.rolesModify = '88BA6EBF-A9EB-4BC0-BC1F-520F56F94918');
         po.push(pids.permissionsView = '534A9C1D-0D77-42AB-92F6-3E7F27317689');
         po.push(pids.permissionsModify = 'AAF07984-BCE8-41F2-A5E6-8C1D7FFBB0B2');
+        po.push(pids.clientDevicesStatusView = '23C1D054-11D6-4DCB-A597-67F665D6328B');
     }
 
     mapToBinaryString(permissionIds: string[]): string {

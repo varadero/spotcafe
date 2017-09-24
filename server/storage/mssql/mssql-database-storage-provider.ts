@@ -17,6 +17,7 @@ import { IClientFilesData } from '../client-files-data';
 import { IRoleWithPermissionsIds } from '../../../shared/interfaces/role-with-permissions-ids';
 import { IRoleWithPermissions } from '../../../shared/interfaces/role-with-permissions';
 import { ICreateRoleWithPermissionsIdsResult } from '../../../shared/interfaces/create-role-with-permissions-ids-result';
+import { IClientDeviceStatus } from '../../../shared/interfaces/client-device-status';
 
 export class MSSqlDatabaseStorageProvider implements StorageProvider {
     private config: ConnectionConfig;
@@ -27,6 +28,17 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         this.logger = logger;
         this.config = <ConnectionConfig>(config);
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
+    }
+
+    async getClientDevicesStatus(): Promise<IClientDeviceStatus[]> {
+        const sql = `
+            SELECT cds.[DeviceId], cds.[IsStarted], cds.[StartedAt], cds.[StartedFor], cd.[Name], cd.[Approved]
+            FROM [ClientDevicesStatus] cds
+            INNER JOIN [ClientDevices] cd ON cds.[DeviceId]=cd.[Id]
+            WHERE cd.[Approved]=1
+        `;
+        const getResult = await this.dbHelper.execToObjects(sql);
+        return <IClientDeviceStatus[]>getResult.firstResultSet.rows;
     }
 
     async createRoleWithPermissionsIds(roleWithPermissionsIds: IRoleWithPermissionsIds): Promise<ICreateRoleWithPermissionsIdsResult> {
@@ -211,12 +223,23 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
     }
 
     async approveClientDevice(clientDevice: IClientDevice): Promise<void> {
-        const sql = `
+        let sql = `
             UPDATE [ClientDevices]
             SET [Name]=@Name,
                 [Approved]=@Approved,
                 [ApprovedAt]=@ApprovedAt
             WHERE [Id]=@Id
+
+            IF NOT EXISTS (
+                SELECT TOP 1 [DeviceId]
+                FROM [ClientDevicesStatus]
+                WHERE [DeviceId]=@Id
+            )
+                BEGIN
+                    INSERT INTO [ClientDevicesStatus]
+                    ([DeviceId], [IsStarted], [StartedAt], [StartedFor]) VALUES
+                    (@Id, 0, NULL, NULL)
+                END
         `;
         const params: IRequestParameter[] = [
             { name: 'Name', value: clientDevice.name, type: TYPES.NVarChar },
@@ -224,13 +247,15 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             { name: 'ApprovedAt', value: new Date().getTime(), type: TYPES.BigInt },
             { name: 'Id', value: clientDevice.id, type: TYPES.NVarChar }
         ];
+        sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
         await this.dbHelper.execRowCount(sql, params);
     }
 
     async registerClientDevice(id: string, name: string, address: string): Promise<IRegisterClientDeviceResult> {
         let sql = `
             IF EXISTS (
-                SELECT TOP 1 [Id] FROM [ClientDevices]
+                SELECT TOP 1 [Id]
+                FROM [ClientDevices]
                 WHERE [Id]=@Id
             )
                 BEGIN

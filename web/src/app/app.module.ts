@@ -4,19 +4,20 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CoreModule } from './core/core.module';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { ComputersComponent } from './computers/computers.component';
+import { ClientDevicesStatusComponent } from './client-devices-status/client-devices-status.component';
+import { ClientDevicesStatusService } from './client-devices-status/client-devices-status.service';
 
 @NgModule({
   declarations: [
     AppComponent,
-    ComputersComponent
+    ClientDevicesStatusComponent
   ],
   imports: [
     CoreModule,
     AppRoutingModule,
     NoopAnimationsModule
   ],
-  providers: [],
+  providers: [ClientDevicesStatusService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

@@ -11,6 +11,7 @@ import { IClientFilesData } from './client-files-data';
 import { IRoleWithPermissionsIds } from '../../shared/interfaces/role-with-permissions-ids';
 import { IEmployee } from '../../shared/interfaces/employee';
 import { ICreateRoleWithPermissionsIdsResult } from '../../shared/interfaces/create-role-with-permissions-ids-result';
+import { IClientDeviceStatus } from '../../shared/interfaces/client-device-status';
 
 export abstract class StorageProvider {
     abstract initialize(config: any, ...args: any[]): void;
@@ -20,6 +21,7 @@ export abstract class StorageProvider {
     abstract prepareStorage(): Promise<IPrepareStorageResult>;
 
     abstract getTokenSecret(): Promise<string | null>;
+    abstract getClientDevicesStatus(): Promise<IClientDeviceStatus[]>;
 
     abstract getEmployeesWithRoles(): Promise<IEmployeeWithRoles[]>;
     abstract createEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<ICreateEmployeeResult>;

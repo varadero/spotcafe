@@ -1,19 +1,16 @@
 <md-sidenav-container>
   <md-sidenav mode="side" opened="true" [ngClass]="{'sidenav-collapsed': sidenavCollapsed}">
     <md-nav-list>
-      <md-list-item routerLink="/computers" [attr.title]="sidenavCollapsed ? 'Computers': null" routerLinkActive="active-nav-item"
-        class="inactive-nav-item">
+      <md-list-item routerLink="/client-devices-status" title="Client devices status" routerLinkActive="active-nav-item" class="inactive-nav-item">
         <md-icon md-list-icon>desktop_windows</md-icon>
-        <h4 md-line *ngIf="!sidenavCollapsed">Computers</h4>
+        <h4 md-line *ngIf="!sidenavCollapsed">Client devices status</h4>
       </md-list-item>
       <md-divider></md-divider>
-      <md-list-item routerLink="/reports" [attr.title]="sidenavCollapsed ? 'Reports': null" routerLinkActive="active-nav-item"
-        class="inactive-nav-item">
+      <md-list-item routerLink="/reports" title="Reports" routerLinkActive="active-nav-item" class="inactive-nav-item">
         <md-icon md-list-icon>timeline</md-icon>
         <h4 md-line *ngIf="!sidenavCollapsed">Reports</h4>
       </md-list-item>
-      <md-list-item routerLink="/settings" [attr.title]="sidenavCollapsed ? 'Settings': null" routerLinkActive="active-nav-item"
-        class="inactive-nav-item">
+      <md-list-item routerLink="/settings" title="Settings" routerLinkActive="active-nav-item" class="inactive-nav-item">
         <md-icon md-list-icon>settings</md-icon>
         <h4 md-line *ngIf="!sidenavCollapsed">Settings</h4>
       </md-list-item>

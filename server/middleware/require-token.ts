@@ -1,6 +1,6 @@
 import * as koaJwt from 'koa-jwt';
 
-export function requireToken(options: IAuthOptons) {
+export function requireToken(options: IAuthOptons): koaJwt.Middleware {
     return koaJwt({ secret: options.secret });
 }
 
