@@ -150,8 +150,22 @@ export class App {
         if (createStorage && !administratorPassword) {
             return Promise.reject('When store must be created, application administrator password must be supplied');
         }
-
-        const prepareStorageResult = await this.prepareStorage(createStorage, administratorPassword);
+        let prepareStorageResult = {
+            createResult: <ICreateStorageResult | null>null,
+            prepareResult: <IPrepareStorageResult | null>null
+        };
+        // Try multiple times to prepare storage
+        // This could be useful if the application starts way sonner than the storage (database server)
+        for (let i = 0; i < 100000; i++) {
+            try {
+                prepareStorageResult = await this.prepareStorage(createStorage, administratorPassword);
+                if (prepareStorageResult.prepareResult) {
+                    break;
+                }
+            } catch (err) {
+                await this.delay(5000);
+            }
+        }
         if (createStorage) {
             // Creating storage will not start the server
             return null;
@@ -233,14 +247,14 @@ export class App {
 
             };
 
-            result = new Promise<https.Server>((resolve, reject) => {
+            result = new Promise<https.Server>(resolve => {
                 const server = https.createServer(httpsServerOptions, this.koa.callback())
                     .listen(httpConf.port, httpConf.host, () => {
                         resolve(<https.Server>server);
                     });
             });
         } else {
-            result = new Promise<https.Server>((resolve, reject) => {
+            result = new Promise<https.Server>(resolve => {
                 const server = http.createServer(this.koa.callback())
                     .listen(httpConf.port, httpConf.host, () => {
                         resolve(<any>server);
@@ -250,11 +264,11 @@ export class App {
         return result;
     }
 
-    // private delay(ms: number): Promise<void> {
-    //     return new Promise<void>((resolve, reject) => {
-    //         setTimeout(() => resolve(), ms);
-    //     });
-    // }
+    private delay(ms: number): Promise<void> {
+        return new Promise<void>(resolve => {
+            setTimeout(() => resolve(), ms);
+        });
+    }
 }
 
 export interface IAppOptions {
