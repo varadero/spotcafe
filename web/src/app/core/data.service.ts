@@ -12,6 +12,10 @@ import { IRoleWithPermissionsIds } from '../../../../shared/interfaces/role-with
 import { ICreateRoleWithPermissionsIdsResult } from '../../../../shared/interfaces/create-role-with-permissions-ids-result';
 import { IPermission } from '../../../../shared/interfaces/permission';
 import { IClientDeviceStatus } from '../../../../shared/interfaces/client-device-status';
+import { IStartClientDeviceArgs } from '../../../../shared/interfaces/start-client-device-args';
+import { IStartClientDeviceResult } from '../../../../shared/interfaces/start-client-device-result';
+import { IStopClientDeviceArgs } from '../../../../shared/interfaces/stop-client-device-args';
+import { IStopClientDeviceResult } from '../../../../shared/interfaces/stop-client-device-result';
 
 @Injectable()
 export class DataService {
@@ -23,6 +27,20 @@ export class DataService {
         private authSvc: AuthService // ,
         // private cacheSvc: CacheService
     ) { }
+
+    stopClientDevice(deviceId: string): Promise<IStopClientDeviceResult> {
+        const args: IStopClientDeviceArgs = {
+            deviceId: deviceId
+        };
+        return this.post('client-devices-status/' + encodeURIComponent(deviceId) + '/stop', args);
+    }
+
+    startClientDevice(deviceId: string): Promise<IStartClientDeviceResult> {
+        const args: IStartClientDeviceArgs = {
+            deviceId: deviceId
+        };
+        return this.post('client-devices-status/' + encodeURIComponent(deviceId) + '/start', args);
+    }
 
     getClientDevicesStatus(): Promise<IClientDeviceStatus[]> {
         return this.get('client-devices-status');

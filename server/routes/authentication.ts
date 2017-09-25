@@ -71,8 +71,13 @@ export class AuthenticationRoutes {
         if (this.apiPathIs(urlPath, 'permissions')) {
             return this.selectPermissionsIds(method, [pids.permissionsView], [pids.permissionsModify]);
         }
-        if (method === 'GET' && urlPath.startsWith(this.apiPathIs + 'client-devices-status')) {
-            return [pids.clientDevicesStatusView];
+        if (urlPath.startsWith(this.apiPathIs + 'client-devices-status')) {
+            if (method === 'GET') {
+                return [pids.clientDevicesStatusView];
+            }
+            if (method === 'POST') {
+                return [pids.clientDevicesStatusModify];
+            }
         }
 
         return [];

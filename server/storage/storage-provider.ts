@@ -12,6 +12,10 @@ import { IRoleWithPermissionsIds } from '../../shared/interfaces/role-with-permi
 import { IEmployee } from '../../shared/interfaces/employee';
 import { ICreateRoleWithPermissionsIdsResult } from '../../shared/interfaces/create-role-with-permissions-ids-result';
 import { IClientDeviceStatus } from '../../shared/interfaces/client-device-status';
+import { IStartClientDeviceArgs } from '../../shared/interfaces/start-client-device-args';
+import { IStartClientDeviceResult } from '../../shared/interfaces/start-client-device-result';
+import { IStopClientDeviceArgs } from '../../shared/interfaces/stop-client-device-args';
+import { IStopClientDeviceResult } from '../../shared/interfaces/stop-client-device-result';
 
 export abstract class StorageProvider {
     abstract initialize(config: any, ...args: any[]): void;
@@ -43,6 +47,8 @@ export abstract class StorageProvider {
     abstract getClientDevices(): Promise<IClientDevice[]>;
     abstract approveClientDevice(clientDevice: IClientDevice): Promise<void>;
     abstract updateClientDevice(clientDevice: IClientDevice): Promise<void>;
+    abstract startClientDevice(args: IStartClientDeviceArgs, startedAt: number): Promise<IStartClientDeviceResult>;
+    abstract stopClientDevice(args: IStopClientDeviceArgs, stoppedAt: number): Promise<IStopClientDeviceResult>;
 
     abstract getClientFiles(): Promise<IClientFilesData | null>;
     abstract setClientFiles(clientFiles: IClientFilesData): Promise<void>;

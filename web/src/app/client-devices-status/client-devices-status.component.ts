@@ -3,6 +3,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 // import { IClientDeviceStatus } from '../../../../shared/interfaces/client-device-status';
 import { DataService } from '../core/data.service';
 import { IClentDeviceStatusDisplay, ClientDevicesStatusService } from './client-devices-status.service';
+// import { IStartClientDeviceResult } from '../../../../shared/interfaces/start-client-device-result';
 
 @Component({
   templateUrl: './client-devices-status.component.html'
@@ -24,6 +25,32 @@ export class ClientDevicesStatusComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopInterval();
+  }
+
+  async startDevice(deviceId: string): Promise<void> {
+    try {
+      const result = await this.dataSvc.startClientDevice(deviceId);
+      if (result.alreadyStarted) {
+        // TODO Device is already started
+      }
+      // TODO Instead of refreshing all devices, return device status in the result
+      this.loadData();
+    } catch (err) {
+    } finally {
+    }
+  }
+
+  async stopDevice(deviceId: string): Promise<void> {
+    try {
+      const result = await this.dataSvc.stopClientDevice(deviceId);
+      if (result.alreadyStopped) {
+        // TODO Device is already stopped
+      }
+      // TODO Instead of refreshing all devices, return device status in the result
+      this.loadData();
+    } catch (err) {
+    } finally {
+    }
   }
 
   private async loadData(): Promise<void> {

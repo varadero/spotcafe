@@ -67,6 +67,7 @@ export class App {
         this.koa.use(requireToken({ secret: tokenSecret || '' }));
         this.koa.use(authRoutes.checkAuthorization());
 
+        // Everything below must be authenticated and authorized
         const employeesRoutes = new EmployeesRoutes(this.storageProvider, apiPrefix);
         this.koa.use(employeesRoutes.updateEmployeeWithRoles());
         this.koa.use(employeesRoutes.getEmployeesWithRoles());
@@ -88,6 +89,8 @@ export class App {
 
         const clientDevicesStatesRoutes = new ClientDevicesStatusRoutes(this.storageProvider, apiPrefix);
         this.koa.use(clientDevicesStatesRoutes.getClientDevicesStatus());
+        this.koa.use(clientDevicesStatesRoutes.startDevice());
+        this.koa.use(clientDevicesStatesRoutes.stopDevice());
     }
 
     /**

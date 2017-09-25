@@ -3,6 +3,7 @@ export interface IClientDeviceStatus {
     name: string;
     isStarted: boolean;
     startedAt: number;
+    stoppedAt: number;
     duration: number;
     bill: number;
 }

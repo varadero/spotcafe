@@ -18,6 +18,10 @@ import { IRoleWithPermissionsIds } from '../../../shared/interfaces/role-with-pe
 import { IRoleWithPermissions } from '../../../shared/interfaces/role-with-permissions';
 import { ICreateRoleWithPermissionsIdsResult } from '../../../shared/interfaces/create-role-with-permissions-ids-result';
 import { IClientDeviceStatus } from '../../../shared/interfaces/client-device-status';
+import { IStartClientDeviceArgs } from '../../../shared/interfaces/start-client-device-args';
+import { IStartClientDeviceResult } from '../../../shared/interfaces/start-client-device-result';
+import { IStopClientDeviceArgs } from '../../../shared/interfaces/stop-client-device-args';
+import { IStopClientDeviceResult } from '../../../shared/interfaces/stop-client-device-result';
 
 export class MSSqlDatabaseStorageProvider implements StorageProvider {
     private config: ConnectionConfig;
@@ -30,9 +34,71 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
     }
 
+    async stopClientDevice(args: IStopClientDeviceArgs, stoppedAt: number): Promise<IStopClientDeviceResult> {
+        const sql = `
+            IF EXISTS (
+                SELECT TOP 1 [IsStarted]
+                FROM [ClientDevicesStatus]
+                WHERE [DeviceId]=@DeviceId AND [IsStarted]=0
+            )
+                BEGIN
+                    SELECT [AlreadyStopped]=CAST(1 as bit)
+                END
+                ELSE
+                BEGIN
+                    SELECT [AlreadyStopped]=CAST(0 as bit)
+                    UPDATE [ClientDevicesStatus]
+                    SET [IsStarted]=0,
+                        [StoppedAt]=@StoppedAt
+                    WHERE [DeviceId]=@DeviceId
+                END
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'DeviceId', value: args.deviceId, type: TYPES.UniqueIdentifierN },
+            { name: 'StoppedAt', value: stoppedAt, type: TYPES.BigInt },
+        ];
+        const execResult = await this.dbHelper.execToObjects(sql, params);
+        const alreadyStopped = (<{ alreadyStopped: boolean }>execResult.firstResultSet.rows[0]).alreadyStopped;
+        const result: IStopClientDeviceResult = {
+            alreadyStopped: alreadyStopped
+        };
+        return result;
+    }
+
+    async startClientDevice(args: IStartClientDeviceArgs, startedAt: number): Promise<IStartClientDeviceResult> {
+        const sql = `
+            IF EXISTS (
+                SELECT TOP 1 [IsStarted]
+                FROM [ClientDevicesStatus]
+                WHERE [DeviceId]=@DeviceId AND [IsStarted]=1
+            )
+                BEGIN
+                    SELECT [AlreadyStarted]=CAST(1 as bit)
+                END
+                ELSE
+                BEGIN
+                    SELECT [AlreadyStarted]=CAST(0 as bit)
+                    UPDATE [ClientDevicesStatus]
+                    SET [IsStarted]=1,
+                        [StartedAt]=@StartedAt
+                    WHERE [DeviceId]=@DeviceId
+                END
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'DeviceId', value: args.deviceId, type: TYPES.UniqueIdentifierN },
+            { name: 'StartedAt', value: startedAt, type: TYPES.BigInt },
+        ];
+        const execResult = await this.dbHelper.execToObjects(sql, params);
+        const alreadyStarted = (<{ alreadyStarted: boolean }>execResult.firstResultSet.rows[0]).alreadyStarted;
+        const result: IStartClientDeviceResult = {
+            alreadyStarted: alreadyStarted
+        };
+        return result;
+    }
+
     async getClientDevicesStatus(): Promise<IClientDeviceStatus[]> {
         const sql = `
-            SELECT cds.[DeviceId], cds.[IsStarted], cds.[StartedAt], cds.[StartedFor], cd.[Name], cd.[Approved]
+            SELECT cds.[DeviceId], cds.[IsStarted], cds.[StartedAt], cds.[StartedFor], cds.[StoppedAt], cd.[Name], cd.[Approved]
             FROM [ClientDevicesStatus] cds
             INNER JOIN [ClientDevices] cd ON cds.[DeviceId]=cd.[Id]
             WHERE cd.[Approved]=1
@@ -237,8 +303,8 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             )
                 BEGIN
                     INSERT INTO [ClientDevicesStatus]
-                    ([DeviceId], [IsStarted], [StartedAt], [StartedFor]) VALUES
-                    (@Id, 0, NULL, NULL)
+                    ([DeviceId], [IsStarted], [StartedAt], [StartedFor], [StoppedAt]) VALUES
+                    (@Id, 0, NULL, NULL, NULL)
                 END
         `;
         const params: IRequestParameter[] = [

@@ -8,8 +8,8 @@
     <md-card-content>
     </md-card-content>
     <md-card-actions>
-      <button md-button color="primary" class="device-status-start-button" [style.visibility]="device.isStarted ? 'hidden': ''"><md-icon>play_arrow</md-icon>Start</button>
-      <button md-raised-button color="accent" [style.visibility]="device.isStarted ? '' : 'hidden'"><md-icon>stop</md-icon>Stop</button>
+      <button (click)="startDevice(device.deviceId)" md-button color="primary" class="device-status-start-button" [style.visibility]="device.isStarted ? 'hidden': ''"><md-icon>play_arrow</md-icon>Start</button>
+      <button (click)="stopDevice(device.deviceId)" md-raised-button color="accent" [style.visibility]="device.isStarted ? '' : 'hidden'"><md-icon>stop</md-icon>Stop</button>
     </md-card-actions>
   </md-card>
 </div>
