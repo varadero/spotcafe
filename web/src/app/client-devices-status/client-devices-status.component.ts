@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 
-import { IClientDeviceStatus } from '../../../../shared/interfaces/client-device-status';
+// import { IClientDeviceStatus } from '../../../../shared/interfaces/client-device-status';
 import { DataService } from '../core/data.service';
 import { IClentDeviceStatusDisplay, ClientDevicesStatusService } from './client-devices-status.service';
 

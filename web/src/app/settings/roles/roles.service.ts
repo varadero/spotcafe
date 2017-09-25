@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { IRoleWithPermissionsIds } from '../../../../../shared/interfaces/role-with-permissions-ids';
-import { IRoleWithPermissions } from '../../../../../shared/interfaces/role-with-permissions';
+// import { IRoleWithPermissions } from '../../../../../shared/interfaces/role-with-permissions';
 import { IRole } from '../../../../../shared/interfaces/role';
 import { IPermission } from '../../../../../shared/interfaces/permission';
 
@@ -56,7 +56,7 @@ export class RolesService {
         return result;
     }
 
-    getPermissionById(permissions: IPermission[], permissionId: string): IPermission {
+    getPermissionById(permissions: IPermission[], permissionId: string): IPermission | null {
         for (let i = 0; i < permissions.length; i++) {
             const permission = permissions[i];
             if (permission.id === permissionId) {

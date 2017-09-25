@@ -78,7 +78,7 @@ export class EmployeesService {
         }
     }
 
-    private getRoleById(roles: IRole[], roleId: string): IRole {
+    private getRoleById(roles: IRole[], roleId: string): IRole | null {
         for (let i = 0; i < roles.length; i++) {
             const role = roles[i];
             if (role.id === roleId) {

@@ -3,7 +3,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { DataService } from '../../core/data.service';
 import { IRoleWithPermissions } from '../../../../../shared/interfaces/role-with-permissions';
 import { IRoleWithPermissionsIds } from '../../../../../shared/interfaces/role-with-permissions-ids';
-import { IPermission } from '../../../../../shared/interfaces/permission';
+// import { IPermission } from '../../../../../shared/interfaces/permission';
 import { RolesService, ISelectablePermission, IRoleErrors, IRoleWithSelectablePermissions } from './roles.service';
 import { DisplayMessagesComponent } from '../../shared/display-messages.component';
 import { ErrorsService } from '../../shared/errors.service';
@@ -12,7 +12,7 @@ import { ErrorsService } from '../../shared/errors.service';
     templateUrl: './roles.component.html'
 })
 export class RolesComponent implements OnInit {
-    selectedRoleWithPermissions: IRoleWithSelectablePermissions;
+    selectedRoleWithPermissions: IRoleWithSelectablePermissions | undefined;
     newRoleWithPermissions: IRoleWithSelectablePermissions;
     rolesWithPermissions: IRoleWithSelectablePermissions[];
     permissions: ISelectablePermission[];

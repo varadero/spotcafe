@@ -199,15 +199,14 @@ export class DatabaseHelper {
     async execute(
         conn: Connection,
         sql: string,
-        inputParameters?: IRequestParameter[],
-        outputParameters?: IRequestParameter[]
+        inputParameters?: IRequestParameter[]
     ): Promise<IExecuteResult> {
         return new Promise<IExecuteResult>((resolve, reject) => {
             const result = <IExecuteResult>{};
             result.firstResultSet = <IResultSet>{ rows: [] };
             result.allResultSets = [];
             let rows: ColumnValue[][] = [];
-            const req = new Request(sql, (err, rowCount) => {
+            const req = new Request(sql, err => {
                 if (err) {
                     this.logError(err, sql);
                     return reject(err);
@@ -223,7 +222,7 @@ export class DatabaseHelper {
                 return resolve(result);
             });
             this.addRequestParameters(req, inputParameters);
-            req.on('columnMetadata', (columns: ColumnValue[]) => {
+            req.on('columnMetadata', () => {
                 // Happens before each resultset 'row' events
                 if (rows.length > 0) {
                     result.allResultSets.push(<IResultSet>{ rows: rows });
@@ -240,11 +239,10 @@ export class DatabaseHelper {
     async executeToObjects(
         conn: Connection | null,
         sql: string,
-        inputParameters?: IRequestParameter[],
-        outputParameters?: IRequestParameter[]
+        inputParameters?: IRequestParameter[]
     ): Promise<IExecuteToObjectsResult> {
         const connection = await this.getConnection(conn);
-        const executeResult = await this.execute(connection, sql, inputParameters, outputParameters);
+        const executeResult = await this.execute(connection, sql, inputParameters);
         if (!conn) {
             // The connection was not sent as parameter - it was created locally - close it
             this.close(connection);
@@ -276,10 +274,9 @@ export class DatabaseHelper {
 
     execToObjects(
         sql: string,
-        inputParameters?: IRequestParameter[],
-        outputParameters?: IRequestParameter[]
+        inputParameters?: IRequestParameter[]
     ): Promise<IExecuteToObjectsResult> {
-        return this.executeToObjects(null, sql, inputParameters, outputParameters);
+        return this.executeToObjects(null, sql, inputParameters);
     }
 
     /**
@@ -290,12 +287,11 @@ export class DatabaseHelper {
     async executeRowCount(
         conn: Connection | null,
         sql: string,
-        inputParameters?: IRequestParameter[],
-        outputParameters?: IRequestParameter[]
+        inputParameters?: IRequestParameter[]
     ): Promise<number> {
         const connection = await this.getConnection(conn);
         return new Promise<number>((resolve, reject) => {
-            const req = new Request(sql, (err, rowCount, rows) => {
+            const req = new Request(sql, (err, rowCount) => {
                 if (!conn) {
                     // The connection was not sent as parameter - it was created locally - close it
                     this.close(connection);
@@ -313,10 +309,9 @@ export class DatabaseHelper {
 
     async execRowCount(
         sql: string,
-        inputParameters?: IRequestParameter[],
-        outputParameters?: IRequestParameter[]
+        inputParameters?: IRequestParameter[]
     ): Promise<number> {
-        return this.executeRowCount(null, sql, inputParameters, outputParameters);
+        return this.executeRowCount(null, sql, inputParameters);
     }
 
     /**
@@ -331,7 +326,7 @@ export class DatabaseHelper {
         const connection = await this.getConnection(conn);
         let colValue: ColumnValue;
         return new Promise<ColumnValue>((resolve, reject) => {
-            const req = new Request(sql, (err, rowCount) => {
+            const req = new Request(sql, err => {
                 if (!conn) {
                     // The connection was not sent as parameter - it was created locally - close it
                     this.close(connection);

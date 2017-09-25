@@ -110,7 +110,7 @@ export class AuthenticationRoutes {
         return promise;
     }
 
-    private async logInEmployeeImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<any> {
+    private async logInEmployeeImpl(ctx: Koa.Context): Promise<any> {
         const credentials = <{ username: string, password: string }>ctx.request.body;
         const userWithPermissions = await this.storageProvider
             .getEmployeeWithRolesAndPermissions(credentials.username, credentials.password);

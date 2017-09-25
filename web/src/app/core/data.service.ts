@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/toPromise';
 
 import { AuthService } from './auth.service';
-import { CacheService } from './cache.service';
+// import { CacheService } from './cache.service';
 import { IEmployeeWithRoles } from '../../../../shared/interfaces/employee-with-roles';
 import { IRole } from '../../../../shared/interfaces/role';
 import { IClientDevice } from '../../../../shared/interfaces/client-device';
@@ -21,8 +20,8 @@ export class DataService {
 
     constructor(
         private http: HttpClient,
-        private authSvc: AuthService,
-        private cacheSvc: CacheService
+        private authSvc: AuthService // ,
+        // private cacheSvc: CacheService
     ) { }
 
     getClientDevicesStatus(): Promise<IClientDeviceStatus[]> {
@@ -112,13 +111,13 @@ export class DataService {
         );
     }
 
-    private patch(url: string, body: any): Promise<any> {
-        const headers = this.getHeaders();
-        return this.http.patch(this.getApiUrl(url), body, { headers: headers }).toPromise().then(
-            res => res,
-            err => this.handleErr(err, url)
-        );
-    }
+    // private patch(url: string, body: any): Promise<any> {
+    //     const headers = this.getHeaders();
+    //     return this.http.patch(this.getApiUrl(url), body, { headers: headers }).toPromise().then(
+    //         res => res,
+    //         err => this.handleErr(err, url)
+    //     );
+    // }
 
     private handleErr(err: any, url: string): never {
         if (err.error && err.error.message) {
@@ -144,17 +143,17 @@ export class DataService {
         return undefined;
     }
 
-    private getFromCache<T>(key: string): T | undefined {
-        if (!this.useCache) {
-            return undefined;
-        }
-        return this.cacheSvc.getItem<T>(key);
-    }
+    // private getFromCache<T>(key: string): T | undefined {
+    //     if (!this.useCache) {
+    //         return undefined;
+    //     }
+    //     return this.cacheSvc.getItem<T>(key);
+    // }
 
-    private setToCache<T>(key: string, item: T): void {
-        if (!this.useCache) {
-            return;
-        }
-        this.cacheSvc.setItem(key, item);
-    }
+    // private setToCache<T>(key: string, item: T): void {
+    //     if (!this.useCache) {
+    //         return;
+    //     }
+    //     this.cacheSvc.setItem(key, item);
+    // }
 }

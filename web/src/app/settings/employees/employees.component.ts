@@ -11,7 +11,7 @@ import {
     ISelectableRole,
     INewEmployeeWithSelectableRoles
 } from './employees.services';
-import { IEmployee } from '../../../../../shared/interfaces/employee';
+// import { IEmployee } from '../../../../../shared/interfaces/employee';
 import { ErrorsService } from '../../shared/errors.service';
 
 @Component({
@@ -19,7 +19,7 @@ import { ErrorsService } from '../../shared/errors.service';
 })
 export class EmployeesComponent implements OnInit {
     employeesWithRoles: IEmployeeWithSelectableRoles[];
-    selectedEmployeeWithRoles: IEmployeeWithSelectableRoles;
+    selectedEmployeeWithRoles: IEmployeeWithSelectableRoles | undefined;
     roles: IRole[] = [];
     newEmployeeWithRoles: INewEmployeeWithSelectableRoles;
     newEmployeeErrors: INewEmployeeErrors = {
@@ -57,7 +57,7 @@ export class EmployeesComponent implements OnInit {
         this.waiting.updateEmployee = true;
         try {
             const sanitizedEmployeeWithRoles = this.employeesSvc.getSanitizedEmployeeWithRoles(employeeWithRoles);
-            const updateResponse = await this.dataSvc.updateEmployeeWithRoles(sanitizedEmployeeWithRoles);
+            await this.dataSvc.updateEmployeeWithRoles(sanitizedEmployeeWithRoles);
             const username = employeeWithRoles.employee.username;
             this.addSuccessMessage(`Employee ${username} has been updated`, this.updateEmployeeMessagesComponent);
         } catch (err) {

@@ -84,7 +84,7 @@ export class ConnectionPool {
         clearInterval(this.cleanupTimer);
         for (let i = this.items.length - 1; i >= 0; i--) {
             const connection = this.items[i].connection;
-            connection.reset(err => { });
+            connection.reset(() => { });
             connection.removeAllListeners('connect');
             connection.removeAllListeners('errorMessage');
             connection.removeAllListeners('end');

@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { SettingsComponent } from './settings.component';
 import { EmployeesComponent } from './employees/employees.component';
-import { DisplayMessagesComponent } from '../shared/display-messages.component';
+// import { DisplayMessagesComponent } from '../shared/display-messages.component';
 import { ClientDevicesComponent } from './client-devices/client-devices.component';
 import { RolesComponent } from './roles/roles.component';
 

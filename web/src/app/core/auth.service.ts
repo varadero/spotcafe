@@ -6,11 +6,11 @@ import { IToken } from '../../../../shared/interfaces/token';
 
 @Injectable()
 export class AuthService {
-    loggedIn$ = new BehaviorSubject<IToken>(null);
+    loggedIn$ = new BehaviorSubject<IToken | null>(null);
     unauthorized$ = new Subject<string>();
 
     private tokenKey = 'spotcafe.token';
-    private token: IToken;
+    private token: IToken | null;
     private isLoggedIn: boolean;
     private storage: Storage;
 
@@ -45,7 +45,7 @@ export class AuthService {
         this.unauthorized$.next(url);
     }
 
-    getToken(): IToken {
+    getToken(): IToken | null {
         return this.token;
     }
 
@@ -53,7 +53,7 @@ export class AuthService {
         return sessionStorage;
     }
 
-    private getTokenFromStorage(): IToken {
+    private getTokenFromStorage(): IToken | null {
         const tokenValue = this.getFromStorage(this.tokenKey);
         if (!tokenValue) {
             return null;
@@ -67,7 +67,7 @@ export class AuthService {
         }
     }
 
-    private setTokenToStorage(token: IToken): void {
+    private setTokenToStorage(token: IToken | null): void {
         try {
             this.setToStorage(this.tokenKey, JSON.stringify(token));
         } catch (err) {
@@ -87,7 +87,7 @@ export class AuthService {
         }
     }
 
-    private getFromStorage(key: string): string {
+    private getFromStorage(key: string): string | null {
         try {
             return this.storage.getItem(key);
         } catch (err) {

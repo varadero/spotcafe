@@ -17,7 +17,7 @@ export class AppComponent implements OnInit {
     this.authSvc.loggedIn$.subscribe(token => {
       this.isLoggedIn = !!token;
     });
-    this.authSvc.unauthorized$.subscribe(url => {
+    this.authSvc.unauthorized$.subscribe(() => {
       // TODO Show toaster with unauthorized message
     });
   }
@@ -25,7 +25,7 @@ export class AppComponent implements OnInit {
   logInEmployee(username: string, password: string) {
     this.dataSvc.logInEmployee(username, password).then(res => {
       this.authSvc.setLoggedIn(res);
-    }, err => {
+    }, () => {
       this.authSvc.setUnauthenticated();
     });
   }

@@ -39,7 +39,7 @@ import { IMessage } from './message';
 })
 export class DisplayMessagesComponent implements OnInit {
     messages: IMessage[] = [];
-    @Input() staticMessage: IMessage = null;
+    @Input() staticMessage: IMessage | null = null;
 
     private timeout = 5000;
 
