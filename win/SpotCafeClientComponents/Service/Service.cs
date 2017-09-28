@@ -209,7 +209,7 @@ namespace SpotCafe.Service {
             si.cb = Marshal.SizeOf(si);
             si.lpDesktop = @"winsta0\default";
             var dwCreationFlags = Interop.NORMAL_PRIORITY_CLASS;
-            Interop.CreateProcessAsUser(duplicatedToken, null, appName, ref sa, ref sa, false, dwCreationFlags, IntPtr.Zero, null, ref si, out Interop.PROCESS_INFORMATION pi);
+            Interop.CreateProcessAsUser(duplicatedToken, appName, serviceConfig.ClientId + " " + serviceConfig.ServerIp, ref sa, ref sa, false, dwCreationFlags, IntPtr.Zero, null, ref si, out Interop.PROCESS_INFORMATION pi);
             return pi;
         }
 

@@ -19,9 +19,18 @@ export class ConnectionPool {
         this.poolConfig.maxConnections = poolConfig.maxConnections || this.defaultPoolConfig.maxConnections;
         this.poolConfig.timeToLive = poolConfig.timeToLive || this.defaultPoolConfig.timeToLive;
         this.items = [];
-        this.cleanupTimer = setInterval(() => {
+        // TODO The following for some strane reason doesn't work
+        // It will work if setInterval result is not assigned to this.cleanupTimer
+        // this.cleanupTimer = setInterval(() => {
+        //     this.cleanUpPool();
+        // }, this.poolConfig.timeToLive);
+
+        // TODO The following works
+        const cleanupTimer = setInterval(() => {
+            this.cleanupTimer = cleanupTimer;
             this.cleanUpPool();
         }, this.poolConfig.timeToLive);
+        if (cleanupTimer) { }
     }
 
     async getConnection(config: ConnectionConfig): Promise<Connection | null> {

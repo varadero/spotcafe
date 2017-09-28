@@ -35,7 +35,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
     }
 
     async stopClientDevice(args: IStopClientDeviceArgs, stoppedAt: number): Promise<IStopClientDeviceResult> {
-        const sql = `
+        let sql = `
             IF EXISTS (
                 SELECT TOP 1 [IsStarted]
                 FROM [ClientDevicesStatus]
@@ -57,6 +57,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             { name: 'DeviceId', value: args.deviceId, type: TYPES.UniqueIdentifierN },
             { name: 'StoppedAt', value: stoppedAt, type: TYPES.BigInt },
         ];
+        sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
         const execResult = await this.dbHelper.execToObjects(sql, params);
         const alreadyStopped = (<{ alreadyStopped: boolean }>execResult.firstResultSet.rows[0]).alreadyStopped;
         const result: IStopClientDeviceResult = {
@@ -66,7 +67,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
     }
 
     async startClientDevice(args: IStartClientDeviceArgs, startedAt: number): Promise<IStartClientDeviceResult> {
-        const sql = `
+        let sql = `
             IF EXISTS (
                 SELECT TOP 1 [IsStarted]
                 FROM [ClientDevicesStatus]
@@ -88,6 +89,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             { name: 'DeviceId', value: args.deviceId, type: TYPES.UniqueIdentifierN },
             { name: 'StartedAt', value: startedAt, type: TYPES.BigInt },
         ];
+        sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
         const execResult = await this.dbHelper.execToObjects(sql, params);
         const alreadyStarted = (<{ alreadyStarted: boolean }>execResult.firstResultSet.rows[0]).alreadyStarted;
         const result: IStartClientDeviceResult = {
@@ -96,15 +98,12 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         return result;
     }
 
+    async getClientDeviceStatus(deviceId: string): Promise<IClientDeviceStatus> {
+        return (await this.getClientDevicesStatusImpl(deviceId))[0];
+    }
+
     async getClientDevicesStatus(): Promise<IClientDeviceStatus[]> {
-        const sql = `
-            SELECT cds.[DeviceId], cds.[IsStarted], cds.[StartedAt], cds.[StartedFor], cds.[StoppedAt], cd.[Name], cd.[Approved]
-            FROM [ClientDevicesStatus] cds
-            INNER JOIN [ClientDevices] cd ON cds.[DeviceId]=cd.[Id]
-            WHERE cd.[Approved]=1
-        `;
-        const getResult = await this.dbHelper.execToObjects(sql);
-        return <IClientDeviceStatus[]>getResult.firstResultSet.rows;
+        return this.getClientDevicesStatusImpl(null);
     }
 
     async createRoleWithPermissionsIds(roleWithPermissionsIds: IRoleWithPermissionsIds): Promise<ICreateRoleWithPermissionsIdsResult> {
@@ -355,6 +354,20 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         return result;
     }
 
+    async getClientDevice(deviceId: string): Promise<IClientDevice> {
+        const sql = `
+            SELECT TOP 1 [Id], [Name], [Address], [Description], [Approved], [ApprovedAt]
+            FROM [ClientDevices]
+            WHERE [Id]=@DeviceId
+            ORDER BY [Name]
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'DeviceId', value: deviceId, type: TYPES.NVarChar }
+        ];
+        const getResult = await this.dbHelper.execToObjects(sql, params);
+        return <IClientDevice>getResult.firstResultSet.rows[0];
+    }
+
     async getClientDevices(): Promise<IClientDevice[]> {
         const sql = `
             SELECT [Id], [Name], [Address], [Description], [Approved], [ApprovedAt]
@@ -564,6 +577,26 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
 
     async prepareStorage(): Promise<IPrepareStorageResult> {
         return this.dbHelper.prepareDatabase();
+    }
+
+    private async getClientDevicesStatusImpl(deviceId: string | null): Promise<IClientDeviceStatus[]> {
+        let sql = `
+            SELECT cds.[DeviceId], cds.[IsStarted], cds.[StartedAt], cds.[StartedFor], cds.[StoppedAt], cd.[Name], cd.[Approved]
+            FROM [ClientDevicesStatus] cds
+            INNER JOIN [ClientDevices] cd ON cds.[DeviceId]=cd.[Id]
+            WHERE cd.[Approved]=1
+        `;
+        const params: IRequestParameter[] = [];
+        if (deviceId) {
+            sql += `
+                AND cds.[DeviceId]=@DeviceId
+            `;
+            params.push(
+                { name: 'DeviceId', value: deviceId, type: TYPES.UniqueIdentifierN }
+            );
+        }
+        const getResult = await this.dbHelper.execToObjects(sql, params);
+        return <IClientDeviceStatus[]>getResult.firstResultSet.rows;
     }
 
     private async getEmployeeByUsernameAndPassword(username: string, password: string): Promise<IEmployee | null> {

@@ -28,7 +28,7 @@ export class EmployeesRoutes extends RoutesBase {
 
     updateEmployeeWithRoles(): any {
         return route.post(this.apiPrefix + 'employees/:id', async ctx => {
-            await this.handleActionResult(ctx, () => this.updateEmployeeWithRolesImpl(ctx.request.body, ctx.state.token));
+            await this.handleActionResult(ctx, () => this.updateEmployeeWithRolesImpl(ctx.request.body, this.getServerToken(ctx)));
         });
     }
 

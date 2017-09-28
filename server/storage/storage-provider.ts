@@ -25,7 +25,9 @@ export abstract class StorageProvider {
     abstract prepareStorage(): Promise<IPrepareStorageResult>;
 
     abstract getTokenSecret(): Promise<string | null>;
+
     abstract getClientDevicesStatus(): Promise<IClientDeviceStatus[]>;
+    abstract getClientDeviceStatus(deviceId: string): Promise<IClientDeviceStatus>;
 
     abstract getEmployeesWithRoles(): Promise<IEmployeeWithRoles[]>;
     abstract createEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<ICreateEmployeeResult>;
@@ -45,6 +47,7 @@ export abstract class StorageProvider {
 
     abstract registerClientDevice(id: string, name: string, address: string): Promise<IRegisterClientDeviceResult>;
     abstract getClientDevices(): Promise<IClientDevice[]>;
+    abstract getClientDevice(deviceId: string): Promise<IClientDevice>;
     abstract approveClientDevice(clientDevice: IClientDevice): Promise<void>;
     abstract updateClientDevice(clientDevice: IClientDevice): Promise<void>;
     abstract startClientDevice(args: IStartClientDeviceArgs, startedAt: number): Promise<IStartClientDeviceResult>;

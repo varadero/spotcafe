@@ -26,6 +26,7 @@ import { ClientDevicesRoutes } from './routes/client-devices';
 import { IClientFilesData } from './storage/client-files-data';
 import { ClientFilesRoutes } from './routes/client-files';
 import { ClientDevicesStatusRoutes } from './routes/client-devices-status';
+import { ClientDeviceCurrentDataRoutes } from './routes/client-device-current-data';
 
 export class App {
     private logger = new Logger();
@@ -63,6 +64,7 @@ export class App {
 
         const authRoutes = new AuthenticationRoutes(this.storageProvider, apiPrefix);
         this.koa.use(authRoutes.logInEmployee());
+        this.koa.use(authRoutes.logInClientDevice());
 
         this.koa.use(requireToken({ secret: tokenSecret || '' }));
         this.koa.use(authRoutes.checkAuthorization());
@@ -91,6 +93,9 @@ export class App {
         this.koa.use(clientDevicesStatesRoutes.getClientDevicesStatus());
         this.koa.use(clientDevicesStatesRoutes.startDevice());
         this.koa.use(clientDevicesStatesRoutes.stopDevice());
+
+        const clientDeviceCurrentDataRoutes = new ClientDeviceCurrentDataRoutes(this.storageProvider, apiPrefix);
+        this.koa.use(clientDeviceCurrentDataRoutes.getClientDeviceCurrentData());
     }
 
     /**
@@ -159,14 +164,17 @@ export class App {
         };
         // Try multiple times to prepare storage
         // This could be useful if the application starts way sonner than the storage (database server)
+        const delay = 5000;
         for (let i = 0; i < 100000; i++) {
             try {
                 prepareStorageResult = await this.prepareStorage(createStorage, administratorPassword);
                 if (prepareStorageResult.prepareResult) {
                     break;
+                } else {
+                    await this.delay(delay);
                 }
             } catch (err) {
-                await this.delay(5000);
+                await this.delay(delay);
             }
         }
         if (createStorage) {

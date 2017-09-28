@@ -11,6 +11,7 @@ using System.Windows.Forms;
 
 namespace SpotCafe.Desktop {
     static class Program {
+        private static string logFileFullPath;
         private static Logger logger;
         private static Mutex mutex;
         private const string mutexName = @"Global\7D23335A-9D10-4462-B1AF-A2C729C1B509";
@@ -20,7 +21,7 @@ namespace SpotCafe.Desktop {
         /// </summary>
         [STAThread]
         static void Main() {
-            var logFileFullPath = Path.Combine(Application.CommonAppDataPath, $"SpotCafe.Desktop.{Environment.UserName}.log.txt");
+            logFileFullPath = Path.Combine(Application.CommonAppDataPath, $"SpotCafe.Desktop.{Environment.UserName}.log.txt");
             try {
                 logger = new Logger(logFileFullPath);
             } catch { }
@@ -44,6 +45,10 @@ namespace SpotCafe.Desktop {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new MainForm());
+        }
+
+        public static string GetLogFileFullPath() {
+            return logFileFullPath;
         }
 
         static bool RegisterMutex() {

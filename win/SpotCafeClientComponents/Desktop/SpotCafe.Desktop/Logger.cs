@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace SpotCafe.Desktop {
     public class Logger {
+        private static object locker = new object();
         private string logFile;
 
         public Logger(string logFile) {
@@ -22,7 +23,9 @@ namespace SpotCafe.Desktop {
 
         private void Log(string message, string type) {
             try {
-                File.AppendAllText(logFile, $"{DateTime.Now}: {type}: {message}{Environment.NewLine}");
+                lock (locker) {
+                    File.AppendAllText(logFile, $"{DateTime.Now}: {type}: {message}{Environment.NewLine}");
+                }
             } catch { }
         }
 

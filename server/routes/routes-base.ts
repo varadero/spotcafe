@@ -2,9 +2,10 @@ import * as Koa from 'koa';
 
 import { IRouteActionResult } from './interfaces/route-action-result';
 import { ErrorMessage } from '../utils/error-message';
+import { IServerToken } from './interfaces/server-token';
 
 export class RoutesBase {
-    private errorMessage = new ErrorMessage();
+    protected errorMessage = new ErrorMessage();
 
     async handleActionResult<T>(
         ctx: Koa.Context,
@@ -42,7 +43,15 @@ export class RoutesBase {
             }
             return result;
         } catch (err) {
-            return ctx.throw(500);
+            if (err && err.status) {
+                return ctx.throw(err.status);
+            } else {
+                return ctx.throw(500);
+            }
         }
+    }
+
+    getServerToken(ctx: Koa.Context): IServerToken {
+        return ctx.state.token;
     }
 }
