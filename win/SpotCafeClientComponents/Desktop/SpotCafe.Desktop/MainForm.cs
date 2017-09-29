@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,15 +22,24 @@ namespace SpotCafe.Desktop {
         private RestClient rest;
         private Logger logger;
         private Timer currentDataTimer;
+        private IntPtr secureDekstopHandle;
+        private IntPtr startupDesktopHandle;
+        private CommandLineArgs commandLineArgs;
 
         public MainForm() {
             InitializeComponent();
             var args = Environment.GetCommandLineArgs();
             logger = new Logger(Program.GetLogFileFullPath());
             logger.Log($"Starting with arguments {string.Join(" ", args)}");
-            clientId = args[1];
-            serverIp = args[2];
+            var cmdArgsParser = new CommandLineArgsParser();
+            commandLineArgs = cmdArgsParser.Parse(args);
+            clientId = commandLineArgs.ClientID;
+            serverIp = commandLineArgs.ServerIP;
             logger.Log($"ClientID={clientId} ; ServerIP={serverIp}");
+            startupDesktopHandle = Program.GetStartupDesktopHandle();
+            logger.Log($"Startup desktop handle: {startupDesktopHandle}");
+            secureDekstopHandle = CreateSecureDesktop();
+            logger.Log($"Secure desktop handle: {secureDekstopHandle}");
             ServicePointManager.ServerCertificateValidationCallback = ServiceCertificateValidationCallback;
             currentDataTimer = new Timer();
             currentDataTimer.Interval = (int)TimeSpan.FromSeconds(5).TotalMilliseconds;
@@ -43,6 +53,19 @@ namespace SpotCafe.Desktop {
                 return;
             }
             textBox1.Text = currentData.IsStarted.ToString();
+            var switched = SwitchSesktops(currentData.IsStarted);
+            if (!switched) {
+                logger.Log($"Error on switching desktop: {Marshal.GetLastWin32Error()}");
+            }
+        }
+
+        private bool SwitchSesktops(bool isStarted) {
+#if DEBUG
+            textBox1.Text = isStarted.ToString();
+            return true;
+#endif
+            var desktopHandle = isStarted ? startupDesktopHandle : secureDekstopHandle;
+            return Interop.SwitchDesktop(desktopHandle);
         }
 
         private async void CurrentDataTimer_Tick(object sender, EventArgs e) {
@@ -86,6 +109,11 @@ namespace SpotCafe.Desktop {
             //    }
             //}
             return true;
+        }
+
+        private IntPtr CreateSecureDesktop() {
+            var desktopHandle = Interop.CreateDesktop("SpotCafeDesktop", IntPtr.Zero, IntPtr.Zero, 0, Interop.DesktopAccessRights.GENERIC_ALL, IntPtr.Zero);
+            return desktopHandle;
         }
     }
 }

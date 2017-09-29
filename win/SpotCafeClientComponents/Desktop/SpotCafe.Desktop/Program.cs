@@ -15,6 +15,7 @@ namespace SpotCafe.Desktop {
         private static Logger logger;
         private static Mutex mutex;
         private const string mutexName = @"Global\7D23335A-9D10-4462-B1AF-A2C729C1B509";
+        private static IntPtr startupDesktopHandle;
 
         /// <summary>
         /// The main entry point for the application.
@@ -42,9 +43,15 @@ namespace SpotCafe.Desktop {
                 return;
             }
 
+            startupDesktopHandle = Interop.GetInputDesktopHandle();
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new MainForm());
+        }
+
+        public static IntPtr GetStartupDesktopHandle() {
+            return startupDesktopHandle;
         }
 
         public static string GetLogFileFullPath() {

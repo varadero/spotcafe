@@ -7,6 +7,31 @@ using System.Threading.Tasks;
 
 namespace SpotCafe.Desktop {
     public class Interop {
+        public enum ObjectInformationIndex {
+            UOI_NAME = 2
+        }
+
+        //public enum DesktopAccess : uint {
+        //    DESKTOP_READOBJECTS = 1
+        //}
+
+        [Flags]
+        public enum DesktopAccessRights : uint {
+            DESKTOP_READOBJECTS = 0x00000001,
+            DESKTOP_CREATEWINDOW = 0x00000002,
+            DESKTOP_CREATEMENU = 0x00000004,
+            DESKTOP_HOOKCONTROL = 0x00000008,
+            DESKTOP_JOURNALRECORD = 0x00000010,
+            DESKTOP_JOURNALPLAYBACK = 0x00000020,
+            DESKTOP_ENUMERATE = 0x00000040,
+            DESKTOP_WRITEOBJECTS = 0x00000080,
+            DESKTOP_SWITCHDESKTOP = 0x00000100,
+
+            GENERIC_ALL = (DESKTOP_READOBJECTS | DESKTOP_CREATEWINDOW | DESKTOP_CREATEMENU |
+                DESKTOP_HOOKCONTROL | DESKTOP_JOURNALRECORD | DESKTOP_JOURNALPLAYBACK |
+                DESKTOP_ENUMERATE | DESKTOP_WRITEOBJECTS | DESKTOP_SWITCHDESKTOP)
+        };
+
         [DllImport("user32.dll", SetLastError = true)]
         public static extern IntPtr GetThreadDesktop(uint dwThreadId);
 
@@ -25,17 +50,25 @@ namespace SpotCafe.Desktop {
         [DllImport("user32.dll", SetLastError = true)]
         static extern IntPtr OpenInputDesktop(uint dwFlags, bool fInherit, uint dwDesiredAccess);
 
-        public enum ObjectInformationIndex {
-            UOI_NAME = 2
-        }
+        [DllImport("user32.dll")]
+        public static extern bool SwitchDesktop(IntPtr hDesktop);
 
-        public enum DesktopAccess : uint {
-            DESKTOP_READOBJECTS = 1
+        [DllImport("user32.dll")]
+        public static extern IntPtr CreateDesktop(
+            string lpszDesktop,
+            IntPtr lpszDevice,
+            IntPtr pDevmode,
+            int dwFlags,
+            DesktopAccessRights dwDesiredAccess,
+            IntPtr lpsa
+        );
+
+        public static IntPtr GetInputDesktopHandle() {
+            return OpenInputDesktop(0, false, (uint)DesktopAccessRights.GENERIC_ALL);
         }
 
         public static string GetInputDesktopName() {
-            var inputDesktopHandle = OpenInputDesktop(0, false, (uint)DesktopAccess.DESKTOP_READOBJECTS);
-            return GetDesktopName(inputDesktopHandle);
+            return GetDesktopName(GetInputDesktopHandle());
         }
 
         public static string GetProcessDesktopName() {

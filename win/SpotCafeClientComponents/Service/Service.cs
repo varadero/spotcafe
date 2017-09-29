@@ -209,7 +209,24 @@ namespace SpotCafe.Service {
             si.cb = Marshal.SizeOf(si);
             si.lpDesktop = @"winsta0\default";
             var dwCreationFlags = Interop.NORMAL_PRIORITY_CLASS;
-            Interop.CreateProcessAsUser(duplicatedToken, appName, serviceConfig.ClientId + " " + serviceConfig.ServerIp, ref sa, ref sa, false, dwCreationFlags, IntPtr.Zero, null, ref si, out Interop.PROCESS_INFORMATION pi);
+            var serverIp = serviceConfig.ServerIp;
+            if (string.IsNullOrWhiteSpace(serverIp)) {
+                serverIp = remoteEndPoint.Address.ToString();
+            }
+
+            Interop.CreateProcessAsUser(
+                duplicatedToken,
+                appName,
+                $"ClientID={serviceConfig.ClientId} ServerIP={serverIp} ServerCertificateThumbprint={serviceConfig.ServerCertificateThumbprint}",
+                ref sa,
+                ref sa,
+                false,
+                dwCreationFlags,
+                IntPtr.Zero,
+                null,
+                ref si,
+                out Interop.PROCESS_INFORMATION pi
+            );
             return pi;
         }
 
