@@ -19,8 +19,8 @@ namespace SpotCafe.Service.REST {
             client.BaseAddress = ub.Uri;
         }
 
-        public async Task<string> GetClientFiles() {
-            var response = await client.GetAsync(GetApiPath("client-files"));
+        public async Task<string> GetClientStartupData() {
+            var response = await client.GetAsync(GetApiPath("client-startup-data"));
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadAsStringAsync();
             return body;

@@ -22,6 +22,7 @@ import { IStartClientDeviceArgs } from '../../../shared/interfaces/start-client-
 import { IStartClientDeviceResult } from '../../../shared/interfaces/start-client-device-result';
 import { IStopClientDeviceArgs } from '../../../shared/interfaces/stop-client-device-args';
 import { IStopClientDeviceResult } from '../../../shared/interfaces/stop-client-device-result';
+import { IClientStartupData } from '../client-startup-data';
 
 export class MSSqlDatabaseStorageProvider implements StorageProvider {
     private config: ConnectionConfig;
@@ -259,13 +260,16 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         await this.dbHelper.execRowCount(sql, params);
     }
 
-    async getClientFiles(): Promise<IClientFilesData | null> {
+    async getClientStartupData(): Promise<IClientStartupData | null> {
+        const result = <IClientStartupData>{};
         const setting = await this.dbHelper.getDatabaseSetting(null, 'client.files');
         if (setting) {
-            return <IClientFilesData>JSON.parse(setting);
+            result.clientFiles = <IClientFilesData>JSON.parse(setting);
         } else {
-            return null;
+            result.clientFiles = null;
         }
+        // TODO Add more data
+        return result;
     }
 
     async updateClientDevice(clientDevice: IClientDevice): Promise<void> {

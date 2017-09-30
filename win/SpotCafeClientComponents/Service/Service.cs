@@ -27,7 +27,7 @@ namespace SpotCafe.Service {
         private Serializer serializer;
         private const int downloadClientFilesTriesCount = 10;
         private TimeSpan downloadClientFilesDelayBetweenRetries = TimeSpan.FromSeconds(6);
-        private ClientFilesData clientFiles = null;
+        private ClientStartupData clientStartupData = null;
         private const string clientFileNameToStart = "SpotCafe.Desktop.exe";
         private string clientAppFullPath;
         private string pathForClientFiles;
@@ -100,6 +100,11 @@ namespace SpotCafe.Service {
         }
 
         private void ExecuteStartupClientFileIfLoggedIn() {
+#if DEBUG
+            if (string.Equals(Environment.MachineName, "svincho", StringComparison.OrdinalIgnoreCase)) {
+                return;
+            }
+#endif
             // TODO Execute startup client file also if the service is started while the user is already logged in...
             uint sessionId = 0;
             if (useConsoleSession) {
@@ -173,13 +178,14 @@ namespace SpotCafe.Service {
                     e.StopDiscover = true;
                     discoverer.StopDiscovery();
                     remoteEndPoint = e.RemoteEndPoint;
-                    clientFiles = await DownloadClientFiles();
+                    clientStartupData = await DownloadClientFiles();
+                    var clientFiles = clientStartupData?.ClientFiles;
                     if (clientFiles != null) {
                         var appToRun = (clientFiles != null && !string.IsNullOrWhiteSpace(clientFiles.StartupName)) ? clientFiles.StartupName : clientFileNameToStart;
                         clientAppFullPath = Path.Combine(pathForClientFiles, appToRun);
                         ExecuteStartupClientFileIfLoggedIn();
                     } else {
-
+                        LogError("No startup data received from the server", LogEventIds.NoStartupDataReceived);
                     }
                 }
             } catch (Exception ex) {
@@ -230,20 +236,22 @@ namespace SpotCafe.Service {
             return pi;
         }
 
-        private async Task<ClientFilesData> DownloadClientFiles() {
+        private async Task<ClientStartupData> DownloadClientFiles() {
             var serviceHost = remoteEndPoint.Address.ToString();
             var client = new RestClient(serviceHost, "api");
+            ClientStartupData clientStartupDataResult = null;
             for (var i = 0; i < downloadClientFilesTriesCount; i++) {
                 try {
                     Log($"Downloading client files from {serviceHost}", LogEventIds.DownloadingClientFiles);
-                    var clientFilesResponse = await client.GetClientFiles();
-                    clientFiles = serializer.Deserialize<ClientFilesData>(clientFilesResponse);
+                    var clientStartupDataResponse = await client.GetClientStartupData();
+                    clientStartupDataResult = serializer.Deserialize<ClientStartupData>(clientStartupDataResponse);
                     break;
                 } catch (Exception ex) {
                     LogError($"Error {i + 1}/{downloadClientFilesTriesCount} on loading client files: {ex}", LogEventIds.ErrorDownloadingClientFiles);
                     await Task.Delay(downloadClientFilesDelayBetweenRetries);
                 }
             }
+            var clientFiles = clientStartupDataResult?.ClientFiles;
             if (clientFiles != null && clientFiles.Files != null && clientFiles.Files.Length > 0) {
                 // Client files were downloaded - extract them
                 try {
@@ -258,7 +266,7 @@ namespace SpotCafe.Service {
             } else {
                 LogError("There is no client files data", LogEventIds.DownloadingClientFiles);
             }
-            return clientFiles;
+            return clientStartupDataResult;
         }
 
         private void ExtractClientFiles(ClientFilesData data, string folder) {

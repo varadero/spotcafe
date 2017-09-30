@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SpotCafe.Service {
+namespace SpotCafe.Service.REST {
     [DataContract]
     public class ClientFilesData {
         [DataMember(Name = "files")]

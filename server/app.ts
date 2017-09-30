@@ -24,7 +24,7 @@ import { EmployeesRoutes } from './routes/employees';
 import { RolesRoutes } from './routes/roles';
 import { ClientDevicesRoutes } from './routes/client-devices';
 import { IClientFilesData } from './storage/client-files-data';
-import { ClientFilesRoutes } from './routes/client-files';
+import { ClientStartupDataRoutes } from './routes/client-startup-data';
 import { ClientDevicesStatusRoutes } from './routes/client-devices-status';
 import { ClientDeviceCurrentDataRoutes } from './routes/client-device-current-data';
 
@@ -60,8 +60,8 @@ export class App {
         this.koa.use(notFound({ root: webFolder, serve: 'index.html', ignorePrefix: apiPrefix }));
         this.koa.use(bodyParser());
 
-        const clientFilesRouts = new ClientFilesRoutes(this.storageProvider, apiPrefix);
-        this.koa.use(clientFilesRouts.getClientFiles());
+        const clientStartupDataRoutes = new ClientStartupDataRoutes(this.storageProvider, apiPrefix);
+        this.koa.use(clientStartupDataRoutes.getClientStartupData());
 
         const authRoutes = new AuthenticationRoutes(this.storageProvider, apiPrefix);
         this.koa.use(authRoutes.logInEmployee());

@@ -3,13 +3,7 @@ import * as route from 'koa-route';
 import { StorageProvider } from '../storage/storage-provider';
 import { RoutesBase } from './routes-base';
 import { IRouteActionResult } from './interfaces/route-action-result';
-import { IClientDeviceCurrentData } from './interfaces/client-device-current-date';
-
-declare module 'koa' {
-    interface Context extends BaseContext {
-        state: any | { asdf: number };
-    }
-}
+import { IClientDeviceCurrentData } from './interfaces/client-device-current-data';
 
 export class ClientDeviceCurrentDataRoutes extends RoutesBase {
 
