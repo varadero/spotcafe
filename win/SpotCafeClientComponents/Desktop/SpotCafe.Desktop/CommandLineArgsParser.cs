@@ -13,10 +13,12 @@ namespace SpotCafe.Desktop {
                 if (parts.Length == 2) {
                     var name = parts[0].ToLower();
                     var value = parts[1];
-                    if (name == "clientid") {
-                        result.ClientID = value;
-                    } else if (name == "serverip") {
+                    if (name == "client-id") {
+                        result.ClientId = value;
+                    } else if (name == "server-ip") {
                         result.ServerIP = value;
+                    } else if (name == "server-certificate-thumbprint") {
+                        result.ServerCertificateThumbprint = value;
                     }
                 }
             }

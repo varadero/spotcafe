@@ -11,40 +11,36 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SpotCafe.Desktop {
     public partial class MainForm : Form {
-        private string clientId;
-        private string serverIp;
-        private ClientToken clientToken;
-        private RestClient rest;
-        private Logger logger;
-        private Timer currentDataTimer;
-        private IntPtr secureDekstopHandle;
-        private IntPtr startupDesktopHandle;
-        private CommandLineArgs commandLineArgs;
+        private MainFormState _state;
 
         public MainForm() {
             InitializeComponent();
-            var args = Environment.GetCommandLineArgs();
-            logger = new Logger(Program.GetLogFileFullPath());
-            logger.Log($"Starting with arguments {string.Join(" ", args)}");
-            var cmdArgsParser = new CommandLineArgsParser();
-            commandLineArgs = cmdArgsParser.Parse(args);
-            clientId = commandLineArgs.ClientID;
-            serverIp = commandLineArgs.ServerIP;
-            logger.Log($"ClientID={clientId} ; ServerIP={serverIp}");
-            startupDesktopHandle = Program.GetStartupDesktopHandle();
-            logger.Log($"Startup desktop handle: {startupDesktopHandle}");
-            secureDekstopHandle = CreateSecureDesktop();
-            logger.Log($"Secure desktop handle: {secureDekstopHandle}");
+            _state = new MainFormState();
+        }
+
+        public void Start(MainFormStartArgs args) {
+            _state.StartArgs = args;
+            _state.Logger = args.Logger;
+
+            StartSecureThread();
+            // Accept all service sertificates
             ServicePointManager.ServerCertificateValidationCallback = ServiceCertificateValidationCallback;
-            currentDataTimer = new Timer();
-            currentDataTimer.Interval = (int)TimeSpan.FromSeconds(5).TotalMilliseconds;
-            currentDataTimer.Tick += CurrentDataTimer_Tick;
-            rest = new RestClient(serverIp, "api", clientId);
+
+            // Poll timer for current data (which contains isStarted flag etc.)
+            _state.CurrentDataTimer = new System.Windows.Forms.Timer();
+            _state.CurrentDataTimer.Interval = (int)TimeSpan.FromSeconds(5).TotalMilliseconds;
+            _state.CurrentDataTimer.Tick += CurrentDataTimer_Tick;
+
+            // REST client for communication with the server
+            _state.Rest = new RestClient(_state.StartArgs.CommandLineArguments.ServerIP, "api", _state.StartArgs.CommandLineArguments.ClientId);
+
+            // Try to log in
             LogInDevice();
         }
 
@@ -55,49 +51,60 @@ namespace SpotCafe.Desktop {
             textBox1.Text = currentData.IsStarted.ToString();
             var switched = SwitchSesktops(currentData.IsStarted);
             if (!switched) {
-                logger.Log($"Error on switching desktop: {Marshal.GetLastWin32Error()}");
+                Log($"Error on switching desktop: {Marshal.GetLastWin32Error()}");
             }
         }
 
         private bool SwitchSesktops(bool isStarted) {
-#if DEBUG
-            textBox1.Text = isStarted.ToString();
-            return true;
-#endif
-            var desktopHandle = isStarted ? startupDesktopHandle : secureDekstopHandle;
+            var desktopHandle = isStarted ? _state.StartArgs.StartupDesktopHandle : _state.StartArgs.SecureDesktopHandle;
             return Interop.SwitchDesktop(desktopHandle);
+        }
+
+        private void StartSecureThread() {
+            _state.SecureThreadState = new SecureThreadState();
+            _state.SecureThreadState.SecureDesktopHandle = _state.StartArgs.SecureDesktopHandle;
+            _state.SecureThread = new Thread(new ParameterizedThreadStart(SecureThread));
+            _state.SecureThread.Start(_state.SecureThreadState);
+
+        }
+
+        private void SecureThread(object state) {
+            var threadState = (SecureThreadState)state;
+            Interop.SetThreadDesktop(threadState.SecureDesktopHandle);
+            threadState.SecureForm = new SecureForm();
+            Application.Run(threadState.SecureForm);
         }
 
         private async void CurrentDataTimer_Tick(object sender, EventArgs e) {
             try {
-                currentDataTimer.Stop();
-                var currentData = await rest.GetCurrentData();
+                _state.CurrentDataTimer.Stop();
+                var currentData = await _state.Rest.GetCurrentData();
                 ProcessCurrentData(currentData);
             } catch (Exception ex) {
-                logger.LogError($"Error on getting current data: {ex}");
+                LogError($"Error on getting current data: {ex}");
             } finally {
-                currentDataTimer.Start();
+                _state.CurrentDataTimer.Start();
             }
         }
 
         private async void LogInDevice() {
             for (var i = 0; i < 100; i++) {
                 try {
-                    clientToken = await rest.LogIn();
-                    rest.SetToken(clientToken);
+                    _state.ClientToken = await _state.Rest.LogIn();
+                    _state.Rest.SetToken(_state.ClientToken);
                     // TODO Start the application
-                    CurrentDataTimer_Tick(currentDataTimer, EventArgs.Empty);
+                    CurrentDataTimer_Tick(_state.CurrentDataTimer, EventArgs.Empty);
                     StartCurrentDataTimer();
                     break;
                 } catch (Exception ex) {
-                    logger.LogError($"Error logging in: {ex}");
+                    LogError($"Error logging in: {ex}");
                     await Task.Delay(TimeSpan.FromSeconds(5));
                 }
             }
         }
 
         private void StartCurrentDataTimer() {
-            currentDataTimer.Start();
+            _state.CurrentDataTimer.Start();
         }
 
         private bool ServiceCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) {
@@ -111,9 +118,40 @@ namespace SpotCafe.Desktop {
             return true;
         }
 
-        private IntPtr CreateSecureDesktop() {
-            var desktopHandle = Interop.CreateDesktop("SpotCafeDesktop", IntPtr.Zero, IntPtr.Zero, 0, Interop.DesktopAccessRights.GENERIC_ALL, IntPtr.Zero);
-            return desktopHandle;
+        private void Log(string message) {
+            _state.Logger.Log(message);
+        }
+
+        private void LogError(string message) {
+            _state.Logger.LogError(message);
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e) {
+            var secureForm = _state.SecureThreadState?.SecureForm;
+            if (secureForm != null) {
+                try {
+                    secureForm.Invoke((MethodInvoker)delegate {
+                        secureForm.Close();
+                    });
+                } catch (Exception ex) {
+                    LogError($"Can't close secure form: {ex}");
+                }
+            }
+            base.OnFormClosing(e);
+        }
+
+        private class MainFormState {
+            public ClientToken ClientToken { get; set; }
+            public RestClient Rest { get; set; }
+            public Logger Logger { get; set; }
+            public System.Windows.Forms.Timer CurrentDataTimer { get; set; }
+            public Thread SecureThread { get; set; }
+            public MainFormStartArgs StartArgs { get; set; }
+            public SecureThreadState SecureThreadState { get; set; }
+        }
+        private class SecureThreadState {
+            public Form SecureForm { get; set; }
+            public IntPtr SecureDesktopHandle { get; set; }
         }
     }
 }

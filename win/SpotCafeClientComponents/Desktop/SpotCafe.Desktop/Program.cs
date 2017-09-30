@@ -15,7 +15,6 @@ namespace SpotCafe.Desktop {
         private static Logger logger;
         private static Mutex mutex;
         private const string mutexName = @"Global\7D23335A-9D10-4462-B1AF-A2C729C1B509";
-        private static IntPtr startupDesktopHandle;
 
         /// <summary>
         /// The main entry point for the application.
@@ -43,22 +42,36 @@ namespace SpotCafe.Desktop {
                 return;
             }
 
-            startupDesktopHandle = Interop.GetInputDesktopHandle();
+            var args = Environment.GetCommandLineArgs();
+            Log($"Starting with arguments {string.Join(" ", args)}");
+            var cmdArgsParser = new CommandLineArgsParser();
+            var commandLineArgs = cmdArgsParser.Parse(args);
+            logger.Log($"ClientID={commandLineArgs.ClientId} ; ServerIP={commandLineArgs.ServerIP}");
 
+            var startupDesktopHandle = Interop.GetInputDesktopHandle();
+            var secureDesktopHandle = CreateSecureDesktop();
+            var mainForm = new MainForm();
+            mainForm.Start(new MainFormStartArgs {
+                StartupDesktopHandle = startupDesktopHandle,
+                SecureDesktopHandle = secureDesktopHandle,
+                CommandLineArguments = commandLineArgs,
+                Logger = logger
+            });
             Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainForm());
-        }
-
-        public static IntPtr GetStartupDesktopHandle() {
-            return startupDesktopHandle;
+            //Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(mainForm);
         }
 
         public static string GetLogFileFullPath() {
             return logFileFullPath;
         }
 
-        static bool RegisterMutex() {
+        private static IntPtr CreateSecureDesktop() {
+            var desktopHandle = Interop.CreateDesktop("SpotCafeSecureDesktop", IntPtr.Zero, IntPtr.Zero, 0, Interop.DesktopAccessRights.GENERIC_ALL, IntPtr.Zero);
+            return desktopHandle;
+        }
+
+        private static bool RegisterMutex() {
             var mutexIsNew = false;
             try {
                 mutex = Mutex.OpenExisting(mutexName);

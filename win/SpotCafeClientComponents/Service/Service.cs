@@ -217,7 +217,7 @@ namespace SpotCafe.Service {
             Interop.CreateProcessAsUser(
                 duplicatedToken,
                 appName,
-                $"ClientID={serviceConfig.ClientId} ServerIP={serverIp} ServerCertificateThumbprint={serviceConfig.ServerCertificateThumbprint}",
+                $"Client-ID={serviceConfig.ClientId} Server-IP={serverIp} Server-Certificate-Thumbprint={serviceConfig.ServerCertificateThumbprint}",
                 ref sa,
                 ref sa,
                 false,

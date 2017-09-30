@@ -54,6 +54,9 @@ namespace SpotCafe.Desktop {
         public static extern bool SwitchDesktop(IntPtr hDesktop);
 
         [DllImport("user32.dll")]
+        public static extern bool SetThreadDesktop(IntPtr hDesktop);
+
+        [DllImport("user32.dll")]
         public static extern IntPtr CreateDesktop(
             string lpszDesktop,
             IntPtr lpszDevice,
