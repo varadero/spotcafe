@@ -29,7 +29,7 @@ import { ClientDevicesStatusRoutes } from './routes/client-devices-status';
 import { ClientDeviceCurrentDataRoutes } from './routes/client-device-current-data';
 
 export class App {
-    private logger = new Logger();
+    private logger: Logger;
     private koa: Koa;
     private storageProvider: StorageProvider;
     private server: https.Server | http.Server;
@@ -43,6 +43,7 @@ export class App {
      * for application administrator user which will be created as the first user
      */
     start(createStorage: boolean, administratorPassword?: string | null): Promise<https.Server | http.Server | null> {
+        this.logger = new Logger(this.options.config.logging.filePath);
         return this.startImpl(createStorage, administratorPassword);
     }
 

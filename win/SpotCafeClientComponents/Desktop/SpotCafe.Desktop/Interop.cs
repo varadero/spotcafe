@@ -11,10 +11,6 @@ namespace SpotCafe.Desktop {
             UOI_NAME = 2
         }
 
-        //public enum DesktopAccess : uint {
-        //    DESKTOP_READOBJECTS = 1
-        //}
-
         [Flags]
         public enum DesktopAccessRights : uint {
             DESKTOP_READOBJECTS = 0x00000001,
@@ -31,6 +27,31 @@ namespace SpotCafe.Desktop {
                 DESKTOP_HOOKCONTROL | DESKTOP_JOURNALRECORD | DESKTOP_JOURNALPLAYBACK |
                 DESKTOP_ENUMERATE | DESKTOP_WRITEOBJECTS | DESKTOP_SWITCHDESKTOP)
         };
+
+        public static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
+        //public static readonly IntPtr HWND_NOTOPMOST = new IntPtr(-2);
+        //public static readonly IntPtr HWND_TOP = new IntPtr(0);
+        //public static readonly IntPtr HWND_BOTTOM = new IntPtr(1);
+
+        //public const uint SWP_NOSIZE = 0x0001;
+        //public const uint SWP_NOMOVE = 0x0002;
+        public const uint SWP_SHOWWINDOW = 0x0040;
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct LASTINPUTINFO {
+            public static readonly int SizeOf = Marshal.SizeOf(typeof(LASTINPUTINFO));
+
+            [MarshalAs(UnmanagedType.U4)]
+            public UInt32 cbSize;
+            [MarshalAs(UnmanagedType.U4)]
+            public UInt32 dwTime;
+        }
+
+        [DllImport("user32.dll")]
+        public static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern IntPtr GetThreadDesktop(uint dwThreadId);
@@ -65,6 +86,18 @@ namespace SpotCafe.Desktop {
             DesktopAccessRights dwDesiredAccess,
             IntPtr lpsa
         );
+
+        public static TimeSpan GetIdleTime() {
+            var lastInputInfo = new LASTINPUTINFO();
+            lastInputInfo.cbSize = (uint)LASTINPUTINFO.SizeOf;
+            if (GetLastInputInfo(ref lastInputInfo)) {
+                var duration = Environment.TickCount - lastInputInfo.dwTime;
+                if (duration > 0) {
+                    return TimeSpan.FromMilliseconds(duration);
+                }
+            }
+            return TimeSpan.Zero;
+        }
 
         public static IntPtr GetInputDesktopHandle() {
             return OpenInputDesktop(0, false, (uint)DesktopAccessRights.GENERIC_ALL);

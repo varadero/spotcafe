@@ -21,24 +21,14 @@ namespace SpotCafe.Desktop {
 
         public MainForm() {
             InitializeComponent();
-            _state = new MainFormState();
         }
 
         public void Start(MainFormStartArgs args) {
-            _state.StartArgs = args;
-            _state.Logger = args.Logger;
-
-            StartSecureThread();
             // Accept all service sertificates
             ServicePointManager.ServerCertificateValidationCallback = ServiceCertificateValidationCallback;
 
-            // Poll timer for current data (which contains isStarted flag etc.)
-            _state.CurrentDataTimer = new System.Windows.Forms.Timer();
-            _state.CurrentDataTimer.Interval = (int)TimeSpan.FromSeconds(5).TotalMilliseconds;
-            _state.CurrentDataTimer.Tick += CurrentDataTimer_Tick;
-
-            // REST client for communication with the server
-            _state.Rest = new RestClient(_state.StartArgs.CommandLineArguments.ServerIP, "api", _state.StartArgs.CommandLineArguments.ClientId);
+            InitializeState(args);
+            StartSecureThread();
 
             // Try to log in
             LogInDevice();
@@ -61,18 +51,26 @@ namespace SpotCafe.Desktop {
         }
 
         private void StartSecureThread() {
-            _state.SecureThreadState = new SecureThreadState();
-            _state.SecureThreadState.SecureDesktopHandle = _state.StartArgs.SecureDesktopHandle;
-            _state.SecureThread = new Thread(new ParameterizedThreadStart(SecureThread));
             _state.SecureThread.Start(_state.SecureThreadState);
-
         }
 
         private void SecureThread(object state) {
             var threadState = (SecureThreadState)state;
             Interop.SetThreadDesktop(threadState.SecureDesktopHandle);
             threadState.SecureForm = new SecureForm();
+            threadState.SecureForm.SignIn += SecureForm_SignIn;
+            var secureFormStartArgs = new SecureFormStartArgs();
+            threadState.SecureForm.Start(secureFormStartArgs);
             Application.Run(threadState.SecureForm);
+        }
+
+        private void SecureForm_SignIn(object sender, SignInEventArgs e) {
+            try {
+
+            } catch (Exception ex) {
+                LogError($"Error on sign in: {ex}");
+            }
+            _state.SecureThreadState.SecureForm.SignInResult(false, "User name or password is invalid");
         }
 
         private async void CurrentDataTimer_Tick(object sender, EventArgs e) {
@@ -108,13 +106,14 @@ namespace SpotCafe.Desktop {
         }
 
         private bool ServiceCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) {
-            //if (!string.IsNullOrWhiteSpace(serviceConfig.ServerCertificateThumbprint)) {
-            //    var certThumbprint = certificate.GetCertHashString();
-            //    if (certThumbprint != serviceConfig.ServerCertificateThumbprint) {
-            //        LogError($"Certificate thumbprint {certThumbprint} does not match configuration thumbprint {serviceConfig.ServerCertificateThumbprint}", LogEventIds.ServiceCertificateThumbprintError);
-            //        return false;
-            //    }
-            //}
+            var thumbprintArg = _state.StartArgs.CommandLineArguments.ServerCertificateThumbprint;
+            if (!string.IsNullOrWhiteSpace(thumbprintArg)) {
+                var certThumbprint = certificate.GetCertHashString();
+                if (certThumbprint != thumbprintArg) {
+                    LogError($"Certificate thumbprint {certThumbprint} does not match configuration thumbprint {thumbprintArg}");
+                    return false;
+                }
+            }
             return true;
         }
 
@@ -140,6 +139,24 @@ namespace SpotCafe.Desktop {
             base.OnFormClosing(e);
         }
 
+        private void InitializeState(MainFormStartArgs args) {
+            _state = new MainFormState();
+            _state.StartArgs = args;
+            _state.Logger = args.Logger;
+
+            // Poll timer for current data (which contains isStarted flag etc.)
+            _state.CurrentDataTimer = new System.Windows.Forms.Timer();
+            _state.CurrentDataTimer.Interval = (int)TimeSpan.FromSeconds(5).TotalMilliseconds;
+            _state.CurrentDataTimer.Tick += CurrentDataTimer_Tick;
+
+            // REST client for communication with the server
+            _state.Rest = new RestClient(_state.StartArgs.CommandLineArguments.ServerIP, "api", _state.StartArgs.CommandLineArguments.ClientId);
+
+            _state.SecureThreadState = new SecureThreadState();
+            _state.SecureThreadState.SecureDesktopHandle = _state.StartArgs.SecureDesktopHandle;
+            _state.SecureThread = new Thread(new ParameterizedThreadStart(SecureThread));
+        }
+
         private class MainFormState {
             public ClientToken ClientToken { get; set; }
             public RestClient Rest { get; set; }
@@ -150,7 +167,7 @@ namespace SpotCafe.Desktop {
             public SecureThreadState SecureThreadState { get; set; }
         }
         private class SecureThreadState {
-            public Form SecureForm { get; set; }
+            public SecureForm SecureForm { get; set; }
             public IntPtr SecureDesktopHandle { get; set; }
         }
     }

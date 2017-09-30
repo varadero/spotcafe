@@ -70,7 +70,9 @@
     <Compile Include="SecureForm.Designer.cs">
       <DependentUpon>SecureForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="SecureFormStartArgs.cs" />
     <Compile Include="Serializer.cs" />
+    <Compile Include="SignInEventArgs.cs" />
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -83,6 +85,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="SecureForm.resx">
+      <DependentUpon>SecureForm.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

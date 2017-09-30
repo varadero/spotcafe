@@ -2,6 +2,7 @@
 
 # Project files
 SpotCafe.Desktop.zip
+/logs
 
 # compiled output
 /dist

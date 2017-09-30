@@ -5,5 +5,8 @@
         "secure": true,
         "redirectHttpToHttps": true,
         "webAppFolder": "dist/web/"
+    },
+    "logging": {
+        "filePath": "./logs/spotcafe.server.log"
     }
 }

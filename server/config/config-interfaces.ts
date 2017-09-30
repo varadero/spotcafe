@@ -1,5 +1,6 @@
 export interface IAppConfig {
     httpServer: IHttpServerConfig;
+    logging: ILogConfig;
 }
 
 export interface IHttpServerConfig {
@@ -8,4 +9,8 @@ export interface IHttpServerConfig {
     secure: boolean;
     redirectHttpToHttps: boolean;
     webAppFolder: string;
+}
+
+export interface ILogConfig {
+    filePath: string;
 }
