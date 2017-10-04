@@ -100,3 +100,11 @@ html, body, app-root, md-sidenav-container, .primary-content {
 .device-status-start-button {
     background-color: rgba(0,255,0,0.2);
 }
+
+button.client-device-button {
+    margin-right: 1em;
+}
+
+.client-device-approved-check {
+    margin-right: 1em;
+}

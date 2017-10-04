@@ -17,6 +17,7 @@ import { IStartClientDeviceResult } from '../../shared/interfaces/start-client-d
 import { IStopClientDeviceArgs } from '../../shared/interfaces/stop-client-device-args';
 import { IStopClientDeviceResult } from '../../shared/interfaces/stop-client-device-result';
 import { IClientStartupData } from './client-startup-data';
+import { IDeviceGroup } from '../../shared/interfaces/device-group';
 
 export abstract class StorageProvider {
     abstract initialize(config: any, ...args: any[]): void;
@@ -49,7 +50,6 @@ export abstract class StorageProvider {
     abstract registerClientDevice(id: string, name: string, address: string): Promise<IRegisterClientDeviceResult>;
     abstract getClientDevices(): Promise<IClientDevice[]>;
     abstract getClientDevice(deviceId: string): Promise<IClientDevice>;
-    abstract approveClientDevice(clientDevice: IClientDevice): Promise<void>;
     abstract updateClientDevice(clientDevice: IClientDevice): Promise<void>;
     abstract startClientDevice(args: IStartClientDeviceArgs, startedAt: number): Promise<IStartClientDeviceResult>;
     abstract stopClientDevice(args: IStopClientDeviceArgs, stoppedAt: number): Promise<IStopClientDeviceResult>;
@@ -57,4 +57,6 @@ export abstract class StorageProvider {
     abstract getClientStartupData(): Promise<IClientStartupData | null>;
 
     abstract setClientFiles(clientFiles: IClientFilesData): Promise<void>;
+
+    abstract getDevicesGroups(): Promise<IDeviceGroup[]>;
 }

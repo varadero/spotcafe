@@ -6,6 +6,7 @@ import { EmployeesComponent } from './employees/employees.component';
 // import { DisplayMessagesComponent } from '../shared/display-messages.component';
 import { ClientDevicesComponent } from './client-devices/client-devices.component';
 import { RolesComponent } from './roles/roles.component';
+import { DevicesGroupsComponent } from './devices-groups/devices-groups.component';
 
 const routes: Routes = [
     {
@@ -20,6 +21,9 @@ const routes: Routes = [
         }, {
             path: 'roles',
             component: RolesComponent
+        }, {
+            path: 'devices-groups',
+            component: DevicesGroupsComponent
         }]
     }
 ];

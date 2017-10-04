@@ -23,6 +23,7 @@ import { IStartClientDeviceResult } from '../../../shared/interfaces/start-clien
 import { IStopClientDeviceArgs } from '../../../shared/interfaces/stop-client-device-args';
 import { IStopClientDeviceResult } from '../../../shared/interfaces/stop-client-device-result';
 import { IClientStartupData } from '../client-startup-data';
+import { IDeviceGroup } from '../../../shared/interfaces/device-group';
 
 export class MSSqlDatabaseStorageProvider implements StorageProvider {
     private config: ConnectionConfig;
@@ -33,6 +34,16 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         this.logger = logger;
         this.config = <ConnectionConfig>(config);
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
+    }
+
+    async getDevicesGroups(): Promise<IDeviceGroup[]> {
+        const sql = `
+            SELECT [Id], [Name], [Description]
+            FROM [DevicesGroups]
+            ORDER BY [Name]
+        `;
+        const getResult = await this.dbHelper.execToObjects(sql);
+        return <IDeviceGroup[]>getResult.firstResultSet.rows;
     }
 
     async stopClientDevice(args: IStopClientDeviceArgs, stoppedAt: number): Promise<IStopClientDeviceResult> {
@@ -278,7 +289,9 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             SET [Name]=@Name,
                 [Address]=@Address,
                 [Description]=@Description,
-                [Approved]=@Approved
+                [Approved]=@Approved,
+                [ApprovedAt]=CASE WHEN (@Approved=1 AND [ApprovedAt] IS NULL) THEN @ApprovedAt ELSE [ApprovedAt] END,
+                [DeviceGroupId]=@DeviceGroupId
             WHERE [Id]=@Id
         `;
         const params: IRequestParameter[] = [
@@ -286,37 +299,10 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             { name: 'Address', value: clientDevice.address, type: TYPES.NVarChar },
             { name: 'Description', value: clientDevice.description, type: TYPES.NVarChar },
             { name: 'Approved', value: clientDevice.approved, type: TYPES.Bit },
+            { name: 'ApprovedAt', value: clientDevice.approvedAt, type: TYPES.BigInt },
+            { name: 'DeviceGroupId', value: clientDevice.deviceGroup.id, type: TYPES.UniqueIdentifier },
             { name: 'Id', value: clientDevice.id, type: TYPES.NVarChar },
         ];
-        await this.dbHelper.execRowCount(sql, params);
-    }
-
-    async approveClientDevice(clientDevice: IClientDevice): Promise<void> {
-        let sql = `
-            UPDATE [ClientDevices]
-            SET [Name]=@Name,
-                [Approved]=@Approved,
-                [ApprovedAt]=@ApprovedAt
-            WHERE [Id]=@Id
-
-            IF NOT EXISTS (
-                SELECT TOP 1 [DeviceId]
-                FROM [ClientDevicesStatus]
-                WHERE [DeviceId]=@Id
-            )
-                BEGIN
-                    INSERT INTO [ClientDevicesStatus]
-                    ([DeviceId], [IsStarted], [StartedAt], [StartedFor], [StoppedAt]) VALUES
-                    (@Id, 0, NULL, NULL, NULL)
-                END
-        `;
-        const params: IRequestParameter[] = [
-            { name: 'Name', value: clientDevice.name, type: TYPES.NVarChar },
-            { name: 'Approved', value: 1, type: TYPES.Bit },
-            { name: 'ApprovedAt', value: new Date().getTime(), type: TYPES.BigInt },
-            { name: 'Id', value: clientDevice.id, type: TYPES.NVarChar }
-        ];
-        sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
         await this.dbHelper.execRowCount(sql, params);
     }
 
@@ -336,12 +322,18 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
                     INSERT INTO [ClientDevices]
                     ([Id], [Name], [Address], [Approved]) VALUES
                     (@Id, @Name, @Address, 0)
+
+                    INSERT INTO [ClientDevicesStatus]
+                    ([DeviceId], [IsStarted], [StartedAt], [StartedFor], [StoppedAt]) VALUES
+                    (@Id, 0, NULL, NULL, NULL)
                 END
 
-            SELECT TOP 1 [Id], [Name], [Address], [Description], [Approved], [ApprovedAt]
-            FROM [ClientDevices]
+            SELECT TOP 1 cd.[Id], cd.[Name], cd.[Address], cd.[Description], cd.[Approved], cd.[ApprovedAt], cd.[DeviceGroupId],
+                         dg.[Name] AS [DeviceGroupName]
+            FROM [ClientDevices] cd
+            INNER JOIN [DevicesGroups] dg ON cd.[DeviceGroupId] = dg.[Id]
             WHERE [Id]=@Id
-        `;
+            `;
         const params: IRequestParameter[] = [
             { name: 'Id', value: id, type: TYPES.NVarChar },
             { name: 'Name', value: name, type: TYPES.NVarChar },
@@ -350,7 +342,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
         const registerDeviceResult = await this.dbHelper.execToObjects(sql, params);
         const createdNew = (<{ createdNew: boolean }>registerDeviceResult.firstResultSet.rows[0]).createdNew;
-        const device = <IClientDevice>registerDeviceResult.allResultSets[1].rows[0];
+        const device = this.getClientDevicesFromRows(registerDeviceResult.allResultSets[1].rows[0])[0];
         const result = <IRegisterClientDeviceResult>{
             clientDevice: device,
             createdNew: createdNew
@@ -360,8 +352,10 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
 
     async getClientDevice(deviceId: string): Promise<IClientDevice> {
         const sql = `
-            SELECT TOP 1 [Id], [Name], [Address], [Description], [Approved], [ApprovedAt]
-            FROM [ClientDevices]
+            SELECT TOP 1 cd.[Id], cd.[Name], cd.[Address], cd.[Description], cd.[Approved], cd.[ApprovedAt], cd.[DeviceGroupId],
+                         dg.[Name] AS [DeviceGroupName]
+            FROM [ClientDevices] cd
+            INNER JOIN [DevicesGroups] dg ON cd.[DeviceGroupId] = dg.[Id]
             WHERE [Id]=@DeviceId
             ORDER BY [Name]
         `;
@@ -369,17 +363,42 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             { name: 'DeviceId', value: deviceId, type: TYPES.NVarChar }
         ];
         const getResult = await this.dbHelper.execToObjects(sql, params);
-        return <IClientDevice>getResult.firstResultSet.rows[0];
+        const clientDevice = this.getClientDevicesFromRows(getResult.firstResultSet.rows[0])[0];
+        return clientDevice;
     }
 
     async getClientDevices(): Promise<IClientDevice[]> {
         const sql = `
-            SELECT [Id], [Name], [Address], [Description], [Approved], [ApprovedAt]
-            FROM [ClientDevices]
-            ORDER BY [Name]
+            SELECT cd.[Id], cd.[Name], cd.[Address], cd.[Description], cd.[Approved], cd.[ApprovedAt], cd.[DeviceGroupId],
+                   dg.[Name] AS [DeviceGroupName]
+            FROM [ClientDevices] cd
+            INNER JOIN [DevicesGroups] dg ON cd.[DeviceGroupId] = dg.[Id]
+            ORDER BY cd.[Name]
         `;
         const getResult = await this.dbHelper.execToObjects(sql);
-        return <IClientDevice[]>getResult.firstResultSet.rows;
+        const clientDevices = this.getClientDevicesFromRows(getResult.firstResultSet.rows);
+        return clientDevices;
+    }
+
+    getClientDevicesFromRows(rows: any): IClientDevice[] {
+        const keyObjectMap = { id: '', name: '', address: '', description: '', approved: '', approvedAt: '' };
+        const itemsObjectMap = { deviceGroupId: 'id', deviceGroupName: 'name' };
+        const groupedAndRenamed = this.dbHelper.groupAndRename(
+            rows,
+            keyObjectMap,
+            itemsObjectMap,
+            'clientDevice',
+            'deviceGroup'
+        );
+        const clientDevices = groupedAndRenamed.map(x => this.getClientDeviceFromGroup(x));
+        return clientDevices;
+    }
+
+    getClientDeviceFromGroup(group: any): IClientDevice {
+        const firstGroup = group;
+        const clientDevice = <IClientDevice>firstGroup.clientDevice;
+        clientDevice.deviceGroup = <IDeviceGroup>firstGroup.deviceGroup[0];
+        return clientDevice;
     }
 
     async createEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): Promise<ICreateEmployeeResult> {

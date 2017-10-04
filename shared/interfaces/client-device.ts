@@ -1,3 +1,5 @@
+import { IIdWithName } from './id-with-name';
+
 export interface IClientDevice {
     id: string;
     name: string;
@@ -5,4 +7,5 @@ export interface IClientDevice {
     description: string;
     approved: boolean;
     approvedAt?: number;
+    deviceGroup: IIdWithName;
 }

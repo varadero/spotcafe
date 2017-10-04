@@ -27,6 +27,7 @@ import { IClientFilesData } from './storage/client-files-data';
 import { ClientStartupDataRoutes } from './routes/client-startup-data';
 import { ClientDevicesStatusRoutes } from './routes/client-devices-status';
 import { ClientDeviceCurrentDataRoutes } from './routes/client-device-current-data';
+import { DevicesGroupsRoutes } from './routes/devices-groups';
 
 export class App {
     private logger: Logger;
@@ -87,7 +88,6 @@ export class App {
 
         const clientDevicesRoutes = new ClientDevicesRoutes(this.storageProvider, apiPrefix);
         this.koa.use(clientDevicesRoutes.getClientDevices());
-        this.koa.use(clientDevicesRoutes.approveClientDevice());
         this.koa.use(clientDevicesRoutes.updateClientDevice());
 
         const clientDevicesStatesRoutes = new ClientDevicesStatusRoutes(this.storageProvider, apiPrefix);
@@ -97,6 +97,9 @@ export class App {
 
         const clientDeviceCurrentDataRoutes = new ClientDeviceCurrentDataRoutes(this.storageProvider, apiPrefix);
         this.koa.use(clientDeviceCurrentDataRoutes.getClientDeviceCurrentData());
+
+        const devicesGroupsRoutes = new DevicesGroupsRoutes(this.storageProvider, apiPrefix);
+        this.koa.use(devicesGroupsRoutes.getAllDevicesGroups());
     }
 
     /**

@@ -1,15 +1,17 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 
-import { IClientDevice } from '../../../../../shared/interfaces/client-device';
+import { IDeviceGroup } from '../../../../../shared/interfaces/device-group';
 import { DataService } from '../../core/data.service';
 import { DisplayMessagesComponent } from '../../shared/display-messages.component';
+import { IClientDeviceDisplay } from './client-device-display';
+import { ClientDevicesService } from './client-devices.service';
 
 @Component({
     templateUrl: './client-devices.component.html'
 })
 export class ClientDevicesComponent implements OnInit {
-    approvedDevices: IClientDevice[];
-    notApprovedDevices: IClientDevice[];
+    clientDevices: IClientDeviceDisplay[];
+    devicesGroups: IDeviceGroup[];
 
     waiting = {
         loadDevices: false,
@@ -19,48 +21,44 @@ export class ClientDevicesComponent implements OnInit {
 
     @ViewChild('loadDevicesMessagesComponent') private loadDevicesMessagesComponent: DisplayMessagesComponent;
 
-    constructor(private dataSvc: DataService) { }
+    constructor(private dataSvc: DataService, private clientDevicesSvc: ClientDevicesService) { }
 
     ngOnInit(): void {
         this.loadData();
     }
 
-    async updateDevice(device: IClientDevice): Promise<void> {
+    async updateDevice(clientDeviceDisplay: IClientDeviceDisplay): Promise<void> {
         try {
             this.waiting.updateDevice = true;
-            await this.dataSvc.updateClientDevice(device);
-            this.loadData();
+            clientDeviceDisplay.updating = true;
+            const clientDevice = this.clientDevicesSvc.toClientDevice(clientDeviceDisplay);
+            await this.dataSvc.updateClientDevice(clientDevice);
         } catch (err) {
 
         } finally {
+            clientDeviceDisplay.updating = false;
             this.waiting.updateDevice = false;
 
-        }
-    }
-
-    async approveDevice(device: IClientDevice): Promise<void> {
-        try {
-            this.waiting.approveDevice = true;
-            await this.dataSvc.approveClientDevice(device);
-            this.loadData();
-        } catch (err) {
-
-        } finally {
-            this.waiting.approveDevice = false;
         }
     }
 
     private async loadData(): Promise<void> {
         try {
             this.waiting.loadDevices = true;
-            const res = await this.dataSvc.getClientDevices();
-            this.approvedDevices = res.filter(x => x.approved);
-            this.notApprovedDevices = res.filter(x => !x.approved);
+            // const res = await Promise.all([this.dataSvc.getDevicesGroups(), this.dataSvc.getClientDevices()]);
+            this.devicesGroups = await this.dataSvc.getDevicesGroups();
+            const clientDevices = await this.dataSvc.getClientDevices();
+            this.clientDevices = this.clientDevicesSvc.createClientDeviceDiplayItems(clientDevices, this.devicesGroups);
+            this.sortClientDevices();
         } catch (err) {
-            this.handleError(err, this.loadDevicesMessagesComponent, 'Loading devices and roles');
+            this.handleError(err, this.loadDevicesMessagesComponent, 'Loading devices');
         } finally {
             this.waiting.loadDevices = false;
         }
+    }
+
+    private sortClientDevices(): void {
+        this.clientDevices.sort((left) => left.clientDevice.approved ? -1 : 1);
     }
 
     private handleError(err: any, messagesComponent: DisplayMessagesComponent, messagePrefix: string): void {

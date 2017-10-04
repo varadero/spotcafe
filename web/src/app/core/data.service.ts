@@ -16,6 +16,7 @@ import { IStartClientDeviceArgs } from '../../../../shared/interfaces/start-clie
 import { IStartClientDeviceResult } from '../../../../shared/interfaces/start-client-device-result';
 import { IStopClientDeviceArgs } from '../../../../shared/interfaces/stop-client-device-args';
 import { IStopClientDeviceResult } from '../../../../shared/interfaces/stop-client-device-result';
+import { IDeviceGroup } from '../../../../shared/interfaces/device-group';
 
 @Injectable()
 export class DataService {
@@ -27,6 +28,10 @@ export class DataService {
         private authSvc: AuthService // ,
         // private cacheSvc: CacheService
     ) { }
+
+    getDevicesGroups(): Promise<IDeviceGroup[]> {
+        return this.get('devices-groups');
+    }
 
     stopClientDevice(deviceId: string): Promise<IStopClientDeviceResult> {
         const args: IStopClientDeviceArgs = {
@@ -64,10 +69,6 @@ export class DataService {
 
     updateClientDevice(clientDevice: IClientDevice): Promise<void> {
         return this.post('client-devices/' + encodeURIComponent(clientDevice.id), clientDevice);
-    }
-
-    approveClientDevice(clientDevice: IClientDevice): Promise<void> {
-        return this.post('client-devices/' + encodeURIComponent(clientDevice.id) + '/approve', clientDevice);
     }
 
     getClientDevices(): Promise<IClientDevice[]> {

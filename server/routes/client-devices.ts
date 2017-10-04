@@ -2,6 +2,7 @@ import * as route from 'koa-route';
 
 import { StorageProvider } from '../storage/storage-provider';
 import { RoutesBase } from './routes-base';
+import { IClientDevice } from '../../shared/interfaces/client-device';
 
 export class ClientDevicesRoutes extends RoutesBase {
 
@@ -11,13 +12,7 @@ export class ClientDevicesRoutes extends RoutesBase {
 
     updateClientDevice(): any {
         return route.post(this.apiPrefix + 'client-devices/:id', async ctx => {
-            await this.handleResult(ctx, () => this.storageProvider.updateClientDevice(ctx.request.body));
-        });
-    }
-
-    approveClientDevice(): any {
-        return route.post(this.apiPrefix + 'client-devices/:id/approve', async ctx => {
-            await this.handleResult(ctx, () => this.storageProvider.approveClientDevice(ctx.request.body));
+            await this.handleResult(ctx, () => this.updateClientDeviceImpl(ctx.request.body));
         });
     }
 
@@ -25,5 +20,12 @@ export class ClientDevicesRoutes extends RoutesBase {
         return route.get(this.apiPrefix + 'client-devices', async ctx => {
             await this.handleResult(ctx, () => this.storageProvider.getClientDevices());
         });
+    }
+
+    private async updateClientDeviceImpl(clientDevice: IClientDevice): Promise<void> {
+        if (clientDevice.approved && !clientDevice.approvedAt) {
+            clientDevice.approvedAt = Date.now();
+        }
+        await this.storageProvider.updateClientDevice(clientDevice);
     }
 }
