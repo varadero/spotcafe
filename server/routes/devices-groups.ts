@@ -2,11 +2,19 @@ import * as route from 'koa-route';
 
 import { StorageProvider } from '../storage/storage-provider';
 import { RoutesBase } from './routes-base';
+import { IRouteActionResult } from './interfaces/route-action-result';
+import { IDeviceGroup } from '../../shared/interfaces/device-group';
+import { Numbers } from '../utils/numbers';
+import { IUpdateDeviceGroupResult } from '../../shared/interfaces/update-device-group-result';
+import { ICreateDeviceGroupResult } from '../../shared/interfaces/create-device-group-result';
 
 export class DevicesGroupsRoutes extends RoutesBase {
 
+    private numbers: Numbers;
+
     constructor(private storageProvider: StorageProvider, private apiPrefix: string) {
         super();
+        this.numbers = new Numbers();
     }
 
     getAllDevicesGroups(): any {
@@ -15,45 +23,55 @@ export class DevicesGroupsRoutes extends RoutesBase {
         });
     }
 
-    // getAllRolesWithPermissionIds(): any {
-    //     return route.get(this.apiPrefix + 'roles-with-permissions-ids', async ctx => {
-    //         await this.handleResult(ctx, () => this.storageProvider.getRolesWithPermissionsIds());
-    //     });
-    // }
+    updateDeviceGroup(): any {
+        return route.post(this.apiPrefix + 'devices-groups/:id', async ctx => {
+            await this.handleActionResult(ctx, () => this.updateDeviceGroupImp(ctx.request.body));
+        });
+    }
 
-    // updateRoleWithPermissionsIds(): any {
-    //     return route.post(this.apiPrefix + 'roles-with-permissions-ids/:id', async ctx => {
-    //         await this.handleActionResult(ctx, () => this.updateRoleWithPermissionsIdsImp(ctx.request.body));
-    //     });
-    // }
+    createDeviceGroup(): any {
+        return route.post(this.apiPrefix + 'devices-groups', async ctx => {
+            await this.handleActionResult(ctx, () => this.createDeviceGroupImp(ctx.request.body));
+        });
+    }
 
-    // createRoleWithPermissionsIds(): any {
-    //     return route.post(this.apiPrefix + 'roles-with-permissions-ids', async ctx => {
-    //         await this.handleActionResult(ctx, () => this.createRoleWithPermissionsIdsImp(ctx.request.body));
-    //     });
-    // }
+    private async updateDeviceGroupImp(
+        deviceGroup: IDeviceGroup
+    ): Promise<IRouteActionResult<IUpdateDeviceGroupResult> | void> {
+        const sanitizeError = this.sanitizeDeviceGroup(deviceGroup);
+        if (sanitizeError) {
+            return <IRouteActionResult<ICreateDeviceGroupResult>>sanitizeError;
+        }
+        const updateResult = await this.storageProvider.updateDeviceGroup(deviceGroup);
+        return { value: updateResult };
+    }
 
-    // private async updateRoleWithPermissionsIdsImp(
-    //     roleWithPermissionsIds: IRoleWithPermissionsIds
-    // ): Promise<IRouteActionResult<void> | void> {
-    //     if (roleWithPermissionsIds.role.id.toUpperCase() === PermissionsMapper.administratorRoleId.toUpperCase()) {
-    //         return { error: { message: `Modifying Administrator role is forbidden`, number: 403 } };
-    //     }
-    //     roleWithPermissionsIds.role.name = roleWithPermissionsIds.role.name.trim();
-    //     if (!roleWithPermissionsIds.role.name) {
-    //         return { error: { message: 'Name is required', number: 400 } };
-    //     }
-    //     await this.storageProvider.updateRoleWithPermissionsIds(roleWithPermissionsIds);
-    // }
+    private async createDeviceGroupImp(
+        deviceGroup: IDeviceGroup
+    ): Promise<IRouteActionResult<ICreateDeviceGroupResult> | void> {
+        const sanitizeError = this.sanitizeDeviceGroup(deviceGroup);
+        if (sanitizeError) {
+            return <IRouteActionResult<ICreateDeviceGroupResult>>sanitizeError;
+        }
+        const createReslt = await this.storageProvider.createDeviceGroup(deviceGroup);
+        return { value: createReslt };
+    }
 
-    // private async createRoleWithPermissionsIdsImp(
-    //     roleWithPermissionsIds: IRoleWithPermissionsIds
-    // ): Promise<IRouteActionResult<ICreateRoleWithPermissionsIdsResult> | void> {
-    //     roleWithPermissionsIds.role.name = roleWithPermissionsIds.role.name.trim();
-    //     if (!roleWithPermissionsIds.role.name) {
-    //         return { error: { message: 'Name is required', number: 400 } };
-    //     }
-    //     const createRoleReslt = await this.storageProvider.createRoleWithPermissionsIds(roleWithPermissionsIds);
-    //     return { value: createRoleReslt };
-    // }
+    private sanitizeDeviceGroup(deviceGroup: IDeviceGroup): IRouteActionResult<void> | null {
+        const trimmedName = this.getTrimmedValue(deviceGroup.name);
+        if (!trimmedName) {
+            return { error: { message: 'Name is required', number: 422 } };
+        }
+        const pricePerHour = this.numbers.stringToNumber(deviceGroup.pricePerHour.toString());
+        if (isNaN(pricePerHour)) {
+            return { error: { message: 'Price per hour is not a valid number', number: 422 } };
+        }
+        deviceGroup.pricePerHour = pricePerHour;
+        deviceGroup.name = trimmedName;
+        return null;
+    }
+
+    private getTrimmedValue(value: string): string {
+        return (value) ? value.trim() : '';
+    }
 }

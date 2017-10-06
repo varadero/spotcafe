@@ -12,12 +12,14 @@ import { IRoleWithPermissionsIds } from '../../shared/interfaces/role-with-permi
 import { IEmployee } from '../../shared/interfaces/employee';
 import { ICreateRoleWithPermissionsIdsResult } from '../../shared/interfaces/create-role-with-permissions-ids-result';
 import { IClientDeviceStatus } from '../../shared/interfaces/client-device-status';
-import { IStartClientDeviceArgs } from '../../shared/interfaces/start-client-device-args';
 import { IStartClientDeviceResult } from '../../shared/interfaces/start-client-device-result';
-import { IStopClientDeviceArgs } from '../../shared/interfaces/stop-client-device-args';
 import { IStopClientDeviceResult } from '../../shared/interfaces/stop-client-device-result';
 import { IClientStartupData } from './client-startup-data';
 import { IDeviceGroup } from '../../shared/interfaces/device-group';
+import { IUpdateDeviceGroupResult } from '../../shared/interfaces/update-device-group-result';
+import { ICreateDeviceGroupResult } from '../../shared/interfaces/create-device-group-result';
+import { IStopClientDeviceData } from './stop-client-device-data';
+import { IStartClientDeviceData } from './start-client-device-data';
 
 export abstract class StorageProvider {
     abstract initialize(config: any, ...args: any[]): void;
@@ -51,12 +53,14 @@ export abstract class StorageProvider {
     abstract getClientDevices(): Promise<IClientDevice[]>;
     abstract getClientDevice(deviceId: string): Promise<IClientDevice>;
     abstract updateClientDevice(clientDevice: IClientDevice): Promise<void>;
-    abstract startClientDevice(args: IStartClientDeviceArgs, startedAt: number): Promise<IStartClientDeviceResult>;
-    abstract stopClientDevice(args: IStopClientDeviceArgs, stoppedAt: number): Promise<IStopClientDeviceResult>;
+    abstract startClientDevice(data: IStartClientDeviceData): Promise<IStartClientDeviceResult>;
+    abstract stopClientDevice(data: IStopClientDeviceData): Promise<IStopClientDeviceResult>;
 
     abstract getClientStartupData(): Promise<IClientStartupData | null>;
 
     abstract setClientFiles(clientFiles: IClientFilesData): Promise<void>;
 
     abstract getDevicesGroups(): Promise<IDeviceGroup[]>;
+    abstract createDeviceGroup(deviceGroup: IDeviceGroup): Promise<ICreateDeviceGroupResult>;
+    abstract updateDeviceGroup(deviceGroup: IDeviceGroup): Promise<IUpdateDeviceGroupResult>;
 }

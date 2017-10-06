@@ -17,6 +17,8 @@ import { IStartClientDeviceResult } from '../../../../shared/interfaces/start-cl
 import { IStopClientDeviceArgs } from '../../../../shared/interfaces/stop-client-device-args';
 import { IStopClientDeviceResult } from '../../../../shared/interfaces/stop-client-device-result';
 import { IDeviceGroup } from '../../../../shared/interfaces/device-group';
+import { IUpdateDeviceGroupResult } from '../../../../shared/interfaces/update-device-group-result';
+import { ICreateDeviceGroupResult } from '../../../../shared/interfaces/create-device-group-result';
 
 @Injectable()
 export class DataService {
@@ -28,6 +30,14 @@ export class DataService {
         private authSvc: AuthService // ,
         // private cacheSvc: CacheService
     ) { }
+
+    createDeviceGroup(deviceGroup: IDeviceGroup): Promise<ICreateDeviceGroupResult> {
+        return this.post('devices-groups', deviceGroup);
+    }
+
+    updateDeviceGroup(deviceGroup: IDeviceGroup): Promise<IUpdateDeviceGroupResult> {
+        return this.post('devices-groups/' + encodeURI(deviceGroup.id), deviceGroup);
+    }
 
     getDevicesGroups(): Promise<IDeviceGroup[]> {
         return this.get('devices-groups');

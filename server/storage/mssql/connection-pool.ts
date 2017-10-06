@@ -30,7 +30,6 @@ export class ConnectionPool {
             this.cleanupTimer = cleanupTimer;
             this.cleanUpPool();
         }, this.poolConfig.timeToLive);
-        if (cleanupTimer) { }
     }
 
     async getConnection(config: ConnectionConfig): Promise<Connection | null> {
@@ -95,6 +94,7 @@ export class ConnectionPool {
             const connection = this.items[i].connection;
             connection.reset(() => { });
             connection.removeAllListeners('connect');
+            connection.removeAllListeners('error');
             connection.removeAllListeners('errorMessage');
             connection.removeAllListeners('end');
             connection.removeAllListeners();
@@ -116,13 +116,16 @@ export class ConnectionPool {
                 return reject(err);
             }
             conn.on('connect', err => {
-                conn.removeAllListeners();
+                // conn.removeAllListeners();
                 if (err) { return reject(err); }
                 return resolve(conn);
             });
-            // conn.on('errorMessage', err => {
-            //     this.logError('Connection error message', err);
-            // });
+            conn.on('error', err => {
+                this.logError('Connection message', err);
+            });
+            conn.on('errorMessage', err => {
+                this.logError('Connection error message', err);
+            });
         });
     }
 

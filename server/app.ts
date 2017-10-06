@@ -100,6 +100,8 @@ export class App {
 
         const devicesGroupsRoutes = new DevicesGroupsRoutes(this.storageProvider, apiPrefix);
         this.koa.use(devicesGroupsRoutes.getAllDevicesGroups());
+        this.koa.use(devicesGroupsRoutes.updateDeviceGroup());
+        this.koa.use(devicesGroupsRoutes.createDeviceGroup());
     }
 
     /**

@@ -11,7 +11,6 @@ import {
     ISelectableRole,
     INewEmployeeWithSelectableRoles
 } from './employees.services';
-// import { IEmployee } from '../../../../../shared/interfaces/employee';
 import { ErrorsService } from '../../shared/errors.service';
 
 @Component({

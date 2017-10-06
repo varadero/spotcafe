@@ -12,7 +12,8 @@ export class ErrorsService {
                 if (typeof err.error.message === 'string') {
                     result = err.error.message;
                 } else if (typeof err.error === 'object') {
-                    result = JSON.stringify(err.error);
+                    const errMessage = (err.message) ? err.message + ' ' : '';
+                    result = errMessage + JSON.stringify(err.error);
                 }
             } catch (err) {
                 result = err.error;

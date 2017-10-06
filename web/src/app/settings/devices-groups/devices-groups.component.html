@@ -1,8 +1,40 @@
 <div class="settings-feature card-container">
     <md-card>
         <md-card-title>Existing groups</md-card-title>
+        <spotcafe-messages #loadDevicesGroupsMessagesComponent></spotcafe-messages>
+        <md-select *ngIf="devicesGroups && devicesGroups.length" [(ngModel)]="selectedDeviceGroup">
+            <md-option *ngFor="let deviceGroup of devicesGroups" [value]="deviceGroup">{{deviceGroup.name}}</md-option>
+        </md-select>
+        <div *ngIf="selectedDeviceGroup">
+            <md-form-field>
+                <input mdInput [(ngModel)]="selectedDeviceGroup.name" placeholder="Name" />
+            </md-form-field>
+            <md-form-field>
+                <input mdInput [(ngModel)]="selectedDeviceGroup.description" placeholder="Description" />
+            </md-form-field>
+            <md-form-field>
+                <input mdInput [(ngModel)]="selectedDeviceGroup.pricePerHour" placeholder="Price per hour" />
+            </md-form-field>
+            <md-card-actions>
+                <spotcafe-messages #updateDevicesGroupsMessagesComponent></spotcafe-messages>
+                <button [disabled]="waiting.updatingGroup" md-raised-button (click)="updateDeviceGroup(selectedDeviceGroup)" color="primary">Update group {{selectedDeviceGroup.name}}</button>
+            </md-card-actions>
+        </div>
     </md-card>
     <md-card>
         <md-card-title>New group</md-card-title>
+        <md-form-field>
+            <input mdInput [(ngModel)]="newDeviceGroup.name" placeholder="Name" />
+        </md-form-field>
+        <md-form-field>
+            <input mdInput [(ngModel)]="newDeviceGroup.description" placeholder="Description" />
+        </md-form-field>
+        <md-form-field>
+            <input mdInput [(ngModel)]="newDeviceGroup.pricePerHour" placeholder="Price per hour" />
+        </md-form-field>
+        <md-card-actions>
+            <spotcafe-messages #createDevicesGroupsMessagesComponent></spotcafe-messages>
+            <button [disabled]="waiting.creatingGroup" md-raised-button (click)="createDeviceGroup(newDeviceGroup)" color="primary">Create group {{newDeviceGroup.name}}</button>
+        </md-card-actions>
     </md-card>
 </div>

@@ -155,16 +155,18 @@ export class DatabaseHelper {
         await this.checkScriptFilesForUpdate(scriptsFolder, scriptFilesForUpdate);
 
         // Apply updates
-        for (let i = 0; i < scriptFilesForUpdate.length; i++) {
-            const scriptFileForUpdate = scriptFilesForUpdate[i];
+        for (const scriptFileForUpdate of scriptFilesForUpdate) {
             const scriptFilePath = path.join(scriptsFolder, scriptFileForUpdate.fileName);
             const fileContent = this.readTextFileSync(scriptFilePath);
-            try {
-                await this.executeRowCount(conn, fileContent);
-            } catch (err) {
-                errMsg = `${err}. Error while executing ${scriptFileForUpdate.fileName}`;
-                this.logError(errMsg);
-                return Promise.reject(errMsg);
+            const goParts = fileContent.split(/^GO\s+$/gm);
+            for (const goPart of goParts) {
+                try {
+                    await this.executeRowCount(conn, goPart);
+                } catch (err) {
+                    errMsg = `${err}. Error while executing ${scriptFileForUpdate.fileName} ${goParts.length > 1 ? goPart : ''}`;
+                    this.logError(errMsg);
+                    return Promise.reject(errMsg);
+                }
             }
         }
         return scriptFilesForUpdate.map(x => x.fileName);
@@ -614,12 +616,12 @@ export class DatabaseHelper {
      */
     private async prepareDatabaseWithExistingConnection(conn: Connection): Promise<IPrepareStorageResult> {
         const updateFilesProcessed = await this.updateDatabase(conn);
-        return Promise.resolve(<IPrepareStorageResult>{
+        return <IPrepareStorageResult>{
             storage: this.config.options ? this.config.options.database : '',
             server: this.config.server,
             userName: this.config.userName,
             updateScriptFilesProcessed: updateFilesProcessed
-        });
+        };
     }
 
     private async checkScriptFilesForUpdate(scriptsFolder: string, updateScriptFileInfos: IUpdateScriptFileInfo[]): Promise<any> {

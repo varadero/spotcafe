@@ -36,11 +36,11 @@ export class EmployeesRoutes extends RoutesBase {
         employeeWithRoles: IEmployeeWithRoles
     ): Promise<IRouteActionResult<ICreateEmployeeResult> | void> {
         if (employeeWithRoles.employee.password.length < 6) {
-            return { error: { message: 'Password length must be at least 6 characters', number: 400 } };
+            return { error: { message: 'Password length must be at least 6 characters', number: 422 } };
         }
         employeeWithRoles.employee.username = employeeWithRoles.employee.username.trim();
         if (!employeeWithRoles.employee.username) {
-            return { error: { message: 'User name is required', number: 400 } };
+            return { error: { message: 'User name is required', number: 422 } };
         }
         const createdEmployeeResult = await this.storageProvider.createEmployeeWithRoles(employeeWithRoles);
         return { value: createdEmployeeResult };

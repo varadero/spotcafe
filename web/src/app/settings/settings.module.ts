@@ -11,6 +11,7 @@ import { ClientDevicesService } from './client-devices/client-devices.service';
 import { RolesComponent } from './roles/roles.component';
 import { RolesService } from './roles/roles.service';
 import { DevicesGroupsComponent } from './devices-groups/devices-groups.component';
+import { DurationPipe } from '../core/duration.pipe';
 
 @NgModule({
     declarations: [
@@ -19,7 +20,8 @@ import { DevicesGroupsComponent } from './devices-groups/devices-groups.componen
         ClientDevicesComponent,
         ClientDeviceComponent,
         DevicesGroupsComponent,
-        RolesComponent
+        RolesComponent,
+        DurationPipe
     ],
     imports: [
         SharedModule,

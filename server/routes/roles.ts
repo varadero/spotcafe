@@ -45,7 +45,7 @@ export class RolesRoutes extends RoutesBase {
         }
         roleWithPermissionsIds.role.name = roleWithPermissionsIds.role.name.trim();
         if (!roleWithPermissionsIds.role.name) {
-            return { error: { message: 'Name is required', number: 400 } };
+            return { error: { message: 'Name is required', number: 422 } };
         }
         await this.storageProvider.updateRoleWithPermissionsIds(roleWithPermissionsIds);
     }
@@ -55,9 +55,9 @@ export class RolesRoutes extends RoutesBase {
     ): Promise<IRouteActionResult<ICreateRoleWithPermissionsIdsResult> | void> {
         roleWithPermissionsIds.role.name = roleWithPermissionsIds.role.name.trim();
         if (!roleWithPermissionsIds.role.name) {
-            return { error: { message: 'Name is required', number: 400 } };
+            return { error: { message: 'Name is required', number: 422 } };
         }
-        const createRoleReslt = await this.storageProvider.createRoleWithPermissionsIds(roleWithPermissionsIds);
-        return { value: createRoleReslt };
+        const createRoleResult = await this.storageProvider.createRoleWithPermissionsIds(roleWithPermissionsIds);
+        return { value: createRoleResult };
     }
 }

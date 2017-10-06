@@ -2,7 +2,7 @@
     <md-card>
         <md-card-title>Existing employees</md-card-title>
         <spotcafe-messages #loadEmployeesMessagesComponent></spotcafe-messages>
-        <md-select *ngIf="employeesWithRoles && roles" class="employee-drop-down" [(ngModel)]="selectedEmployeeWithRoles">
+        <md-select *ngIf="employeesWithRoles && roles" [(ngModel)]="selectedEmployeeWithRoles">
             <md-option *ngFor="let employeeWithRole of employeesWithRoles" [value]="employeeWithRole">{{employeeWithRole.employee.username}} ({{employeeWithRole.employee.firstName}} {{employeeWithRole.employee.lastName}})</md-option>
         </md-select>
         <div *ngIf="selectedEmployeeWithRoles">

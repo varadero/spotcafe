@@ -69,10 +69,14 @@ export class ClientDevicesStatusComponent implements OnInit, OnDestroy {
   private stopInterval(): void {
     if (this.intervalHandle) {
       clearInterval(this.intervalHandle);
+      this.intervalHandle = 0;
     }
   }
 
   private startInterval(): void {
+    if (this.intervalHandle) {
+      return;
+    }
     this.intervalHandle = window.setInterval(() => this.loadData(), this.refreshInterval);
   }
 }
