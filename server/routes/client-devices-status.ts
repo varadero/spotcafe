@@ -13,6 +13,7 @@ import { DeviceStatus } from '../utils/device-status';
 
 import { IStopClientDeviceData } from '../storage/stop-client-device-data';
 import { IStartClientDeviceData } from '../storage/start-client-device-data';
+import { IServerToken } from './interfaces/server-token';
 
 export class ClientDevicesStatusRoutes extends RoutesBase {
 
@@ -26,13 +27,13 @@ export class ClientDevicesStatusRoutes extends RoutesBase {
 
     stopDevice(): any {
         return route.post(this.apiPrefix + 'client-devices-status/:id/stop', async ctx => {
-            await this.handleActionResult(ctx, () => this.stopDeviceImpl(ctx.request.body));
+            await this.handleActionResult(ctx, () => this.stopDeviceImpl(ctx.request.body, this.getServerToken(ctx)));
         });
     }
 
     startDevice(): any {
         return route.post(this.apiPrefix + 'client-devices-status/:id/start', async ctx => {
-            await this.handleActionResult(ctx, () => this.startDeviceImpl(ctx.request.body));
+            await this.handleActionResult(ctx, () => this.startDeviceImpl(ctx.request.body, this.getServerToken(ctx)));
         });
     }
 
@@ -42,30 +43,43 @@ export class ClientDevicesStatusRoutes extends RoutesBase {
         });
     }
 
-    private async stopDeviceImpl(args: IStartClientDeviceArgs): Promise<IRouteActionResult<IStopClientDeviceResult> | void> {
+    private async stopDeviceImpl(
+        args: IStartClientDeviceArgs,
+        serverToken: IServerToken
+    ): Promise<IRouteActionResult<IStopClientDeviceResult> | void> {
         const currentStatus = await this.storageProvider.getClientDeviceStatus(args.deviceId);
         const bill = this.bill.calcBill({
             startedAt: currentStatus.startedAt,
             startedAtUptime: currentStatus.startedAtUptime,
             pricePerHour: currentStatus.pricePerHour
-        }
-        );
+        });
         const data = <IStopClientDeviceData>{
             args: args,
             lastBill: bill.totalBill,
             stoppedAt: this.time.getCurrentTime(),
             stoppedAtUptime: this.time.getCurrentUptime()
         };
+        if (this.isServerTokenEmployee(serverToken)) {
+            data.stoppedByEmployeeId = serverToken.accountId;
+        }
         const result = await this.storageProvider.stopClientDevice(data);
         return { value: result };
     }
 
-    private async startDeviceImpl(args: IStartClientDeviceArgs): Promise<IRouteActionResult<IStartClientDeviceResult> | void> {
+    private async startDeviceImpl(
+        args: IStartClientDeviceArgs,
+        serverToken: IServerToken
+    ): Promise<IRouteActionResult<IStartClientDeviceResult> | void> {
         const data = <IStartClientDeviceData>{
             args: args,
             startedAt: this.time.getCurrentTime(),
             startedAtUptime: this.time.getCurrentUptime()
         };
+        if (this.isServerTokenEmployee(serverToken)) {
+            data.startedByEmployeeId = serverToken.accountId;
+        } else if (this.isServerTokenClient(serverToken)) {
+            data.startedByClientId = serverToken.accountId;
+        }
         const result = await this.storageProvider.startClientDevice(data);
         return { value: result };
     }

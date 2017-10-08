@@ -61,18 +61,18 @@ export class AuthenticationRoutes extends RoutesBase {
         const allowingPermissions = this.getAllowingPermissions(ctx.method, ctx.path);
         if (allowingPermissions.length === 0) {
             // Can't find permission for that method and url path - don't allow execution
-            return ctx.throw(this.errorMessage.create('URL forbidden'), 403);
+            return ctx.throw(403, this.errorMessage.create('URL forbidden'));
         }
         const hasAnyPermission = this.permissionsMapper.hasAnyPermission(allowingPermissions, tokenObj.permissions);
         if (!hasAnyPermission) {
-            return ctx.throw(this.errorMessage.create('No permission'), 403);
+            return ctx.throw(403, this.errorMessage.create('No permission'));
         }
         return next();
     }
 
     private async generateToken(
         accountId: string,
-        type: 'employee' | 'client-device',
+        type: 'employee' | 'client' | 'client-device',
         allPermissionIds: string[]
     ): Promise<IToken> {
         // Create token object for crypting including mapped permissions

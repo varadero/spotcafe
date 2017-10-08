@@ -2,6 +2,7 @@ import { IStopClientDeviceArgs } from '../../shared/interfaces/stop-client-devic
 
 export interface IStopClientDeviceData {
     args: IStopClientDeviceArgs;
+    stoppedByEmployeeId?: string;
     stoppedAt: number;
     stoppedAtUptime: number;
     lastBill: number;

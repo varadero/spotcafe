@@ -4,7 +4,7 @@ CREATE TABLE [dbo].[ClientDevices](
 	[Address] [nvarchar](250) NULL,
 	[Description] [nvarchar](max) NULL,
 	[Approved] [bit] NOT NULL,
-	[ApprovedAt] [bigint] NULL,
+	[ApprovedAt] decimal(16,0) NULL
  CONSTRAINT [PK_ClientDevices_Id] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC

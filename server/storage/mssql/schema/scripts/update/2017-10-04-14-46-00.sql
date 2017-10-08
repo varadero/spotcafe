@@ -2,6 +2,7 @@ CREATE TABLE [dbo].[DevicesGroups](
 	[Id] [uniqueidentifier] NOT NULL,
 	[Name] [nvarchar](250) NOT NULL,
 	[Description] [nvarchar](max) NULL,
+	[PricePerHour] money NOT NULL
  CONSTRAINT [PK_DevicesGroups_Id] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -20,8 +21,8 @@ CREATE UNIQUE NONCLUSTERED INDEX [IX_Clients_Username] ON [dbo].[Clients]
 
 
 INSERT INTO [DevicesGroups]
-([Id], [Name], [Description]) VALUES
-('E000F85C-06ED-4EF4-8C3A-FEDB89EA9EE4', 'Default','Default group')
+([Id], [Name], [Description], [PricePerHour]) VALUES
+('E000F85C-06ED-4EF4-8C3A-FEDB89EA9EE4', 'Default','Default group', 0)
 
 INSERT INTO [Permissions]
 ([Id], [Name], [Description]) VALUES

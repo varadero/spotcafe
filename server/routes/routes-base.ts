@@ -27,7 +27,11 @@ export class RoutesBase {
         }
 
         if (result && result.error) {
-            return ctx.throw(this.errorMessage.create(result.error.message || ''), result.error.number || 500);
+            const status = result.error.number || 500;
+            const message = this.errorMessage.create(result.error.message || '');
+            ctx.status = status;
+            ctx.message = message;
+            return ctx.throw(status, message);
         }
 
         return result;
@@ -38,14 +42,15 @@ export class RoutesBase {
             const result = await action();
             if (result) {
                 ctx.body = result;
-            } else {
-                ctx.status = 200;
             }
+            ctx.status = 200;
             return result;
         } catch (err) {
             if (err && err.status) {
+                ctx.status = err.status;
                 return ctx.throw(err.status);
             } else {
+                ctx.status = 500;
                 return ctx.throw(500);
             }
         }
@@ -53,5 +58,17 @@ export class RoutesBase {
 
     getServerToken(ctx: Koa.Context): IServerToken {
         return ctx.state.token;
+    }
+
+    isServerTokenEmployee(serverToken: IServerToken): boolean {
+        return (serverToken.type === 'employee');
+    }
+
+    isServerTokenClient(serverToken: IServerToken): boolean {
+        return (serverToken.type === 'client');
+    }
+
+    isServerTokenClientDevice(serverToken: IServerToken): boolean {
+        return (serverToken.type === 'client-device');
     }
 }

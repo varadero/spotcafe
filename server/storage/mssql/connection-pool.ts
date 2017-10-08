@@ -8,35 +8,49 @@ export class ConnectionPool {
         maxConnections: 100,
         timeToLive: 120000
     };
-    private cleanupTimer: NodeJS.Timer;
+    // private cleanupTimer: NodeJS.Timer;
+    private lastCleaup: number;
+    private config: {
+        maxConnections: number;
+        idleTimeout: number;
+        timeToLive: number;
+    };
 
-    constructor(private poolConfig: IConnectionPoolConfig, private logger: { log: Function, error: Function }) {
-        this.poolConfig = <IConnectionPoolConfig>{};
+    constructor(poolConfig: IConnectionPoolConfig, private logger: { log: Function, error: Function }) {
+        this.config = <any>{};
         if (!poolConfig) {
             poolConfig = <IConnectionPoolConfig>{};
         }
-        this.poolConfig.idleTimeout = poolConfig.idleTimeout || this.defaultPoolConfig.idleTimeout;
-        this.poolConfig.maxConnections = poolConfig.maxConnections || this.defaultPoolConfig.maxConnections;
-        this.poolConfig.timeToLive = poolConfig.timeToLive || this.defaultPoolConfig.timeToLive;
+        // this.config = poolConfig;
+        this.config.idleTimeout = poolConfig.idleTimeout || this.defaultPoolConfig.idleTimeout;
+        this.config.maxConnections = poolConfig.maxConnections || this.defaultPoolConfig.maxConnections;
+        this.config.timeToLive = poolConfig.timeToLive || this.defaultPoolConfig.timeToLive;
         this.items = [];
-        // TODO The following for some strane reason doesn't work
+        // TODO The following for some strange reason doesn't work
         // It will work if setInterval result is not assigned to this.cleanupTimer
         // this.cleanupTimer = setInterval(() => {
         //     this.cleanUpPool();
         // }, this.poolConfig.timeToLive);
 
-        // TODO The following works
-        const cleanupTimer = setInterval(() => {
-            this.cleanupTimer = cleanupTimer;
-            this.cleanUpPool();
-        }, this.poolConfig.timeToLive);
+        // // TODO The following works
+        // const cleanupTimer = setInterval(() => {
+        //     this.cleanUpPool();
+        // }, this.poolConfig.timeToLive);
+        // this.cleanupTimer = cleanupTimer;
+        this.lastCleaup = Date.now();
     }
 
     async getConnection(config: ConnectionConfig): Promise<Connection | null> {
+        const now = Date.now();
+        const timeDiff = now - this.lastCleaup;
+        if (timeDiff > this.config.timeToLive) {
+            this.lastCleaup = now;
+            this.cleanUpPool();
+        }
         let connectedItem = this.getFirstConectedPoolItem(config);
         if (!connectedItem) {
             // No free connection pool item is found
-            const maxConnections = this.poolConfig.maxConnections || 100;
+            const maxConnections = this.config.maxConnections || 100;
             if (this.items.length === maxConnections) {
                 // No more free slots in the pool for new items
                 const msg = 'The pool is full';
@@ -89,7 +103,7 @@ export class ConnectionPool {
     }
 
     dispose(): void {
-        clearInterval(this.cleanupTimer);
+        // clearInterval(this.cleanupTimer);
         for (let i = this.items.length - 1; i >= 0; i--) {
             const connection = this.items[i].connection;
             connection.reset(() => { });
@@ -124,14 +138,19 @@ export class ConnectionPool {
                 this.logError('Connection message', err);
             });
             conn.on('errorMessage', err => {
-                this.logError('Connection error message', err);
+                let errText = '';
+                try {
+                    errText = JSON.stringify(err);
+                } catch (stringifyErr) {
+                }
+                this.logError('Connection error message', errText);
             });
         });
     }
 
     private getFirstConectedPoolItem(config: ConnectionConfig): IConnectionPoolItem | null {
         const now = new Date().getTime();
-        const timeToLive = this.poolConfig.timeToLive || this.defaultPoolConfig.timeToLive;
+        const timeToLive = this.config.timeToLive || this.defaultPoolConfig.timeToLive;
         const firstNotInUse = this.items.find(x => !x.inUse && !x.disposing && x.config === config && ((now - x.createdAt) < timeToLive));
         if (firstNotInUse) {
             return firstNotInUse;
@@ -141,8 +160,9 @@ export class ConnectionPool {
     }
 
     private cleanUpPool(): void {
+        this.logger.log(`Cleaning up the pool of ${this.items.length} connections`);
         const now = new Date().getTime();
-        const idleTimeout = this.poolConfig.idleTimeout || this.defaultPoolConfig.idleTimeout;
+        const idleTimeout = this.config.idleTimeout || this.defaultPoolConfig.idleTimeout;
         for (let i = this.items.length - 1; i >= 0; i--) {
             const item = this.items[i];
             if (!item.inUse && !item.disposing && (now - item.lastReleasedAt) > idleTimeout) {
@@ -158,6 +178,7 @@ export class ConnectionPool {
                 this.items.splice(i, 1);
             }
         }
+        this.logger.log(`Pool cleaned up. ${this.items.length} connections left`);
     }
 
     private logError(message?: any, ...optionalParams: any[]) {

@@ -24,7 +24,7 @@ import { IStartClientDeviceData } from './start-client-device-data';
 export abstract class StorageProvider {
     abstract initialize(config: any, ...args: any[]): void;
 
-    abstract createStorage(administratorPassword: string): Promise<ICreateStorageResult>;
+    abstract createStorage(appAdministratorPassword: string): Promise<ICreateStorageResult>;
 
     abstract prepareStorage(): Promise<IPrepareStorageResult>;
 
@@ -49,7 +49,7 @@ export abstract class StorageProvider {
     abstract updateRoleWithPermissionsIds(roleWithPermissionsIds: IRoleWithPermissionsIds): Promise<void>;
     abstract createRoleWithPermissionsIds(roleWithPermissionsIds: IRoleWithPermissionsIds): Promise<ICreateRoleWithPermissionsIdsResult>;
 
-    abstract registerClientDevice(id: string, name: string, address: string): Promise<IRegisterClientDeviceResult>;
+    abstract registerClientDevice(id: string, name: string, address: string, deviceGroupId: string): Promise<IRegisterClientDeviceResult>;
     abstract getClientDevices(): Promise<IClientDevice[]>;
     abstract getClientDevice(deviceId: string): Promise<IClientDevice>;
     abstract updateClientDevice(clientDevice: IClientDevice): Promise<void>;

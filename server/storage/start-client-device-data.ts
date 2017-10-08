@@ -2,6 +2,8 @@ import { IStartClientDeviceArgs } from '../../shared/interfaces/start-client-dev
 
 export interface IStartClientDeviceData {
     args: IStartClientDeviceArgs;
+    startedByClientId?: string;
+    startedByEmployeeId?: string;
     startedAt: number;
     startedAtUptime: number;
 }

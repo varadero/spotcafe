@@ -15,18 +15,45 @@ CREATE TABLE [dbo].[Clients](
 CREATE TABLE [dbo].[ClientDevicesStatus](
 	[DeviceId] [nvarchar](100) NOT NULL,
 	[IsStarted] [bit] NOT NULL,
-	[StartedAt] [bigint] NULL,
-	[StartedFor] [uniqueidentifier] NULL,
+	[StartedByClientId] [uniqueidentifier] NULL,
+	[StartedByEmployeeId] [uniqueidentifier] NULL,
+	[StartedAt] decimal(16,0) NULL,
+	[StartedAtUptime] decimal(16,0) NULL,
+	[StoppedByEmployeeId] [uniqueidentifier] NULL,
+	[StoppedAt] decimal(16,0) NULL,
+	[StoppedAtUptime] decimal(16,0) NULL,
+	[LastBill] [money] NULL
  CONSTRAINT [PK_ClientDevicesStatus] PRIMARY KEY CLUSTERED 
 (
 	[DeviceId] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 ) ON [PRIMARY]
 
-ALTER TABLE [dbo].[ClientDevicesStatus]  WITH CHECK ADD  CONSTRAINT [FK_ClientDevicesStatus_Clients] FOREIGN KEY([StartedFor])
+ALTER TABLE dbo.ClientDevicesStatus ADD CONSTRAINT
+	FK_ClientDevicesStatus_StartedByEmployeeId_Employees_Id FOREIGN KEY
+	(
+	StartedByEmployeeId
+	) REFERENCES dbo.Employees
+	(
+	Id
+	) ON UPDATE  NO ACTION 
+	 ON DELETE  NO ACTION 
+
+ALTER TABLE dbo.ClientDevicesStatus ADD CONSTRAINT
+	FK_ClientDevicesStatus_StoppedByEmployeeId_Employees_Id FOREIGN KEY
+	(
+	StoppedByEmployeeId
+	) REFERENCES dbo.Employees
+	(
+	Id
+	) ON UPDATE  NO ACTION 
+	 ON DELETE  NO ACTION 
+
+
+ALTER TABLE [dbo].[ClientDevicesStatus]  WITH CHECK ADD  CONSTRAINT [FK_ClientDevicesStatus_StartedByClientId_Clients_Id] FOREIGN KEY([StartedByClientId])
 REFERENCES [dbo].[Clients] ([Id])
 
-ALTER TABLE [dbo].[ClientDevicesStatus] CHECK CONSTRAINT [FK_ClientDevicesStatus_Clients]
+ALTER TABLE [dbo].[ClientDevicesStatus] CHECK CONSTRAINT [FK_ClientDevicesStatus_StartedByClientId_Clients_Id]
 
 ALTER TABLE [dbo].[ClientDevicesStatus]  WITH CHECK ADD  CONSTRAINT [FK_ClientDevicesStatus_DeviceId_ClientDevices_Id] FOREIGN KEY([DeviceId])
 REFERENCES [dbo].[ClientDevices] ([Id])

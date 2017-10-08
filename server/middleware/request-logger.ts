@@ -5,13 +5,12 @@ import { Logger } from '../utils/logger';
 export function requestLogger(logger: Logger): any {
     return async function (ctx: Koa.Context, next: () => Promise<any>): Promise<any> {
         const start = new Date().getTime();
-        let msg: string;
         try {
             await next();
         } finally {
-            msg = (<any>ctx).ip + ' ' + ctx.method + ' ' + ctx.originalUrl + ' ' + ctx.status + ' ' + ctx.message;
+            let msg = 'REQUEST ' + (<any>ctx).ip + ' ' + ctx.method + ' ' + ctx.originalUrl + ' ' + ctx.status;
             const end = new Date().getTime();
-            msg += ' ' + `${end - start}ms`;
+            msg += ' ' + `${end - start} ${ctx.message}`;
             logger.log(msg);
         }
     };

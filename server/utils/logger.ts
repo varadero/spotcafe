@@ -33,7 +33,22 @@ export class Logger {
         try {
             let data = text;
             if (optionalParams && optionalParams.length > 0) {
-                data += ' ; ' + optionalParams.join(' ; ');
+                for (const optionalParam of optionalParams) {
+                    let optionalParamString = '';
+                    if (typeof optionalParams === 'object') {
+                        try {
+                            optionalParamString = JSON.stringify(optionalParam);
+                            if (optionalParamString === '{}') {
+                                optionalParamString = `${optionalParam.message} : ${optionalParam.stack}`;
+                            }
+                        } catch (stringifyErr) {
+                            optionalParamString = `<Can't stringify '${optionalParam}'>`;
+                        }
+                    } else {
+                        optionalParamString = optionalParam;
+                    }
+                    data += ' ; ' + optionalParamString;
+                }
             }
             data += '\r\n';
             fs.appendFileSync(this.logFilePath, data);

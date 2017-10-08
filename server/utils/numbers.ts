@@ -31,7 +31,7 @@ export class Numbers {
         const rightMostCommaPosition = stripped.lastIndexOf(',');
         const rightMostSeparatorPosition = Math.max(rightMostPointPosition, rightMostCommaPosition);
         // Remove all separators
-        const digitsOnly = stripped.replace(',', '').replace('.', '');
+        const digitsOnly = stripped.replace(/,/g, '').replace(/\./g, '');
         // Convert tu number - it will be eventually divided accordin to separator position
         const num = parseInt(digitsOnly, 10);
         let divider = 1;

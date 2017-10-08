@@ -10,7 +10,7 @@
     <md-form-field>
         <input mdInput [(ngModel)]="clientDeviceDisplay.clientDevice.description" placeholder="Description" />
     </md-form-field>
-    <md-select [(ngModel)]="clientDeviceDisplay.selectedGroup" placeholder="Select group">
+    <md-select [(ngModel)]="clientDeviceDisplay.selectedGroup" placeholder="Group">
         <md-option *ngFor="let deviceGroup of clientDeviceDisplay.groups" [value]="deviceGroup">{{deviceGroup.name}}</md-option>
     </md-select>
     <md-form-field>

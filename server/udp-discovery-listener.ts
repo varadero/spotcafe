@@ -29,7 +29,12 @@ export class UdpDiscoveryListener {
                 const str = msg.toString('utf8');
                 const obj = <{ clientId: string, clientName: string }>JSON.parse(str);
                 this.logger.log('Client application discovery data', obj);
-                const registerResult = await this.storageProvider.registerClientDevice(obj.clientId, obj.clientName, rinfo.address);
+                const registerResult = await this.storageProvider.registerClientDevice(
+                    obj.clientId,
+                    obj.clientName,
+                    rinfo.address,
+                    'E000F85C-06ED-4EF4-8C3A-FEDB89EA9EE4'
+                );
                 const discoveryResponse = {
                     approved: registerResult.clientDevice.approved
                 };

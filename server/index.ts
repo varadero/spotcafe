@@ -20,11 +20,11 @@ const appOptions = <IAppOptions>{
         const app = new App(appOptions);
         if (app) { }
         const createStorage = process.argv.includes('--create-storage');
-        const administratorPasswordArg = process.argv.find(x => x.startsWith('--administrator-password='));
-        const administratorPassword = administratorPasswordArg ?
-            administratorPasswordArg.substr(administratorPasswordArg.indexOf('=') + 1)
+        const appAdministratorPasswordArg = process.argv.find(x => x.startsWith('--app-administrator-password='));
+        const appAdministratorPassword = appAdministratorPasswordArg ?
+            appAdministratorPasswordArg.substr(appAdministratorPasswordArg.indexOf('=') + 1)
             : null;
-        const server = await app.start(createStorage, administratorPassword);
+        const server = await app.start(createStorage, appAdministratorPassword);
         if (server) {
             console.log(`${new Date().toISOString()}: App started`);
         }

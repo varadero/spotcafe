@@ -6,7 +6,7 @@ import * as uuidv4 from 'uuid/v4';
 import { Connection, Request, ColumnValue, TediousType, TYPES, ConnectionConfig } from 'tedious';
 import { ICreateStorageResult } from '../create-storage-result';
 import { IPrepareStorageResult } from '../prepare-storage-result';
-import { ConnectionPool } from './connection-pool';
+import { ConnectionPool, IConnectionPoolConfig } from './connection-pool';
 
 export class DatabaseHelper {
     private constants = {
@@ -19,7 +19,7 @@ export class DatabaseHelper {
 
     constructor(private config: ConnectionConfig, private logger: { log: Function, error: Function }) {
         // TODO Get connection pool config from database or from config parameter
-        this.connectionPool = new ConnectionPool({ maxConnections: 100, idleTimeout: 60000, timeToLive: 120000 }, logger);
+        this.connectionPool = this.createConnectionPool({ maxConnections: 100, idleTimeout: 60000, timeToLive: 120000 }, logger);
     }
 
     async getTokenSecret(): Promise<string | null> {
@@ -31,7 +31,7 @@ export class DatabaseHelper {
         }
     }
 
-    async createDatabase(administratorPassword: string): Promise<ICreateStorageResult> {
+    async createDatabase(appAdministratorPassword: string): Promise<ICreateStorageResult> {
         const result = <ICreateStorageResult>{};
         if (!this.config.options || !this.config.options.database) {
             const errMsg = 'Database is not specified';
@@ -61,6 +61,9 @@ export class DatabaseHelper {
             }
             // Close current connection that created the database because it cannot be used for transactions
             this.close(conn);
+            // Dispose current connection pool and create new one
+            this.connectionPool.dispose();
+            this.connectionPool = this.createConnectionPool({ maxConnections: 100, idleTimeout: 60000, timeToLive: 120000 }, this.logger);
             // Create connection with the original configuration that includes the database name which is now created
             conn = await this.connect(this.config);
             await this.beginTransaction(conn);
@@ -75,17 +78,17 @@ export class DatabaseHelper {
 
             await this.createSettingsTable(conn);
             await this.insertDatabaseVersion(conn, '2017-08-25 12:00:00');
-            await this.insertTokenSecret(conn, this.getRandomString(30).replace(`'`, `''`));
+            await this.insertTokenSecret(conn, this.getSqlSanitizedRandomString(30));
             await this.prepareDatabaseWithExistingConnection(conn);
-            await this.setEmployeePassword(conn, this.constants.administratorId, administratorPassword);
+            await this.setEmployeePassword(conn, this.constants.administratorId, appAdministratorPassword);
             await this.commitTransaction(conn);
             this.close(conn);
             result.storageInitialized = true;
         } catch (err) {
+            result.errorOnStorageCreation = err;
             this.logger.error(err);
         } finally {
             this.connectionPool.dispose();
-            this.close(conn);
         }
 
         return Promise.resolve(result);
@@ -479,6 +482,10 @@ export class DatabaseHelper {
         return hash;
     }
 
+    private createConnectionPool(config: IConnectionPoolConfig, logger: { log: Function, error: Function }): ConnectionPool {
+        return new ConnectionPool(config, logger);
+    }
+
     private getRestPropsAsObject(excludePropNames: string[], obj: any): any {
         const result = <any>{};
         const allProps = Object.getOwnPropertyNames(obj);
@@ -707,6 +714,12 @@ export class DatabaseHelper {
             }
         }
         return result;
+    }
+
+    private getSqlSanitizedRandomString(length: number): string {
+        const randomString = this.getRandomString(length);
+        const sanitized = randomString.replace(/'/g, `''`);
+        return sanitized;
     }
 
     private logError(message?: any, ...optionalParams: any[]) {

@@ -40,12 +40,15 @@ export class App {
     /**
      * Prepares storage (eventually updates it) and starts listening for connections
      * @param createStorage {boolean} If true, application will try to crete storage
-     * @param administratorPassword {string} If createStorage is true, must contain the password
+     * @param appAdministratorPassword {string} If createStorage is true, must contain the password of storage administrator
      * for application administrator user which will be created as the first user
      */
-    start(createStorage: boolean, administratorPassword?: string | null): Promise<https.Server | http.Server | null> {
+    start(
+        createStorage: boolean,
+        appAdministratorPassword?: string | null
+    ): Promise<https.Server | http.Server | null> {
         this.logger = new Logger(this.options.config.logging.filePath);
-        return this.startImpl(createStorage, administratorPassword);
+        return this.startImpl(createStorage, appAdministratorPassword);
     }
 
     private createKoa(tokenSecret: string | null): void {
@@ -159,9 +162,9 @@ export class App {
 
     private async startImpl(
         createStorage: boolean,
-        administratorPassword?: string | null
+        appAdministratorPassword?: string | null
     ): Promise<https.Server | http.Server | null> {
-        if (createStorage && !administratorPassword) {
+        if (createStorage && !appAdministratorPassword) {
             return Promise.reject('When store must be created, application administrator password must be supplied');
         }
         let prepareStorageResult = {
@@ -173,8 +176,10 @@ export class App {
         const delay = 5000;
         for (let i = 0; i < 100000; i++) {
             try {
-                prepareStorageResult = await this.prepareStorage(createStorage, administratorPassword);
-                if (prepareStorageResult.prepareResult) {
+                prepareStorageResult = await this.prepareStorage(createStorage, appAdministratorPassword);
+                if (createStorage && prepareStorageResult.createResult && prepareStorageResult.createResult.storageInitialized) {
+                    break;
+                } else if (!createStorage && prepareStorageResult.prepareResult) {
                     break;
                 } else {
                     await this.delay(delay);
@@ -208,17 +213,17 @@ export class App {
 
     private async prepareStorage(
         createStorage: boolean,
-        administratorPassword?: string | null
+        appAdministratorPassword?: string | null
     ): Promise<{ createResult: ICreateStorageResult | null, prepareResult: IPrepareStorageResult | null }> {
         this.logger.log('Creating storage provider');
         this.storageProvider = this.createStorageProvider();
         let prepareStorageResult: IPrepareStorageResult | null = null;
         let createStorageResult: ICreateStorageResult | null = null;
         try {
-            if (createStorage && administratorPassword) {
+            if (createStorage && appAdministratorPassword) {
                 // Create storage
                 this.logger.log('Creating storage');
-                createStorageResult = await this.storageProvider.createStorage(administratorPassword);
+                createStorageResult = await this.storageProvider.createStorage(appAdministratorPassword);
                 if (createStorageResult.errorOnStorageCreation) {
                     this.logger.log('The storage creation error occured. It can be ignored if the storage already exists.');
                     this.logger.log(createStorageResult.errorOnStorageCreation);

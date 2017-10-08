@@ -123,6 +123,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
     }
 
     async stopClientDevice(data: IStopClientDeviceData): Promise<IStopClientDeviceResult> {
+        const newId = this.dbHelper.generateId();
         let sql = `
             IF EXISTS (
                 SELECT TOP 1 [IsStarted]
@@ -139,14 +140,34 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
                     SET [IsStarted]=0,
                         [StoppedAt]=@StoppedAt,
                         [StoppedAtUptime]=@StoppedAtUptime,
+                        [StoppedByEmployeeId]=@StoppedByEmployeeId,
                         [LastBill]=@LastBill
                     WHERE [DeviceId]=@DeviceId
+
+                    DECLARE @CurrentStartedByClientId uniqueidentifier
+                    DECLARE @CurrentStartedByEmployeeId uniqueidentifier
+                    DECLARE @CurrentStartedAt decimal(16,0)
+                    DECLARE @CurrentStartedAtUptime decimal(16,0)
+                    SELECT @CurrentStartedByClientId=[StartedByClientId],
+                           @CurrentStartedByEmployeeId=[StartedByEmployeeId],
+                           @CurrentStartedAt=[StartedAt],
+                           @CurrentStartedAtUptime=[StartedAtUptime]
+                    FROM [ClientDevicesStatus]
+                    WHERE [DeviceId]=@DeviceId
+
+                    INSERT INTO [ClientDevicesStatusHistory]
+                    ([Id], [DeviceId], [StartedByClientId], [StartedByEmployeeId], [StartedAt], [StartedAtUptime],
+                    [StoppedByEmployeeId], [StoppedAt], [StoppedAtUptime], [Bill]) VALUES
+                    (@Id, @DeviceId, @CurrentStartedByClientId, @CurrentStartedByEmployeeId, @CurrentStartedAt, @CurrentStartedAtUptime,
+                    @StoppedByEmployeeId, @StoppedAt, @StoppedAtUptime, @LastBill)
                 END
         `;
         const params: IRequestParameter[] = [
+            { name: 'Id', value: newId, type: TYPES.UniqueIdentifierN },
             { name: 'DeviceId', value: data.args.deviceId, type: TYPES.UniqueIdentifierN },
             { name: 'StoppedAt', value: data.stoppedAt, type: TYPES.Decimal },
             { name: 'StoppedAtUptime', value: data.stoppedAtUptime, type: TYPES.Decimal },
+            { name: 'StoppedByEmployeeId', value: data.stoppedByEmployeeId, type: TYPES.UniqueIdentifierN },
             { name: 'LastBill', value: data.lastBill, type: TYPES.Money }
         ];
         sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
@@ -174,14 +195,18 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
                     UPDATE [ClientDevicesStatus]
                     SET [IsStarted]=1,
                         [StartedAt]=@StartedAt,
-                        [StartedAtUptime]=@StartedAtUptime
+                        [StartedAtUptime]=@StartedAtUptime,
+                        [StartedByClientId]=@StartedByClientId,
+                        [StartedByEmployeeId]=@StartedByEmployeeId
                     WHERE [DeviceId]=@DeviceId
                 END
         `;
         const params: IRequestParameter[] = [
             { name: 'DeviceId', value: data.args.deviceId, type: TYPES.UniqueIdentifierN },
             { name: 'StartedAt', value: data.startedAt, type: TYPES.Decimal },
-            { name: 'StartedAtUptime', value: data.startedAtUptime, type: TYPES.Decimal }
+            { name: 'StartedAtUptime', value: data.startedAtUptime, type: TYPES.Decimal },
+            { name: 'StartedByClientId', value: data.startedByClientId, type: TYPES.UniqueIdentifierN },
+            { name: 'StartedByEmployeeId', value: data.startedByEmployeeId, type: TYPES.UniqueIdentifierN }
         ];
         sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
         const execResult = await this.dbHelper.execToObjects(sql, params);
@@ -388,7 +413,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         await this.dbHelper.execRowCount(sql, params);
     }
 
-    async registerClientDevice(id: string, name: string, address: string): Promise<IRegisterClientDeviceResult> {
+    async registerClientDevice(id: string, name: string, address: string, deviceGroupId: string): Promise<IRegisterClientDeviceResult> {
         let sql = `
             IF EXISTS (
                 SELECT TOP 1 [Id]
@@ -402,11 +427,11 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
                 BEGIN
                     SELECT [CreatedNew]=CAST(1 AS bit)
                     INSERT INTO [ClientDevices]
-                    ([Id], [Name], [Address], [Approved]) VALUES
-                    (@Id, @Name, @Address, 0)
+                    ([Id], [Name], [Address], [Approved], [DeviceGroupId]) VALUES
+                    (@Id, @Name, @Address, 0, @DeviceGroupId)
 
                     INSERT INTO [ClientDevicesStatus]
-                    ([DeviceId], [IsStarted], [StartedAt], [StartedFor], [StoppedAt]) VALUES
+                    ([DeviceId], [IsStarted], [StartedAt], [StartedByClientId], [StoppedAt]) VALUES
                     (@Id, 0, NULL, NULL, NULL)
                 END
 
@@ -414,17 +439,18 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
                          dg.[Name] AS [DeviceGroupName]
             FROM [ClientDevices] cd
             INNER JOIN [DevicesGroups] dg ON cd.[DeviceGroupId] = dg.[Id]
-            WHERE [Id]=@Id
-            `;
+            WHERE cd.[Id]=@Id
+        `;
         const params: IRequestParameter[] = [
             { name: 'Id', value: id, type: TYPES.NVarChar },
             { name: 'Name', value: name, type: TYPES.NVarChar },
-            { name: 'Address', value: address, type: TYPES.NVarChar }
+            { name: 'Address', value: address, type: TYPES.NVarChar },
+            { name: 'DeviceGroupId', value: deviceGroupId, type: TYPES.UniqueIdentifierN }
         ];
         sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
         const registerDeviceResult = await this.dbHelper.execToObjects(sql, params);
         const createdNew = (<{ createdNew: boolean }>registerDeviceResult.firstResultSet.rows[0]).createdNew;
-        const device = this.getClientDevicesFromRows(registerDeviceResult.allResultSets[1].rows[0])[0];
+        const device = this.getClientDevicesFromRows([registerDeviceResult.allResultSets[1].rows[0]])[0];
         const result = <IRegisterClientDeviceResult>{
             clientDevice: device,
             createdNew: createdNew
@@ -438,14 +464,14 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
                          dg.[Name] AS [DeviceGroupName]
             FROM [ClientDevices] cd
             INNER JOIN [DevicesGroups] dg ON cd.[DeviceGroupId] = dg.[Id]
-            WHERE [Id]=@DeviceId
-            ORDER BY [Name]
+            WHERE cd.[Id]=@DeviceId
+            ORDER BY cd.[Name]
         `;
         const params: IRequestParameter[] = [
             { name: 'DeviceId', value: deviceId, type: TYPES.NVarChar }
         ];
         const getResult = await this.dbHelper.execToObjects(sql, params);
-        const clientDevice = this.getClientDevicesFromRows(getResult.firstResultSet.rows[0])[0];
+        const clientDevice = this.getClientDevicesFromRows([getResult.firstResultSet.rows[0]])[0];
         return clientDevice;
     }
 
@@ -676,8 +702,8 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         return permissions.firstResultSet.rows;
     }
 
-    async createStorage(administratorPassword: string): Promise<ICreateStorageResult> {
-        return await this.dbHelper.createDatabase(administratorPassword);
+    async createStorage(appAdministatorPassword: string): Promise<ICreateStorageResult> {
+        return await this.dbHelper.createDatabase(appAdministatorPassword);
     }
 
     async prepareStorage(): Promise<IPrepareStorageResult> {
@@ -687,13 +713,13 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
     private async getClientDevicesStatusImpl(deviceId: string | null): Promise<IClientDeviceStatus[]> {
         let sql = `
             SELECT cds.[DeviceId], cds.[IsStarted], cds.[StartedAt],
-                   cds.[StartedFor], cds.[StoppedAt], cds.[StartedAtUptime],
+                   cds.[StartedByClientId], cds.[StoppedAt], cds.[StartedAtUptime],
                    cds.[StoppedAtUptime], cds.[LastBill],
                    cd.[Name], cd.[Approved],
                    dg.[PricePerHour]
             FROM [ClientDevicesStatus] cds
             INNER JOIN [ClientDevices] cd ON cds.[DeviceId]=cd.[Id]
-            INNER JOIN [DevicesGroups] dg ON cd.[DeviceGroupId] = dg.[Id]
+            INNER JOIN [DevicesGroups] dg ON cd.[DeviceGroupId]=dg.[Id]
             WHERE cd.[Approved]=1
         `;
         const params: IRequestParameter[] = [];

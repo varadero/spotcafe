@@ -32,7 +32,7 @@
             ],
             "args": [
                 "--create-storage",
-                "--administrator-password=123456"
+                "--app-administrator-password=123456"
             ]
         },
         {
