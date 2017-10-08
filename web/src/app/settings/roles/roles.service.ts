@@ -51,7 +51,7 @@ export class RolesService {
     getSanitizedRoleWithPermissions(roleWithSelectablePermissions: IRoleWithSelectablePermissions): IRoleWithPermissionsIds {
         const result: IRoleWithPermissionsIds = {
             permissionsIds: roleWithSelectablePermissions.permissions.filter(x => x.selected).map(x => x.id),
-            role: { ...roleWithSelectablePermissions.role }
+            role: Object.assign({}, roleWithSelectablePermissions.role)
         };
         return result;
     }

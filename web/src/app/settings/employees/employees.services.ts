@@ -14,14 +14,13 @@ export class EmployeesService {
                 description: role.description,
                 id: role.id,
                 name: role.name
-
             });
         }
         return result;
     }
 
     getSanitizedEmployeeWithRoles(employeeWithRoles: IEmployeeWithRoles): IEmployeeWithRoles {
-        const result = { ...employeeWithRoles };
+        const result = Object.assign({}, employeeWithRoles);
         result.roles = [...employeeWithRoles.roles];
         // Remove not selected roles
         result.roles = (<ISelectableRole[]>result.roles).filter(x => x.selected);

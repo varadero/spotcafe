@@ -8,7 +8,7 @@ export class ClientDevicesService {
         for (let i = 0; i < clientDevices.length; i++) {
             const clientDevice = clientDevices[i];
             const resultItem = <IClientDeviceDisplay>{
-                clientDevice: { ...clientDevice },
+                clientDevice: Object.assign({}, clientDevice),
                 groups: [...devicesGroups]
             };
             resultItem.selectedGroup = <IDeviceGroup>resultItem.groups.find(x => x.id === resultItem.clientDevice.deviceGroup.id);
