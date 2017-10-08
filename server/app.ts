@@ -11,6 +11,7 @@ import { notFound } from './middleware/not-found';
 import { requireToken } from './middleware/require-token';
 import { requestLogger } from './middleware/request-logger';
 import { redirectToHttps } from './middleware/redirect-to-https';
+import { noCache } from './middleware/no-cache';
 import { StorageProvider } from './storage/storage-provider';
 import { StorageProviderHelper } from './storage/storage-provider-helper';
 import { Logger } from './utils/logger';
@@ -63,6 +64,8 @@ export class App {
         this.koa.use(koaStatic(webFolder));
         this.koa.use(notFound({ root: webFolder, serve: 'index.html', ignorePrefix: apiPrefix }));
         this.koa.use(bodyParser());
+
+        this.koa.use(noCache());
 
         const clientStartupDataRoutes = new ClientStartupDataRoutes(this.storageProvider, apiPrefix);
         this.koa.use(clientStartupDataRoutes.getClientStartupData());
