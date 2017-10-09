@@ -44,10 +44,6 @@ html, body, app-root, md-sidenav-container, .primary-content {
     margin-right: 6px;
 }
 
-.employee-drop-down {
-    width: 20em;
-}
-
 .client-devices-table tr {
     height: 3em;
 }

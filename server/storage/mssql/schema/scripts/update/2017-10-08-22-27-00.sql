@@ -57,4 +57,20 @@ INSERT INTO [ClientsGroups]
 ([Id], [Name], [Description], [PricePerHour]) VALUES
 ('D10F87D8-A024-4E56-8E62-004F8322E5B2', 'Default', 'Default client group', 1)
 
+INSERT INTO [Permissions]
+([Id], [Name], [Description]) VALUES
+('6B59A7A0-F3D9-4514-883C-EAD1FE264D9C', 'Clients groups - View', 'Can view clients groups')
+
+INSERT INTO [Permissions]
+([Id], [Name], [Description]) VALUES
+('BC0BB9E9-5D42-4D99-A94D-BB40B4BB22B4', 'Clients groups - Modify', 'Can modify clients groups')
+
+INSERT INTO [dbo].[PermissionsInRoles]
+([PermissionId], [RoleId]) VALUES
+('6B59A7A0-F3D9-4514-883C-EAD1FE264D9C','D2595A95-630C-4E66-9B2E-1F804154FDF5')
+
+INSERT INTO [dbo].[PermissionsInRoles]
+([PermissionId], [RoleId]) VALUES
+('BC0BB9E9-5D42-4D99-A94D-BB40B4BB22B4','D2595A95-630C-4E66-9B2E-1F804154FDF5')
+
 UPDATE [Settings] SET [Value]='2017-10-08 22:27:00' WHERE [Name]='database.version'

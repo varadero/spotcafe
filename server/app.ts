@@ -29,6 +29,7 @@ import { ClientStartupDataRoutes } from './routes/client-startup-data';
 import { ClientDevicesStatusRoutes } from './routes/client-devices-status';
 import { ClientDeviceCurrentDataRoutes } from './routes/client-device-current-data';
 import { DevicesGroupsRoutes } from './routes/devices-groups';
+import { ClientsGroupsRoutes } from './routes/clients-groups';
 
 export class App {
     private logger: Logger;
@@ -108,6 +109,11 @@ export class App {
         this.koa.use(devicesGroupsRoutes.getAllDevicesGroups());
         this.koa.use(devicesGroupsRoutes.updateDeviceGroup());
         this.koa.use(devicesGroupsRoutes.createDeviceGroup());
+
+        const clientsGroupsRoutes = new ClientsGroupsRoutes(this.storageProvider, apiPrefix);
+        this.koa.use(clientsGroupsRoutes.getAllClientsGroups());
+        this.koa.use(clientsGroupsRoutes.updateClientGroup());
+        this.koa.use(clientsGroupsRoutes.createClientGroup());
     }
 
     /**

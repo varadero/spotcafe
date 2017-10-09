@@ -1,6 +1,6 @@
 <div class="settings-feature card-container">
     <md-card>
-        <md-card-title>Existing groups</md-card-title>
+        <md-card-title>Existing devices groups</md-card-title>
         <spotcafe-messages #loadDevicesGroupsMessagesComponent></spotcafe-messages>
         <md-select *ngIf="devicesGroups && devicesGroups.length" [(ngModel)]="selectedDeviceGroup">
             <md-option *ngFor="let deviceGroup of devicesGroups" [value]="deviceGroup">{{deviceGroup.name}}</md-option>

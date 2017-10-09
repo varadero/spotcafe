@@ -1,0 +1,40 @@
+<div class="settings-feature card-container">
+    <md-card>
+        <md-card-title>Existing clients groups</md-card-title>
+        <spotcafe-messages #loadClientsGroupsMessagesComponent></spotcafe-messages>
+        <md-select *ngIf="clientsGroups && clientsGroups.length" [(ngModel)]="selectedClientGroup">
+            <md-option *ngFor="let clientGroup of clientsGroups" [value]="clientGroup">{{clientGroup.name}}</md-option>
+        </md-select>
+        <div *ngIf="selectedClientGroup">
+            <md-form-field>
+                <input mdInput [(ngModel)]="selectedClientGroup.name" placeholder="Name" />
+            </md-form-field>
+            <md-form-field>
+                <input mdInput [(ngModel)]="selectedClientGroup.description" placeholder="Description" />
+            </md-form-field>
+            <md-form-field>
+                <input mdInput [(ngModel)]="selectedClientGroup.pricePerHour" placeholder="Price per hour" />
+            </md-form-field>
+            <md-card-actions>
+                <spotcafe-messages #updateClientsGroupsMessagesComponent></spotcafe-messages>
+                <button [disabled]="waiting.updatingGroup" md-raised-button (click)="updateClientGroup(selectedClientGroup)" color="primary">Update group {{selectedClientGroup.name}}</button>
+            </md-card-actions>
+        </div>
+    </md-card>
+    <md-card>
+        <md-card-title>New group</md-card-title>
+        <md-form-field>
+            <input mdInput [(ngModel)]="newClientGroup.name" placeholder="Name" />
+        </md-form-field>
+        <md-form-field>
+            <input mdInput [(ngModel)]="newClientGroup.description" placeholder="Description" />
+        </md-form-field>
+        <md-form-field>
+            <input mdInput [(ngModel)]="newClientGroup.pricePerHour" placeholder="Price per hour" />
+        </md-form-field>
+        <md-card-actions>
+            <spotcafe-messages #createClientsGroupsMessagesComponent></spotcafe-messages>
+            <button [disabled]="waiting.creatingGroup" md-raised-button (click)="createClientGroup(newClientGroup)" color="primary">Create group {{newClientGroup.name}}</button>
+        </md-card-actions>
+    </md-card>
+</div>

@@ -23,7 +23,7 @@ export class RoutesBase {
                 ctx.status = 200;
             }
         } catch (err) {
-            return ctx.throw(500);
+            return this.throwContextError(ctx, 500);
         }
 
         if (result && result.error) {
@@ -31,7 +31,7 @@ export class RoutesBase {
             const message = this.errorMessage.create(result.error.message || '');
             ctx.status = status;
             ctx.message = message;
-            return ctx.throw(status, message);
+            return this.throwContextError(ctx, status, message);
         }
 
         return result;
@@ -48,16 +48,22 @@ export class RoutesBase {
         } catch (err) {
             if (err && err.status) {
                 ctx.status = err.status;
-                return ctx.throw(err.status);
+                return this.throwContextError(ctx, err.status);
             } else {
                 ctx.status = 500;
-                return ctx.throw(500);
+                return this.throwContextError(ctx, 500);
             }
         }
     }
 
+    throwContextError(ctx: Koa.Context, status: number, message?: string): any {
+        const msg = this.errorMessage.create(message || '');
+        ctx.status = status;
+        ctx.throw(status, msg);
+    }
+
     getServerToken(ctx: Koa.Context): IServerToken {
-        return ctx.state.token;
+        return ctx.state.user;
     }
 
     isServerTokenEmployee(serverToken: IServerToken): boolean {

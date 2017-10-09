@@ -9,12 +9,15 @@ export class ConnectionPool {
         timeToLive: 120000
     };
     // private cleanupTimer: NodeJS.Timer;
-    private lastCleaup: number;
+    private lastClenaup: number;
     private config: {
         maxConnections: number;
         idleTimeout: number;
         timeToLive: number;
     };
+    private logMessagePrefix = 'CONNECTION POOL';
+
+    private statistics: IStatistics;
 
     constructor(poolConfig: IConnectionPoolConfig, private logger: { log: Function, error: Function }) {
         this.config = <any>{};
@@ -26,6 +29,10 @@ export class ConnectionPool {
         this.config.maxConnections = poolConfig.maxConnections || this.defaultPoolConfig.maxConnections;
         this.config.timeToLive = poolConfig.timeToLive || this.defaultPoolConfig.timeToLive;
         this.items = [];
+        this.statistics = {
+            totalConnectionsCreated: 0,
+            totalTimesReused: 0
+        };
         // TODO The following for some strange reason doesn't work
         // It will work if setInterval result is not assigned to this.cleanupTimer
         // this.cleanupTimer = setInterval(() => {
@@ -37,14 +44,14 @@ export class ConnectionPool {
         //     this.cleanUpPool();
         // }, this.poolConfig.timeToLive);
         // this.cleanupTimer = cleanupTimer;
-        this.lastCleaup = Date.now();
+        this.lastClenaup = Date.now();
     }
 
     async getConnection(config: ConnectionConfig): Promise<Connection | null> {
         const now = Date.now();
-        const timeDiff = now - this.lastCleaup;
+        const timeDiff = now - this.lastClenaup;
         if (timeDiff > this.config.timeToLive) {
-            this.lastCleaup = now;
+            this.lastClenaup = now;
             this.cleanUpPool();
         }
         let connectedItem = this.getFirstConectedPoolItem(config);
@@ -71,6 +78,7 @@ export class ConnectionPool {
                 connectedItem.lastPulledAt = connectedItem.createdAt;
                 connectedItem.usedCount = 1;
                 connectedItem.disposing = false;
+                this.statistics.totalConnectionsCreated++;
                 this.items.push(connectedItem);
             } catch (err) {
                 // Error when creating connection
@@ -86,6 +94,7 @@ export class ConnectionPool {
             connectedItem.inUse = true;
             connectedItem.lastPulledAt = new Date().getTime();
             connectedItem.usedCount++;
+            this.statistics.totalTimesReused++;
             return connectedItem.connection;
         }
     }
@@ -160,7 +169,7 @@ export class ConnectionPool {
     }
 
     private cleanUpPool(): void {
-        this.logger.log(`Cleaning up the pool of ${this.items.length} connections`);
+        const itemsLengthBefore = this.items.length;
         const now = new Date().getTime();
         const idleTimeout = this.config.idleTimeout || this.defaultPoolConfig.idleTimeout;
         for (let i = this.items.length - 1; i >= 0; i--) {
@@ -178,20 +187,23 @@ export class ConnectionPool {
                 this.items.splice(i, 1);
             }
         }
-        this.logger.log(`Pool cleaned up. ${this.items.length} connections left`);
+        let logMsg = `Pool cleaned up. ${this.items.length}/${itemsLengthBefore} connections left.`;
+        logMsg += ` ${this.statistics.totalConnectionsCreated} total connections created.`;
+        logMsg += ` ${this.statistics.totalTimesReused} total times reused.`;
+        this.logInfo(logMsg);
     }
 
     private logError(message?: any, ...optionalParams: any[]) {
         if (this.logger) {
-            this.logger.error(message, ...optionalParams);
+            this.logger.error(this.logMessagePrefix + ' ' + message, ...optionalParams);
         }
     }
 
-    // private logInfo(message?: any, ...optionalParams: any[]) {
-    //     if (this.logger) {
-    //         this.logger.log(message, ...optionalParams);
-    //     }
-    // }
+    private logInfo(message?: any, ...optionalParams: any[]) {
+        if (this.logger) {
+            this.logger.log(this.logMessagePrefix + ' ' + message, ...optionalParams);
+        }
+    }
 }
 
 export interface IConnectionPoolConfig {
@@ -210,4 +222,9 @@ interface IConnectionPoolItem {
     usedCount: number;
     inUse: boolean;
     disposing: boolean;
+}
+
+interface IStatistics {
+    totalTimesReused: number;
+    totalConnectionsCreated: number;
 }

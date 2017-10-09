@@ -7,7 +7,7 @@ import { EmployeesComponent } from './employees/employees.component';
 import { ClientDevicesComponent } from './client-devices/client-devices.component';
 import { RolesComponent } from './roles/roles.component';
 import { DevicesGroupsComponent } from './devices-groups/devices-groups.component';
-
+import { ClientsGroupsComponent } from './clients-groups/clients-groups.component';
 const routes: Routes = [
     {
         path: '',
@@ -24,6 +24,9 @@ const routes: Routes = [
         }, {
             path: 'devices-groups',
             component: DevicesGroupsComponent
+        }, {
+            path: 'clients-groups',
+            component: ClientsGroupsComponent
         }]
     }
 ];

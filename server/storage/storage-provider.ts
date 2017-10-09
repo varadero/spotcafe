@@ -20,6 +20,9 @@ import { IUpdateDeviceGroupResult } from '../../shared/interfaces/update-device-
 import { ICreateDeviceGroupResult } from '../../shared/interfaces/create-device-group-result';
 import { IStopClientDeviceData } from './stop-client-device-data';
 import { IStartClientDeviceData } from './start-client-device-data';
+import { IClientGroup } from '../../shared/interfaces/client-group';
+import { IUpdateClientGroupResult } from '../../shared/interfaces/update-client-group-result';
+import { ICreateClientGroupResult } from '../../shared/interfaces/create-client-group-result';
 
 export abstract class StorageProvider {
     abstract initialize(config: any, ...args: any[]): void;
@@ -63,4 +66,8 @@ export abstract class StorageProvider {
     abstract getDevicesGroups(): Promise<IDeviceGroup[]>;
     abstract createDeviceGroup(deviceGroup: IDeviceGroup): Promise<ICreateDeviceGroupResult>;
     abstract updateDeviceGroup(deviceGroup: IDeviceGroup): Promise<IUpdateDeviceGroupResult>;
+
+    abstract getClientsGroups(): Promise<IClientGroup[]>;
+    abstract createClientGroup(deviceGroup: IClientGroup): Promise<ICreateClientGroupResult>;
+    abstract updateClientGroup(deviceGroup: IClientGroup): Promise<IUpdateClientGroupResult>;
 }

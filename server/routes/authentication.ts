@@ -36,7 +36,7 @@ export class AuthenticationRoutes extends RoutesBase {
     private async logInClientDeviceImpl(clientId: string): Promise<IRouteActionResult<IToken> | void> {
         const device = await this.storageProvider.getClientDevice(clientId);
         if (!device.approved) {
-            return { error: { message: 'Not approved' }, status: 401 };
+            return { status: 401, error: { message: 'Not approved' }, };
         }
 
         // Create token object for crypting including mapped permissions
@@ -49,23 +49,16 @@ export class AuthenticationRoutes extends RoutesBase {
     }
 
     private async checkAuthorizationImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<any> {
-        const authHeaderValue = <string>ctx.headers.authorization;
-        const tokenString = authHeaderValue.split(' ')[1];
-        const tokenObj = await this.verifyToken(tokenString);
-        // Set token into request context in order to be available for all other middlewares
-        // TODO It is already available in ctx.state.user - set by jsonwebtoken module
-        ctx.state.token = tokenObj;
-        if (!tokenObj) {
-            return ctx.throw(401);
-        }
+        const tokenObj = <IServerToken>ctx.state.user;
+
         const allowingPermissions = this.getAllowingPermissions(ctx.method, ctx.path);
         if (allowingPermissions.length === 0) {
             // Can't find permission for that method and url path - don't allow execution
-            return ctx.throw(403, this.errorMessage.create('URL forbidden'));
+            return this.throwContextError(ctx, 403, 'URL forbidden');
         }
         const hasAnyPermission = this.permissionsMapper.hasAnyPermission(allowingPermissions, tokenObj.permissions);
         if (!hasAnyPermission) {
-            return ctx.throw(403, this.errorMessage.create('No permission'));
+            return this.throwContextError(ctx, 403, 'No permission');
         }
         return next();
     }
@@ -133,6 +126,9 @@ export class AuthenticationRoutes extends RoutesBase {
         if (this.apiPathIs(urlPath, 'devices-groups')) {
             return this.selectPermissionsIds(method, [pids.devicesGroupsView], [pids.devicesGroupsModify]);
         }
+        if (this.apiPathIs(urlPath, 'clients-groups')) {
+            return this.selectPermissionsIds(method, [pids.clientsGroupsView], [pids.clientsGroupsModify]);
+        }
 
         return [];
     }
@@ -156,19 +152,6 @@ export class AuthenticationRoutes extends RoutesBase {
         return (method === 'GET') ? viewPermissionsIds : (method === 'POST') ? modifyPermissionsIds : [];
     }
 
-    private async verifyToken(token: string): Promise<IServerToken> {
-        const tokenSecret = this.tokenSecret || await this.getTokenSecret();
-        const promise = new Promise<IServerToken>((resolve, reject) => {
-            jwt.verify(token, tokenSecret || '', (err: any, decoded: object | string) => {
-                if (err) {
-                    return reject(err);
-                }
-                return resolve(<IServerToken>decoded);
-            });
-        });
-        return promise;
-    }
-
     private async logInEmployeeImpl(username: string, password: string): Promise<IRouteActionResult<IToken> | void> {
         const userWithPermissions = await this.storageProvider
             .getEmployeeWithRolesAndPermissions(username, password);
@@ -178,7 +161,7 @@ export class AuthenticationRoutes extends RoutesBase {
         }
         if (userWithPermissions.employee.disabled) {
             // This employee is disabled
-            return { error: { message: 'Disabled' }, status: 401 };
+            return { status: 401, error: { message: 'Disabled' } };
         }
 
         // Get all permissions from all employee roles
