@@ -22,7 +22,7 @@ CREATE UNIQUE NONCLUSTERED INDEX [IX_Clients_Username] ON [dbo].[Clients]
 
 INSERT INTO [DevicesGroups]
 ([Id], [Name], [Description], [PricePerHour]) VALUES
-('E000F85C-06ED-4EF4-8C3A-FEDB89EA9EE4', 'Default','Default group', 0)
+('E000F85C-06ED-4EF4-8C3A-FEDB89EA9EE4', 'Default', 'Default device group', 1)
 
 INSERT INTO [Permissions]
 ([Id], [Name], [Description]) VALUES
