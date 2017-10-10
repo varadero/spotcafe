@@ -20,7 +20,20 @@ namespace SpotCafe.Desktop {
 
         public void Start(SecureFormStartArgs args) {
             InitializeState(args);
+#if DEBUG
+            TopMost = false;
+            MaximizeBox = true;
+            MinimizeBox = true;
+            ShowIcon = true;
+            ShowInTaskbar = true;
+            WindowState = FormWindowState.Normal;
+            FormBorderStyle = FormBorderStyle.Sizable;
+            Size = new Size(1024, 768);
+            Location = new Point(200, 200);
+            Refresh();
+#else
             _state.StayOnTopTimer.Start();
+#endif
         }
 
         public void SignInResult(bool isOk, string errorMessage) {

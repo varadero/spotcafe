@@ -6,6 +6,7 @@ CREATE TABLE [dbo].[Clients](
 	[FirstName] [nvarchar](250) NULL,
 	[LastName] [nvarchar](250) NULL,
 	[Phone] [nvarchar](50) NULL,
+	[Disabled] [bit] NOT NULL
  CONSTRAINT [PK_Clients_Id] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC

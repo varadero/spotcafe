@@ -46,6 +46,9 @@ namespace SpotCafe.Desktop {
         }
 
         private bool SwitchSesktops(bool isStarted) {
+#if DEBUG
+            return true;
+#endif
             var desktopHandle = isStarted ? _state.StartArgs.StartupDesktopHandle : _state.StartArgs.SecureDesktopHandle;
             return Interop.SwitchDesktop(desktopHandle);
         }

@@ -29,6 +29,8 @@ import { IStopClientDeviceData } from '../stop-client-device-data';
 import { IClientGroup } from '../../../shared/interfaces/client-group';
 import { ICreateClientGroupResult } from '../../../shared/interfaces/create-client-group-result';
 import { IUpdateClientGroupResult } from '../../../shared/interfaces/update-client-group-result';
+import { IClient } from '../../../shared/interfaces/client';
+import { ICreateEntityResult } from '../../../shared/interfaces/create-entity-result';
 
 export class MSSqlDatabaseStorageProvider implements StorageProvider {
     private config: ConnectionConfig;
@@ -39,6 +41,60 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         this.logger = logger;
         this.config = <ConnectionConfig>(config);
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
+    }
+
+    async createClient(client: IClient): Promise<ICreateEntityResult> {
+        let newId = this.dbHelper.generateId();
+        let sql = `
+            IF EXISTS(
+                SELECT TOP 1 [Username]
+                FROM [Clients]
+                WHERE [Username]=@Username
+            )
+            BEGIN
+                SELECT [AlreadyExists]=CAST(1 as bit)
+            END
+            ELSE
+            BEGIN
+                SELECT [AlreadyExists]=CAST(0 as bit)
+                INSERT INTO [Clients]
+                ([Id], [Username], [Password], [Email], [FirstName], [LastName], [Phone], [Disabled], [ClientGroupId]) VALUES
+                (@Id, @Username, @Password, @Email, @FirstName, @LastName, @Phone, @Disabled, @ClientGroupId)
+            END
+        `;
+        const passwordHash = this.dbHelper.getSha512(client.password);
+        const params: IRequestParameter[] = [
+            { name: 'Id', value: newId, type: TYPES.UniqueIdentifierN },
+            { name: 'Username', value: client.username, type: TYPES.NVarChar },
+            { name: 'Password', value: passwordHash, type: TYPES.NVarChar },
+            { name: 'Email', value: client.email, type: TYPES.NVarChar },
+            { name: 'FirstName', value: client.firstName, type: TYPES.NVarChar },
+            { name: 'LastName', value: client.lastName, type: TYPES.NVarChar },
+            { name: 'Phone', value: client.phone, type: TYPES.NVarChar },
+            { name: 'Disabled', value: client.disabled, type: TYPES.Bit },
+            { name: 'ClientGroupId', value: client.clientGroupId, type: TYPES.UniqueIdentifierN }
+        ];
+        sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
+        const insertResult = await this.dbHelper.execToObjects(sql, params);
+        const alreadyExists = (<{ alreadyExists: boolean }>insertResult.firstResultSet.rows[0]).alreadyExists;
+        if (alreadyExists) {
+            newId = '';
+        }
+
+        return <ICreateEntityResult>{
+            createdId: newId,
+            alreadyExists: alreadyExists
+        };
+    }
+
+    async getClients(): Promise<IClient[]> {
+        const sql = `
+            SELECT [Id], [Username], [Password], [Email], [FirstName], [LastName], [Phone], [Disabled], [ClientGroupId]
+            FROM [Clients]
+            ORDER BY [Username]
+        `;
+        const getResult = await this.dbHelper.execToObjects(sql);
+        return <IClient[]>getResult.firstResultSet.rows;
     }
 
     async createClientGroup(clientGroup: IClientGroup): Promise<ICreateClientGroupResult> {

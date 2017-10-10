@@ -29,19 +29,28 @@ export class AuthenticationRoutes extends RoutesBase {
         });
     }
 
+    // loginClient(): any {
+    //     return route.post(this.apiPrefix + 'login-client', async ctx => {
+    //         await this.handleActionResult(ctx, () => this.logInClientImpl(ctx.request.body.username, ctx.request.body.password));
+    //     });
+    // }
+
     checkAuthorization() {
         return this.checkAuthorizationImpl.bind(this);
     }
 
-    private async logInClientDeviceImpl(clientId: string): Promise<IRouteActionResult<IToken> | void> {
-        const device = await this.storageProvider.getClientDevice(clientId);
+    // private async logInClientImpl(clientId: string): Promise<IRouteActionResult<IToken> | void> {
+    // }
+
+    private async logInClientDeviceImpl(clientDeviceId: string): Promise<IRouteActionResult<IToken> | void> {
+        const device = await this.storageProvider.getClientDevice(clientDeviceId);
         if (!device.approved) {
             return { status: 401, error: { message: 'Not approved' }, };
         }
 
         // Create token object for crypting including mapped permissions
         const token = await this.generateToken(
-            clientId,
+            clientDeviceId,
             'client-device',
             [this.permissionsMapper.permissionIds.clientDeviceFullAccess]
         );
@@ -128,6 +137,9 @@ export class AuthenticationRoutes extends RoutesBase {
         }
         if (this.apiPathIs(urlPath, 'clients-groups')) {
             return this.selectPermissionsIds(method, [pids.clientsGroupsView], [pids.clientsGroupsModify]);
+        }
+        if (this.apiPathIs(urlPath, 'clients')) {
+            return this.selectPermissionsIds(method, [pids.clientsView], [pids.clientsModify]);
         }
 
         return [];

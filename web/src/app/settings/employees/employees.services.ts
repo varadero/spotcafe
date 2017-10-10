@@ -10,11 +10,7 @@ export class EmployeesService {
         const result: IRole[] = [];
         for (let i = 0; i < roles.length; i++) {
             const role = roles[i];
-            result.push({
-                description: role.description,
-                id: role.id,
-                name: role.name
-            });
+            result.push(Object.assign({}, role));
         }
         return result;
     }

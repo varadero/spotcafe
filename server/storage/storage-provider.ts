@@ -23,6 +23,8 @@ import { IStartClientDeviceData } from './start-client-device-data';
 import { IClientGroup } from '../../shared/interfaces/client-group';
 import { IUpdateClientGroupResult } from '../../shared/interfaces/update-client-group-result';
 import { ICreateClientGroupResult } from '../../shared/interfaces/create-client-group-result';
+import { IClient } from '../../shared/interfaces/client';
+import { ICreateEntityResult } from '../../shared/interfaces/create-entity-result';
 
 export abstract class StorageProvider {
     abstract initialize(config: any, ...args: any[]): void;
@@ -70,4 +72,7 @@ export abstract class StorageProvider {
     abstract getClientsGroups(): Promise<IClientGroup[]>;
     abstract createClientGroup(deviceGroup: IClientGroup): Promise<ICreateClientGroupResult>;
     abstract updateClientGroup(deviceGroup: IClientGroup): Promise<IUpdateClientGroupResult>;
+
+    abstract getClients(): Promise<IClient[]>;
+    abstract createClient(client: IClient): Promise<ICreateEntityResult>;
 }

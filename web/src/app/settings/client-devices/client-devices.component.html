@@ -1,6 +1,6 @@
 <div class="settings-feature card-container">
     <md-card>
-        <md-card-title>Client devices</md-card-title>
+        <md-card-title>Existing client devices</md-card-title>
         <div *ngIf="clientDevices && clientDevices.length" class="client-device">
             <spotcafe-client-device *ngFor="let device of clientDevices" [clientDeviceDisplay]="device" (update)="updateDevice(device)"></spotcafe-client-device>
         </div>

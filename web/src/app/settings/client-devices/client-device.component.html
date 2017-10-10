@@ -1,6 +1,4 @@
 <md-card>
-    <button [disabled]="clientDeviceDisplay.updating" class="client-device-button" md-raised-button color="primary" (click)="update.next()">Update</button>
-    <md-checkbox class="client-device-approved-check" mdInput [(ngModel)]="clientDeviceDisplay.clientDevice.approved">Approved</md-checkbox>
     <md-form-field>
         <input mdInput [(ngModel)]="clientDeviceDisplay.clientDevice.name" placeholder="Name" />
     </md-form-field>
@@ -10,10 +8,14 @@
     <md-form-field>
         <input mdInput [(ngModel)]="clientDeviceDisplay.clientDevice.description" placeholder="Description" />
     </md-form-field>
-    <md-select [(ngModel)]="clientDeviceDisplay.selectedGroup" placeholder="Group">
+    <md-select [(ngModel)]="clientDeviceDisplay.selectedGroup" placeholder="Device group">
         <md-option *ngFor="let deviceGroup of clientDeviceDisplay.groups" [value]="deviceGroup">{{deviceGroup.name}}</md-option>
     </md-select>
     <md-form-field>
         <input mdInput value="{{clientDeviceDisplay.clientDevice.id}}" readonly placeholder="Identifier" />
     </md-form-field>
+    <md-checkbox class="client-device-approved-check" mdInput [(ngModel)]="clientDeviceDisplay.clientDevice.approved">Approved</md-checkbox>
+    <md-card-actions>
+        <button [disabled]="clientDeviceDisplay.updating" class="client-device-button" md-raised-button color="primary" (click)="update.next()">Update</button>
+    </md-card-actions>
 </md-card>

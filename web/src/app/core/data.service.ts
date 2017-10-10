@@ -22,6 +22,8 @@ import { ICreateDeviceGroupResult } from '../../../../shared/interfaces/create-d
 import { IClientGroup } from '../../../../shared/interfaces/client-group';
 import { IUpdateClientGroupResult } from '../../../../shared/interfaces/update-client-group-result';
 import { ICreateClientGroupResult } from '../../../../shared/interfaces/create-client-group-result';
+import { IClient } from '../../../../shared/interfaces/client';
+import { ICreateEntityResult } from '../../../../shared/interfaces/create-entity-result';
 
 @Injectable()
 export class DataService {
@@ -33,6 +35,14 @@ export class DataService {
         private authSvc: AuthService // ,
         // private cacheSvc: CacheService
     ) { }
+
+    getClients(): Promise<IClient[]> {
+        return this.get('clients');
+    }
+
+    createClient(client: IClient): Promise<ICreateEntityResult> {
+        return this.post('clients', client);
+    }
 
     createClientGroup(clientGroup: IClientGroup): Promise<ICreateClientGroupResult> {
         return this.post('clients-groups', clientGroup);

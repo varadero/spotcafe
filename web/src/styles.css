@@ -56,10 +56,6 @@ html, body, app-root, md-sidenav-container, .primary-content {
     padding-right: 3em;
 }
 
-.roles-drop-down {
-    width: 20em;
-}
-
 .device-status-card {
     margin-top: 4px;
 }
