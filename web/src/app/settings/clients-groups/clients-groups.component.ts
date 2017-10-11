@@ -1,16 +1,22 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { DataService } from '../../core/data.service';
-import { IClientGroup } from '../../../../../shared/interfaces/client-group';
 import { DisplayMessagesComponent } from '../../shared/display-messages.component';
 import { ErrorsService } from '../../shared/errors.service';
+import { IDeviceGroup } from '../../../../../shared/interfaces/device-group';
+import { ClientsGroupsService, IClientGroupDisplay } from './clients-groups.service';
 
 @Component({
     templateUrl: './clients-groups.component.html'
 })
 export class ClientsGroupsComponent implements OnInit {
-    clientsGroups: IClientGroup[];
-    newClientGroup: IClientGroup;
-    selectedClientGroup: IClientGroup;
+    clientsGroups: IClientGroupDisplay[];
+    newClientGroupWithDevicesGroups: IClientGroupDisplay;
+    selectedClientGroup: IClientGroupDisplay;
+    devicesGroups: IDeviceGroup[];
+    devicesGroupsForExistingClientGroup: IDeviceGroup[];
+    selectedDeviceGroupForExistingClientGroup: IDeviceGroup;
+    devicesGroupsForNewClientGroup: IDeviceGroup[];
+    selectedDeviceGroupForNewClientGroup: IDeviceGroup;
     waiting = {
         loadingGroups: false,
         updatingGroup: false,
@@ -20,46 +26,73 @@ export class ClientsGroupsComponent implements OnInit {
     @ViewChild('updateClientsGroupsMessagesComponent') private updateClientsGroupsMessagesComponent: DisplayMessagesComponent;
     @ViewChild('createClientsGroupsMessagesComponent') private createClientsGroupsMessagesComponent: DisplayMessagesComponent;
 
-    constructor(private dataSvc: DataService, private errorsSvc: ErrorsService) { }
+    constructor(
+        private dataSvc: DataService,
+        private errorsSvc: ErrorsService,
+        private clientsGroupsSvc: ClientsGroupsService
+    ) { }
 
     ngOnInit(): void {
         this.resetNewClientGroup();
         this.loadData();
     }
 
-    async updateClientGroup(clientGroup: IClientGroup): Promise<void> {
+    addDeviceGroupToNewClientGroup(deviceGroup: IDeviceGroup): void {
+        this.clientsGroupsSvc.addDeiceGroupToClientGroup(this.newClientGroupWithDevicesGroups, deviceGroup);
+    }
+    removeDeviceGroupFromNewClientGroup(deviceGroup: IDeviceGroup): void {
+        this.clientsGroupsSvc.removeDeviceGroupFromClientGroup(this.newClientGroupWithDevicesGroups, deviceGroup);
+    }
+
+    addDeviceGroupToSelectedExistingClientGroup(deviceGroup: IDeviceGroup): void {
+        this.clientsGroupsSvc.addDeiceGroupToClientGroup(this.selectedClientGroup, deviceGroup);
+    }
+
+    removeSelectedClientGroupDeviceGroup(deviceGroup: IDeviceGroup): void {
+        this.clientsGroupsSvc.removeDeviceGroupFromClientGroup(this.selectedClientGroup, deviceGroup);
+    }
+
+    async updateClientGroup(clientGroupDisplay: IClientGroupDisplay): Promise<void> {
         try {
+            const clientGroup = clientGroupDisplay.clientGroup;
             this.waiting.updatingGroup = true;
-            const result = await this.dataSvc.updateClientGroup(clientGroup);
+            const clientGroupWithDevicesGroupsIds = this.clientsGroupsSvc.toClientGroupWithDevicesGroupsIds(clientGroupDisplay);
+            const result = await this.dataSvc.updateClientGroup(clientGroupWithDevicesGroupsIds);
             if (result.alreadyExists) {
                 this.updateClientsGroupsMessagesComponent.addErrorMessage(`Group with the name '${clientGroup.name}' already exist`);
             } else if (result.invalidPricePerHour) {
                 this.updateClientsGroupsMessagesComponent.addErrorMessage(`Price per hour '${clientGroup.pricePerHour}' is invalid`);
             } else {
                 this.updateClientsGroupsMessagesComponent.addSuccessMessage(`Group '${clientGroup.name}' was updated`);
+                this.loadData();
             }
         } catch (err) {
-            this.updateClientsGroupsMessagesComponent.addErrorMessage(this.errorsSvc.getNetworkErrorMessage(err, 'Update group'));
+            this.handleError(err, this.updateClientsGroupsMessagesComponent, 'Update group');
         } finally {
             this.waiting.updatingGroup = false;
         }
     }
 
-    async createClientGroup(deviceGroup: IClientGroup): Promise<void> {
+    async createClientGroup(clientGroupDisplay: IClientGroupDisplay): Promise<void> {
         try {
+            const clientGroup = clientGroupDisplay.clientGroup;
             this.waiting.creatingGroup = true;
-            const result = await this.dataSvc.createClientGroup(deviceGroup);
+            const clientGroupWithDevicesGroupsIds = this.clientsGroupsSvc.toClientGroupWithDevicesGroupsIds(clientGroupDisplay);
+            const result = await this.dataSvc.createClientGroup(clientGroupWithDevicesGroupsIds);
             if (result.alreadyExists) {
-                this.createClientsGroupsMessagesComponent.addErrorMessage(`Group with the name '${deviceGroup.name}' already exist`);
+                this.createClientsGroupsMessagesComponent
+                    .addErrorMessage(`Group with the name '${clientGroup.name}' already exist`);
             } else if (result.invalidPricePerHour) {
-                this.createClientsGroupsMessagesComponent.addErrorMessage(`Price per hour '${deviceGroup.pricePerHour}' is invalid`);
+                this.createClientsGroupsMessagesComponent
+                    .addErrorMessage(`Price per hour '${clientGroup.pricePerHour}' is invalid`);
             } else {
-                this.createClientsGroupsMessagesComponent.addSuccessMessage(`Client group '${deviceGroup.name}' was created`);
+                this.createClientsGroupsMessagesComponent
+                    .addSuccessMessage(`Client group '${clientGroup.name}' was created`);
                 this.resetNewClientGroup();
                 this.loadData();
             }
         } catch (err) {
-            this.createClientsGroupsMessagesComponent.addErrorMessage(this.errorsSvc.getNetworkErrorMessage(err, 'Create group'));
+            this.handleError(err, this.createClientsGroupsMessagesComponent, 'Create group');
         } finally {
             this.waiting.creatingGroup = false;
         }
@@ -67,7 +100,13 @@ export class ClientsGroupsComponent implements OnInit {
 
     private async loadData(): Promise<void> {
         try {
-            this.clientsGroups = await this.dataSvc.getClientsGroups();
+            const selectedClientGroupId = this.selectedClientGroup ? this.selectedClientGroup.clientGroup.id : null;
+            const clientsGroupsWithDevicesGroupsIds = await this.dataSvc.getClientsGroups();
+            this.devicesGroups = await this.dataSvc.getDevicesGroups();
+            this.devicesGroupsForExistingClientGroup = this.clientsGroupsSvc.cloneDevicesGroups(this.devicesGroups);
+            this.devicesGroupsForNewClientGroup = this.clientsGroupsSvc.cloneDevicesGroups(this.devicesGroups);
+            this.clientsGroups = this.clientsGroupsSvc.toClientsGroupsDisplay(clientsGroupsWithDevicesGroupsIds, this.devicesGroups);
+            this.selectedClientGroup = <IClientGroupDisplay>this.clientsGroups.find(x => x.clientGroup.id === selectedClientGroupId);
         } catch (err) {
 
         } finally {
@@ -76,11 +115,19 @@ export class ClientsGroupsComponent implements OnInit {
     }
 
     private resetNewClientGroup(): void {
-        this.newClientGroup = {
-            description: '',
-            id: '',
-            name: '',
-            pricePerHour: 0
+        this.newClientGroupWithDevicesGroups = {
+            clientGroup: {
+                description: '',
+                id: '',
+                name: '',
+                pricePerHour: 0
+            },
+            devicesGroups: []
         };
+    }
+
+    private handleError(err: any, messagesComponent: DisplayMessagesComponent, messagePrefix: string): void {
+        const errMessage = this.errorsSvc.getNetworkErrorMessage(err, messagePrefix);
+        messagesComponent.addErrorMessage(errMessage);
     }
 }

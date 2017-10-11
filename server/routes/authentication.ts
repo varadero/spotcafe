@@ -135,7 +135,7 @@ export class AuthenticationRoutes extends RoutesBase {
         if (this.apiPathIs(urlPath, 'devices-groups')) {
             return this.selectPermissionsIds(method, [pids.devicesGroupsView], [pids.devicesGroupsModify]);
         }
-        if (this.apiPathIs(urlPath, 'clients-groups')) {
+        if (this.apiPathIs(urlPath, 'clients-groups-with-devices-groups')) {
             return this.selectPermissionsIds(method, [pids.clientsGroupsView], [pids.clientsGroupsModify]);
         }
         if (this.apiPathIs(urlPath, 'clients')) {

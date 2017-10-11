@@ -6,36 +6,20 @@
                 <md-option *ngFor="let client of clients" [value]="client">{{client.client.username}} ({{client.client.firstName}} {{client.client.lastName}})</md-option>
             </md-select>
         </div>
+        <div *ngIf="selectedClient">
+            <spotcafe-client [clientDisplay]="selectedClient" [hidePasswords]="true"></spotcafe-client>
+            <spotcafe-messages #updateClientMessagesComponent></spotcafe-messages>
+            <md-card-actions>
+                <button [disabled]="waiting.updatingClient" md-raised-button (click)="updateClient(selectedClient)" color="primary">Update client {{selectedClient.client.username}}</button>
+            </md-card-actions>
+        </div>
     </md-card>
     <md-card>
         <md-card-title>New client</md-card-title>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newClient.client.username" placeholder="Username" />
-        </md-form-field>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newClient.client.email" placeholder="Email" />
-        </md-form-field>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newClient.client.firstName" placeholder="First name" />
-        </md-form-field>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newClient.client.lastName" placeholder="Last name" />
-        </md-form-field>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newClient.client.phone" placeholder="Phone" />
-        </md-form-field>
-        <md-form-field>
-            <input type="password" mdInput [(ngModel)]="newClient.client.password" placeholder="Password" />
-        </md-form-field>
-        <md-form-field>
-            <input type="password" mdInput [(ngModel)]="newClient.confirmPassword" placeholder="Confirm password" />
-        </md-form-field>
-        <md-select *ngIf="newClient.groups" [(ngModel)]="newClient.selectedGroup" placeholder="Client group">
-            <md-option *ngFor="let group of newClient.groups" [value]="group">{{group.name}}</md-option>
-        </md-select>
+        <spotcafe-client [clientDisplay]="newClient"></spotcafe-client>
         <spotcafe-messages #newClientMessagesComponent></spotcafe-messages>
         <md-card-actions>
-            <button md-raised-button (click)="createClient(newClient)" color="primary">Create client {{newClient.client.username}}</button>
+            <button [disabled]="waiting.creatingClient" md-raised-button (click)="createClient(newClient)" color="primary">Create client {{newClient.client.username}}</button>
         </md-card-actions>
     </md-card>
 </div>

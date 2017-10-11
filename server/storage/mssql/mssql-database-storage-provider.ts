@@ -26,11 +26,13 @@ import { ICreateDeviceGroupResult } from '../../../shared/interfaces/create-devi
 import { IUpdateDeviceGroupResult } from '../../../shared/interfaces/update-device-group-result';
 import { IStartClientDeviceData } from '../start-client-device-data';
 import { IStopClientDeviceData } from '../stop-client-device-data';
-import { IClientGroup } from '../../../shared/interfaces/client-group';
+import { IClientGroupWithDevicesGroupsIds } from '../../../shared/interfaces/client-group-with-devices-groups-ids';
 import { ICreateClientGroupResult } from '../../../shared/interfaces/create-client-group-result';
 import { IUpdateClientGroupResult } from '../../../shared/interfaces/update-client-group-result';
 import { IClient } from '../../../shared/interfaces/client';
 import { ICreateEntityResult } from '../../../shared/interfaces/create-entity-result';
+import { IUpdateEntityResult } from '../../../shared/interfaces/update-entity-result';
+import { IIdWithName } from '../../../shared/interfaces/id-with-name';
 
 export class MSSqlDatabaseStorageProvider implements StorageProvider {
     private config: ConnectionConfig;
@@ -41,6 +43,48 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         this.logger = logger;
         this.config = <ConnectionConfig>(config);
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
+    }
+
+    async updateClient(client: IClient): Promise<IUpdateEntityResult> {
+        let sql = `
+            IF EXISTS(
+                SELECT TOP 1 [Username]
+                FROM [Clients]
+                WHERE [Username]=@Username
+            )
+            BEGIN
+                SELECT [AlreadyExists]=CAST(1 as bit)
+            END
+            ELSE
+            BEGIN
+                SELECT [AlreadyExists]=CAST(0 as bit)
+                UPDATE [Clients]
+                SET [Username]=@Username,
+                    [Email]=@Email,
+                    [FirstName]=@FirstName,
+                    [LastName]=@LastName,
+                    [Phone]=@Phone,
+                    [Disabled]=@Disabled,
+                    [ClientGroupId]=@ClientGroupId
+                WHERE [Id]=@Id
+            END
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'Username', value: client.username, type: TYPES.NVarChar },
+            { name: 'Email', value: client.email, type: TYPES.NVarChar },
+            { name: 'FirstName', value: client.firstName, type: TYPES.NVarChar },
+            { name: 'LastName', value: client.lastName, type: TYPES.NVarChar },
+            { name: 'Phone', value: client.phone, type: TYPES.NVarChar },
+            { name: 'Disabled', value: client.disabled, type: TYPES.Bit },
+            { name: 'ClientGroupId', value: client.clientGroupId, type: TYPES.UniqueIdentifierN },
+            { name: 'Id', value: client.id, type: TYPES.UniqueIdentifierN }
+        ];
+        sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
+        const insertResult = await this.dbHelper.execToObjects(sql, params);
+        const alreadyExists = (<{ alreadyExists: boolean }>insertResult.firstResultSet.rows[0]).alreadyExists;
+        return <IUpdateEntityResult>{
+            alreadyExists: alreadyExists
+        };
     }
 
     async createClient(client: IClient): Promise<ICreateEntityResult> {
@@ -97,7 +141,9 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         return <IClient[]>getResult.firstResultSet.rows;
     }
 
-    async createClientGroup(clientGroup: IClientGroup): Promise<ICreateClientGroupResult> {
+    async createClientGroupWithDevicesGroupsIds(
+        clientGroupWithDevicesGroupsIds: IClientGroupWithDevicesGroupsIds
+    ): Promise<ICreateClientGroupResult> {
         let newId = this.dbHelper.generateId();
         let sql = `
             IF EXISTS(
@@ -115,14 +161,30 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
                 INSERT INTO [ClientsGroups]
                 ([Id], [Name], [Description], [PricePerHour]) VALUES
                 (@Id, @Name, @Description, @PricePerHour)
-            END
         `;
+        const clientGroup = clientGroupWithDevicesGroupsIds.clientGroup;
         const params: IRequestParameter[] = [
             { name: 'Id', value: newId, type: TYPES.UniqueIdentifierN },
             { name: 'Name', value: clientGroup.name, type: TYPES.NVarChar },
             { name: 'Description', value: clientGroup.description, type: TYPES.NVarChar },
             { name: 'PricePerHour', value: clientGroup.pricePerHour, type: TYPES.Money },
         ];
+        if (clientGroupWithDevicesGroupsIds) {
+            for (let i = 0; i < clientGroupWithDevicesGroupsIds.devicesGroupsIds.length; i++) {
+                const deviceGroupIdParamName = `DeviceGroupId${i}`;
+                sql += `
+                    INSERT INTO [ClientsGroupsWithDevicesGroups]
+                    ([ClientGroupId], [DeviceGroupId]) VALUES
+                    (@Id, @${deviceGroupIdParamName})
+                `;
+                params.push({
+                    name: deviceGroupIdParamName,
+                    value: clientGroupWithDevicesGroupsIds.devicesGroupsIds[i],
+                    type: TYPES.UniqueIdentifierN
+                });
+            }
+        }
+        sql += 'END';
         sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
         const insertResult = await this.dbHelper.execToObjects(sql, params);
         const alreadyExists = (<{ alreadyExists: boolean }>insertResult.firstResultSet.rows[0]).alreadyExists;
@@ -136,7 +198,9 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         return result;
     }
 
-    async updateClientGroup(clientGroup: IClientGroup): Promise<IUpdateClientGroupResult> {
+    async updateClientGroupWithDevicesGroupsIds(
+        clientGroupWithDevicesGroupsIds: IClientGroupWithDevicesGroupsIds
+    ): Promise<IUpdateClientGroupResult> {
         let sql = `
             IF EXISTS(
                 SELECT TOP 1 [Name]
@@ -155,14 +219,33 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
                     [Description]=@Description,
                     [PricePerHour]=@PricePerHour
                 WHERE [Id]=@Id
-            END
+
+                DELETE FROM [ClientsGroupsWithDevicesGroups]
+                WHERE [ClientGroupId]=@Id
         `;
+        const clientGroup = clientGroupWithDevicesGroupsIds.clientGroup;
         const params: IRequestParameter[] = [
             { name: 'Id', value: clientGroup.id, type: TYPES.UniqueIdentifierN },
             { name: 'Name', value: clientGroup.name, type: TYPES.NVarChar },
             { name: 'Description', value: clientGroup.description, type: TYPES.NVarChar },
             { name: 'PricePerHour', value: clientGroup.pricePerHour, type: TYPES.Money },
         ];
+        if (clientGroupWithDevicesGroupsIds) {
+            for (let i = 0; i < clientGroupWithDevicesGroupsIds.devicesGroupsIds.length; i++) {
+                const deviceGroupIdParamName = `DeviceGroupId${i}`;
+                sql += `
+                    INSERT INTO [ClientsGroupsWithDevicesGroups]
+                    ([ClientGroupId], [DeviceGroupId]) VALUES
+                    (@Id, @${deviceGroupIdParamName})
+                `;
+                params.push({
+                    name: deviceGroupIdParamName,
+                    value: clientGroupWithDevicesGroupsIds.devicesGroupsIds[i],
+                    type: TYPES.UniqueIdentifierN
+                });
+            }
+        }
+        sql += 'END';
         sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
         const insertResult = await this.dbHelper.execToObjects(sql, params);
         const alreadyExists = (<{ alreadyExists: boolean }>insertResult.firstResultSet.rows[0]).alreadyExists;
@@ -171,14 +254,33 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         };
     }
 
-    async getClientsGroups(): Promise<IClientGroup[]> {
+    async getClientsGroupsWithDevicesGroupsIds(): Promise<IClientGroupWithDevicesGroupsIds[]> {
         const sql = `
-            SELECT [Id], [Name], [Description], [PricePerHour]
-            FROM [ClientsGroups]
+            SELECT cg.[Id], cg.[Name], cg.[Description], cg.[PricePerHour],
+                   dg.[Id] AS DeviceGroupId, dg.[Name] AS DeviceGroupName
+            FROM [ClientsGroups] cg
+            LEFT OUTER JOIN [ClientsGroupsWithDevicesGroups] cgwdg ON cgwdg.[ClientGroupId]=cg.[Id]
+            LEFT OUTER JOIN [DevicesGroups] dg ON dg.[Id]=cgwdg.[DeviceGroupId]
             ORDER BY [Name]
         `;
-        const getResult = await this.dbHelper.execToObjects(sql);
-        return <IClientGroup[]>getResult.firstResultSet.rows;
+        const groupsWithDevicesGroupsIdsResult = await this.dbHelper.execToObjects(sql);
+        const groupsWithDevicesGroupsIds = this.dbHelper.groupAndRename(
+            groupsWithDevicesGroupsIdsResult.firstResultSet.rows,
+            { id: '', name: '', description: '', pricePerHour: '' },
+            { deviceGroupId: 'id', deviceGroupName: 'name' },
+            'clientGroup',
+            'devicesGroups'
+        );
+        const result: IClientGroupWithDevicesGroupsIds[] = [];
+        for (let i = 0; i < groupsWithDevicesGroupsIds.length; i++) {
+            const item = groupsWithDevicesGroupsIds[i];
+            const obj = <IClientGroupWithDevicesGroupsIds>{
+                clientGroup: item.clientGroup
+            };
+            obj.devicesGroupsIds = (<IIdWithName[]>item.devicesGroups).filter(x => x.id).map(x => x.id);
+            result.push(obj);
+        }
+        return result;
     }
 
     async createDeviceGroup(deviceGroup: IDeviceGroup): Promise<ICreateDeviceGroupResult> {

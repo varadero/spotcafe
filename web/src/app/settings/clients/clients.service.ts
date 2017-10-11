@@ -1,9 +1,9 @@
 import { IClientDisplay } from './client-display';
 import { IClient } from '../../../../../shared/interfaces/client';
-import { IClientGroup } from '../../../../../shared/interfaces/client-group';
+import { IClientGroupWithDevicesGroupsIds } from '../../../../../shared/interfaces/client-group-with-devices-groups-ids';
 
 export class ClientsService {
-    createClientDiplayItems(clients: IClient[], clientsGroups: IClientGroup[]): IClientDisplay[] {
+    createClientDiplayItems(clients: IClient[], clientsGroups: IClientGroupWithDevicesGroupsIds[]): IClientDisplay[] {
         const result: IClientDisplay[] = [];
         for (let i = 0; i < clients.length; i++) {
             const client = clients[i];
@@ -11,19 +11,20 @@ export class ClientsService {
                 client: Object.assign({}, client),
                 groups: [...clientsGroups]
             };
-            resultItem.selectedGroup = <IClientGroup>resultItem.groups.find(x => x.id === resultItem.client.clientGroupId);
+            resultItem.selectedGroup = <IClientGroupWithDevicesGroupsIds>resultItem.groups
+                .find(x => x.clientGroup.id === resultItem.client.clientGroupId);
             result.push(resultItem);
         }
         return result;
     }
 
-    cloneClientsGroups(clientsGroups: IClientGroup[]): IClientGroup[] {
+    cloneClientsGroups(clientsGroups: IClientGroupWithDevicesGroupsIds[]): IClientGroupWithDevicesGroupsIds[] {
         return clientsGroups.map(x => Object.assign({}, x));
     }
 
     toClient(clientDisplay: IClientDisplay): IClient {
         const client = <IClient>{
-            clientGroupId: clientDisplay.selectedGroup.id,
+            clientGroupId: clientDisplay.selectedGroup.clientGroup.id,
             disabled: clientDisplay.client.disabled,
             email: clientDisplay.client.email,
             firstName: clientDisplay.client.firstName,

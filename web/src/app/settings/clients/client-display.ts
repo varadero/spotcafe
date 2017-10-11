@@ -1,9 +1,9 @@
 import { IClient } from '../../../../../shared/interfaces/client';
-import { IClientGroup } from '../../../../../shared/interfaces/client-group';
+import { IClientGroupWithDevicesGroupsIds } from '../../../../../shared/interfaces/client-group-with-devices-groups-ids';
 
 export interface IClientDisplay {
     client: IClient;
-    groups: IClientGroup[];
-    selectedGroup: IClientGroup;
+    groups: IClientGroupWithDevicesGroupsIds[];
+    selectedGroup: IClientGroupWithDevicesGroupsIds;
     confirmPassword: string;
 }

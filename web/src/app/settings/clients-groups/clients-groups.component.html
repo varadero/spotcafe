@@ -3,38 +3,63 @@
         <md-card-title>Existing clients groups</md-card-title>
         <spotcafe-messages #loadClientsGroupsMessagesComponent></spotcafe-messages>
         <md-select *ngIf="clientsGroups && clientsGroups.length" [(ngModel)]="selectedClientGroup">
-            <md-option *ngFor="let clientGroup of clientsGroups" [value]="clientGroup">{{clientGroup.name}}</md-option>
+            <md-option *ngFor="let clientGroupWithDevicesGroups of clientsGroups" [value]="clientGroupWithDevicesGroups">{{clientGroupWithDevicesGroups.clientGroup.name}}</md-option>
         </md-select>
         <div *ngIf="selectedClientGroup">
             <md-form-field>
-                <input mdInput [(ngModel)]="selectedClientGroup.name" placeholder="Name" />
+                <input mdInput [(ngModel)]="selectedClientGroup.clientGroup.name" placeholder="Name" />
             </md-form-field>
             <md-form-field>
-                <input mdInput [(ngModel)]="selectedClientGroup.description" placeholder="Description" />
+                <input mdInput [(ngModel)]="selectedClientGroup.clientGroup.description" placeholder="Description" />
             </md-form-field>
             <md-form-field>
-                <input mdInput [(ngModel)]="selectedClientGroup.pricePerHour" placeholder="Price per hour" />
+                <input mdInput [(ngModel)]="selectedClientGroup.clientGroup.pricePerHour" placeholder="Price per hour" />
             </md-form-field>
+            <div>
+                <div>Devices groups access</div>
+                <md-select *ngIf="devicesGroupsForExistingClientGroup" [(ngModel)]="selectedDeviceGroupForExistingClientGroup" placeholder="Device group">
+                    <md-option *ngFor="let devicesGroup of devicesGroupsForExistingClientGroup" [value]="devicesGroup">{{devicesGroup.name}}</md-option>
+                </md-select>
+                <button [disabled]="!selectedDeviceGroupForExistingClientGroup" md-raised-button color="primary" (click)="addDeviceGroupToSelectedExistingClientGroup(selectedDeviceGroupForExistingClientGroup)">Add</button>
+                <md-list>
+                    <md-list-item *ngFor="let deviceGroup of selectedClientGroup.devicesGroups">
+                        <button md-button color="warn" (click)="removeSelectedClientGroupDeviceGroup(deviceGroup)">Remove</button>{{deviceGroup.name}}
+                    </md-list-item>
+                </md-list>
+            </div>
             <md-card-actions>
                 <spotcafe-messages #updateClientsGroupsMessagesComponent></spotcafe-messages>
-                <button [disabled]="waiting.updatingGroup" md-raised-button (click)="updateClientGroup(selectedClientGroup)" color="primary">Update group {{selectedClientGroup.name}}</button>
+                <button [disabled]="waiting.updatingGroup" md-raised-button (click)="updateClientGroup(selectedClientGroup)" color="primary">Update group {{selectedClientGroup.clientGroup.name}}</button>
             </md-card-actions>
         </div>
     </md-card>
     <md-card>
         <md-card-title>New group</md-card-title>
         <md-form-field>
-            <input mdInput [(ngModel)]="newClientGroup.name" placeholder="Name" />
+            <input mdInput [(ngModel)]="newClientGroupWithDevicesGroups.clientGroup.name" placeholder="Name" />
         </md-form-field>
         <md-form-field>
-            <input mdInput [(ngModel)]="newClientGroup.description" placeholder="Description" />
+            <input mdInput [(ngModel)]="newClientGroupWithDevicesGroups.clientGroup.description" placeholder="Description" />
         </md-form-field>
         <md-form-field>
-            <input mdInput [(ngModel)]="newClientGroup.pricePerHour" placeholder="Price per hour" />
+            <input mdInput [(ngModel)]="newClientGroupWithDevicesGroups.clientGroup.pricePerHour" placeholder="Price per hour" />
         </md-form-field>
+        <div>
+            <div>Devices groups access</div>
+            <md-select *ngIf="devicesGroupsForNewClientGroup" [(ngModel)]="selectedDeviceGroupForNewClientGroup" placeholder="Device group">
+                <md-option *ngFor="let devicesGroup of devicesGroupsForNewClientGroup" [value]="devicesGroup">{{devicesGroup.name}}</md-option>
+            </md-select>
+            <button [disabled]="!selectedDeviceGroupForNewClientGroup" md-raised-button color="primary" (click)="addDeviceGroupToNewClientGroup(selectedDeviceGroupForNewClientGroup)">Add</button>
+            <md-list>
+                <md-list-item *ngFor="let deviceGroup of newClientGroupWithDevicesGroups.devicesGroups">
+                    <button md-button color="warn" (click)="removeDeviceGroupFromNewClientGroup(deviceGroup)">Remove</button>{{deviceGroup.name}}
+                </md-list-item>
+            </md-list>
+        </div>
         <md-card-actions>
             <spotcafe-messages #createClientsGroupsMessagesComponent></spotcafe-messages>
-            <button [disabled]="waiting.creatingGroup" md-raised-button (click)="createClientGroup(newClientGroup)" color="primary">Create group {{newClientGroup.name}}</button>
+            <button [disabled]="waiting.creatingGroup" md-raised-button (click)="createClientGroup(newClientGroupWithDevicesGroups)"
+                color="primary">Create group {{newClientGroupWithDevicesGroups.clientGroup.name}}</button>
         </md-card-actions>
     </md-card>
 </div>

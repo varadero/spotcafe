@@ -15,7 +15,7 @@ export class ConnectionPool {
         idleTimeout: number;
         timeToLive: number;
     };
-    private logMessagePrefix = 'CONNECTION POOL';
+    private logMessagePrefix = 'CONNECTION-POOL';
 
     private statistics: IStatistics;
 

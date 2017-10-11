@@ -23,15 +23,15 @@ export class RoutesBase {
                 ctx.status = 200;
             }
         } catch (err) {
-            return this.throwContextError(ctx, 500);
+            return ctx.throw(500);
         }
 
         if (result && result.error) {
             const status = result.error.number || 500;
             const message = this.errorMessage.create(result.error.message || '');
             ctx.status = status;
-            ctx.message = message;
-            return this.throwContextError(ctx, status, message);
+            ctx.message = result.error.message;
+            return ctx.throw(status, message);
         }
 
         return result;
@@ -48,10 +48,10 @@ export class RoutesBase {
         } catch (err) {
             if (err && err.status) {
                 ctx.status = err.status;
-                return this.throwContextError(ctx, err.status);
+                return ctx.throw(err.status);
             } else {
                 ctx.status = 500;
-                return this.throwContextError(ctx, 500);
+                return ctx.throw(500);
             }
         }
     }

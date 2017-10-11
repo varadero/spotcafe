@@ -19,11 +19,12 @@ import { IStopClientDeviceResult } from '../../../../shared/interfaces/stop-clie
 import { IDeviceGroup } from '../../../../shared/interfaces/device-group';
 import { IUpdateDeviceGroupResult } from '../../../../shared/interfaces/update-device-group-result';
 import { ICreateDeviceGroupResult } from '../../../../shared/interfaces/create-device-group-result';
-import { IClientGroup } from '../../../../shared/interfaces/client-group';
+import { IClientGroupWithDevicesGroupsIds } from '../../../../shared/interfaces/client-group-with-devices-groups-ids';
 import { IUpdateClientGroupResult } from '../../../../shared/interfaces/update-client-group-result';
 import { ICreateClientGroupResult } from '../../../../shared/interfaces/create-client-group-result';
 import { IClient } from '../../../../shared/interfaces/client';
 import { ICreateEntityResult } from '../../../../shared/interfaces/create-entity-result';
+import { IUpdateEntityResult } from '../../../../shared/interfaces/update-entity-result';
 
 @Injectable()
 export class DataService {
@@ -44,16 +45,21 @@ export class DataService {
         return this.post('clients', client);
     }
 
-    createClientGroup(clientGroup: IClientGroup): Promise<ICreateClientGroupResult> {
-        return this.post('clients-groups', clientGroup);
+    updateClient(client: IClient): Promise<IUpdateEntityResult> {
+        return this.post('clients/' + encodeURI(client.id), client);
     }
 
-    updateClientGroup(clientGroup: IClientGroup): Promise<IUpdateClientGroupResult> {
-        return this.post('clients-groups/' + encodeURI(clientGroup.id), clientGroup);
+    createClientGroup(clientGroupWithDevicesGroupsIds: IClientGroupWithDevicesGroupsIds): Promise<ICreateClientGroupResult> {
+        return this.post('clients-groups-with-devices-groups', clientGroupWithDevicesGroupsIds);
     }
 
-    getClientsGroups(): Promise<IClientGroup[]> {
-        return this.get('clients-groups');
+    updateClientGroup(clientGroupWithDevicesGroupsIds: IClientGroupWithDevicesGroupsIds): Promise<IUpdateClientGroupResult> {
+        return this.post('clients-groups-with-devices-groups/'
+            + encodeURI(clientGroupWithDevicesGroupsIds.clientGroup.id), clientGroupWithDevicesGroupsIds);
+    }
+
+    getClientsGroups(): Promise<IClientGroupWithDevicesGroupsIds[]> {
+        return this.get('clients-groups-with-devices-groups');
     }
 
     createDeviceGroup(deviceGroup: IDeviceGroup): Promise<ICreateDeviceGroupResult> {

@@ -12,8 +12,10 @@ import { RolesComponent } from './roles/roles.component';
 import { RolesService } from './roles/roles.service';
 import { DevicesGroupsComponent } from './devices-groups/devices-groups.component';
 import { ClientsGroupsComponent } from './clients-groups/clients-groups.component';
+import { ClientsGroupsService } from './clients-groups/clients-groups.service';
 import { ClientsComponent } from './clients/clients.component';
 import { ClientsService } from './clients/clients.service';
+import { ClientComponent } from './clients/client.component';
 import { DurationPipe } from '../core/duration.pipe';
 
 @NgModule({
@@ -25,6 +27,7 @@ import { DurationPipe } from '../core/duration.pipe';
         DevicesGroupsComponent,
         ClientsGroupsComponent,
         ClientsComponent,
+        ClientComponent,
         RolesComponent,
         DurationPipe
     ],
@@ -39,7 +42,8 @@ import { DurationPipe } from '../core/duration.pipe';
         EmployeesService,
         RolesService,
         ClientDevicesService,
-        ClientsService
+        ClientsService,
+        ClientsGroupsService
     ]
 })
 export class SettingsModule { }

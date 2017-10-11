@@ -1,4 +1,4 @@
-import { IUpdateEntityResult } from './update-entity-resut';
+import { IUpdateEntityResult } from './update-entity-result';
 
 export interface IUpdateClientGroupResult extends IUpdateEntityResult {
     invalidPricePerHour: boolean;
