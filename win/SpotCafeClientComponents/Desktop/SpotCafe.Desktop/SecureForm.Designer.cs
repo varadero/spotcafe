@@ -24,11 +24,11 @@
         /// </summary>
         private void InitializeComponent() {
             this.panelContentWrapper = new System.Windows.Forms.Panel();
+            this.textBoxSignInEror = new System.Windows.Forms.TextBox();
+            this.progressBarSignInTimeout = new System.Windows.Forms.ProgressBar();
             this.buttonSignIn = new System.Windows.Forms.Button();
             this.textBoxPassword = new System.Windows.Forms.TextBox();
             this.textBoxUsername = new System.Windows.Forms.TextBox();
-            this.progressBarSignInTimeout = new System.Windows.Forms.ProgressBar();
-            this.textBoxSignInEror = new System.Windows.Forms.TextBox();
             this.panelContentWrapper.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -45,6 +45,33 @@
             this.panelContentWrapper.Size = new System.Drawing.Size(380, 241);
             this.panelContentWrapper.TabIndex = 0;
             this.panelContentWrapper.Visible = false;
+            // 
+            // textBoxSignInEror
+            // 
+            this.textBoxSignInEror.BackColor = System.Drawing.Color.Black;
+            this.textBoxSignInEror.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.textBoxSignInEror.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.textBoxSignInEror.ForeColor = System.Drawing.Color.Tomato;
+            this.textBoxSignInEror.Location = new System.Drawing.Point(3, 116);
+            this.textBoxSignInEror.Multiline = true;
+            this.textBoxSignInEror.Name = "textBoxSignInEror";
+            this.textBoxSignInEror.ReadOnly = true;
+            this.textBoxSignInEror.Size = new System.Drawing.Size(374, 52);
+            this.textBoxSignInEror.TabIndex = 3;
+            this.textBoxSignInEror.Visible = false;
+            // 
+            // progressBarSignInTimeout
+            // 
+            this.progressBarSignInTimeout.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(192)))));
+            this.progressBarSignInTimeout.Location = new System.Drawing.Point(3, 112);
+            this.progressBarSignInTimeout.Margin = new System.Windows.Forms.Padding(0);
+            this.progressBarSignInTimeout.Maximum = 60;
+            this.progressBarSignInTimeout.Name = "progressBarSignInTimeout";
+            this.progressBarSignInTimeout.Size = new System.Drawing.Size(374, 1);
+            this.progressBarSignInTimeout.Step = 1;
+            this.progressBarSignInTimeout.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.progressBarSignInTimeout.TabIndex = 1;
+            this.progressBarSignInTimeout.Value = 60;
             // 
             // buttonSignIn
             // 
@@ -84,32 +111,6 @@
             this.textBoxUsername.Name = "textBoxUsername";
             this.textBoxUsername.Size = new System.Drawing.Size(374, 50);
             this.textBoxUsername.TabIndex = 0;
-            // 
-            // progressBarSignInTimeout
-            // 
-            this.progressBarSignInTimeout.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(192)))));
-            this.progressBarSignInTimeout.Location = new System.Drawing.Point(3, 112);
-            this.progressBarSignInTimeout.Margin = new System.Windows.Forms.Padding(0);
-            this.progressBarSignInTimeout.Maximum = 60;
-            this.progressBarSignInTimeout.Name = "progressBarSignInTimeout";
-            this.progressBarSignInTimeout.Size = new System.Drawing.Size(374, 1);
-            this.progressBarSignInTimeout.Step = 1;
-            this.progressBarSignInTimeout.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
-            this.progressBarSignInTimeout.TabIndex = 1;
-            this.progressBarSignInTimeout.Value = 60;
-            // 
-            // textBoxSignInEror
-            // 
-            this.textBoxSignInEror.BackColor = System.Drawing.Color.Black;
-            this.textBoxSignInEror.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.textBoxSignInEror.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.textBoxSignInEror.ForeColor = System.Drawing.Color.Tomato;
-            this.textBoxSignInEror.Location = new System.Drawing.Point(3, 116);
-            this.textBoxSignInEror.Multiline = true;
-            this.textBoxSignInEror.Name = "textBoxSignInEror";
-            this.textBoxSignInEror.Size = new System.Drawing.Size(374, 52);
-            this.textBoxSignInEror.TabIndex = 3;
-            this.textBoxSignInEror.Visible = false;
             // 
             // SecureForm
             // 

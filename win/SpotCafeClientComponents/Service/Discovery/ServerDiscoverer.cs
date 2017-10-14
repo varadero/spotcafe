@@ -20,12 +20,12 @@ namespace SpotCafe.Service.Discovery {
         private Serializer serializer;
         private TimeSpan searchInterval;
 
-        public ServerDiscoverer(string clientId, string clientName, string serverIp, TimeSpan searchInterval) {
+        public ServerDiscoverer(string clientDeviceId, string clientDeviceName, string serverIp, TimeSpan searchInterval) {
             serializer = new Serializer();
             this.serverIp = serverIp;
             this.searchInterval = searchInterval;
             discoverPort = 64129;
-            broadcastData = new DiscoveryBroadcastData { ClientId = clientId, ClientName = clientName };
+            broadcastData = new DiscoveryBroadcastData { ClientDeviceId = clientDeviceId, ClientDeviceName = clientDeviceName };
             discoveryTimer = new Timer(new TimerCallback(DiscoveryTimerCallback), null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
         }
 
@@ -46,10 +46,10 @@ namespace SpotCafe.Service.Discovery {
             }
             var handler = DiscoveryDataReceived;
             if (handler != null) {
-                DiscoveryResponse discoveryResponse = null;
+                DiscoveryResult discoveryResponse = null;
                 try {
                     var text = Encoding.UTF8.GetString(data);
-                    discoveryResponse = serializer.Deserialize<DiscoveryResponse>(text);
+                    discoveryResponse = serializer.Deserialize<DiscoveryResult>(text);
                 } catch { }
                 var args = new DiscoveryDataReceivedEventArgs { Response = discoveryResponse, Data = data, RemoteEndPoint = remoteEndpoint };
                 DiscoveryDataReceived(this, args);

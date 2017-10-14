@@ -31,7 +31,9 @@ export class ConnectionPool {
         this.items = [];
         this.statistics = {
             totalConnectionsCreated: 0,
-            totalTimesReused: 0
+            totalTimesReused: 0,
+            connectionErrors: 0,
+            connectionErrorMessages: 0
         };
         // TODO The following for some strange reason doesn't work
         // It will work if setInterval result is not assigned to this.cleanupTimer
@@ -83,6 +85,11 @@ export class ConnectionPool {
             } catch (err) {
                 // Error when creating connection
                 this.logError('Connection error', err);
+                try {
+                    if (newConnection) {
+                        (<Connection>newConnection).close();
+                    }
+                } catch (err) { }
             }
             if (!newConnection) {
                 // Connection was not created for some reason
@@ -144,9 +151,15 @@ export class ConnectionPool {
                 return resolve(conn);
             });
             conn.on('error', err => {
+                this.statistics.connectionErrors++;
+                this.markConnectionForCleanUp(conn);
+                this.cleanUpPool();
                 this.logError('Connection message', err);
             });
             conn.on('errorMessage', err => {
+                this.statistics.connectionErrorMessages++;
+                this.markConnectionForCleanUp(conn);
+                this.cleanUpPool();
                 let errText = '';
                 try {
                     errText = JSON.stringify(err);
@@ -157,15 +170,36 @@ export class ConnectionPool {
         });
     }
 
+    private markConnectionForCleanUp(connection: Connection): void {
+        const poolItem = this.getPoolItemByConnection(connection);
+        if (!poolItem) {
+            return;
+        }
+        if (poolItem) {
+            poolItem.forCleanUp = true;
+        }
+    }
+
     private getFirstConectedPoolItem(config: ConnectionConfig): IConnectionPoolItem | null {
         const now = new Date().getTime();
         const timeToLive = this.config.timeToLive || this.defaultPoolConfig.timeToLive;
-        const firstNotInUse = this.items.find(x => !x.inUse && !x.disposing && x.config === config && ((now - x.createdAt) < timeToLive));
+        const firstNotInUse = this.items.find(x =>
+            !x.forCleanUp
+            && !x.inUse
+            && !x.disposing
+            && x.config === config
+            && ((now - x.createdAt) < timeToLive)
+        );
         if (firstNotInUse) {
             return firstNotInUse;
         }
 
         return null;
+    }
+
+    private getPoolItemByConnection(connection: Connection): IConnectionPoolItem | null {
+        const poolItem = this.items.find(x => x.connection === connection);
+        return poolItem || null;
     }
 
     private cleanUpPool(): void {
@@ -174,7 +208,9 @@ export class ConnectionPool {
         const idleTimeout = this.config.idleTimeout || this.defaultPoolConfig.idleTimeout;
         for (let i = this.items.length - 1; i >= 0; i--) {
             const item = this.items[i];
-            if (!item.inUse && !item.disposing && (now - item.lastReleasedAt) > idleTimeout) {
+            const notInUseAndNotDisposing = !item.inUse && !item.disposing;
+            const tooOld = (now - item.lastReleasedAt) > idleTimeout;
+            if (item.forCleanUp || (notInUseAndNotDisposing && tooOld)) {
                 item.disposing = true;
                 const connection = item.connection;
                 // connection.on('end', () => {
@@ -222,9 +258,12 @@ interface IConnectionPoolItem {
     usedCount: number;
     inUse: boolean;
     disposing: boolean;
+    forCleanUp: boolean;
 }
 
 interface IStatistics {
     totalTimesReused: number;
     totalConnectionsCreated: number;
+    connectionErrors: number;
+    connectionErrorMessages: number;
 }

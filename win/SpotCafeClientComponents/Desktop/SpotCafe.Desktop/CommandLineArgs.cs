@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SpotCafe.Desktop {
     public class CommandLineArgs {
-        public string ClientId { get; set; }
+        public string ClientDeviceId { get; set; }
         public string ServerIP { get; set; }
         public string ServerCertificateThumbprint { get; set; }
     }

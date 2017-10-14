@@ -27,11 +27,15 @@ export class UdpDiscoveryListener {
             this.logger.log(`Client application discovery info: ${clientAppAddr}`);
             try {
                 const str = msg.toString('utf8');
-                const obj = <{ clientId: string, clientName: string }>JSON.parse(str);
+                const obj = <{ clientDeviceId: string, clientDeviceName: string }>JSON.parse(str);
                 this.logger.log('Client application discovery data', obj);
+                if (!obj || !obj.clientDeviceId || !obj.clientDeviceName) {
+                    this.logger.error('Discovery data is incomplete');
+                    return;
+                }
                 const registerResult = await this.storageProvider.registerClientDevice(
-                    obj.clientId,
-                    obj.clientName,
+                    obj.clientDeviceId,
+                    obj.clientDeviceName,
                     rinfo.address,
                     'E000F85C-06ED-4EF4-8C3A-FEDB89EA9EE4'
                 );

@@ -8,4 +8,6 @@ import { IClientDisplay } from './client-display';
 export class ClientComponent {
     @Input() clientDisplay: IClientDisplay;
     @Input() hidePasswords: boolean;
+    @Input() hideCredit: boolean;
+    @Input() hideUsername: boolean;
 }

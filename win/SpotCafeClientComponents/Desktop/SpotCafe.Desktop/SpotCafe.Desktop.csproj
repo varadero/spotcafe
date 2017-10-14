@@ -60,10 +60,14 @@
     <Compile Include="MainFormStartArgs.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="REST\ClientRestClient.cs" />
     <Compile Include="REST\CurrentData.cs" />
-    <Compile Include="REST\LogInRequest.cs" />
-    <Compile Include="REST\RestClient.cs" />
+    <Compile Include="REST\LogInClientRequest.cs" />
+    <Compile Include="REST\LogInClientResult.cs" />
+    <Compile Include="REST\LogInDeviceRequest.cs" />
+    <Compile Include="REST\DeviceRestClient.cs" />
     <Compile Include="REST\ClientToken.cs" />
+    <Compile Include="REST\RestClientBase.cs" />
     <Compile Include="SecureForm.cs">
       <SubType>Form</SubType>
     </Compile>

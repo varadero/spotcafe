@@ -5,10 +5,10 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SpotCafe.Desktop.REST {
+namespace SpotCafe.Service.Discovery {
     [DataContract]
-    public class LogInRequest {
-        [DataMember(Name = "clientId")]
-        public string ClientId { get; set; }
+    class DiscoveryResult {
+        [DataMember(Name = "approved")]
+        public bool Approved { get; set; }
     }
 }

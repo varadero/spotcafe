@@ -8,10 +8,15 @@ import { PermissionsMapper } from '../utils/permissions-mapper';
 import { IServerToken } from './interfaces/server-token';
 import { RoutesBase } from './routes-base';
 import { IRouteActionResult } from './interfaces/route-action-result';
+import { ILogInClientResult } from '../../shared/interfaces/log-in-client-result';
+import { Time } from '../utils/time';
+import { IStartClientDeviceData } from '../storage/start-client-device-data';
+
 
 export class AuthenticationRoutes extends RoutesBase {
     private tokenSecret: string | null;
     private permissionsMapper = new PermissionsMapper();
+    private time = new Time();
 
     constructor(private storageProvider: StorageProvider, private apiPrefix: string) {
         super();
@@ -25,22 +30,63 @@ export class AuthenticationRoutes extends RoutesBase {
 
     logInClientDevice(): any {
         return route.post(this.apiPrefix + 'login-device', async ctx => {
-            await this.handleActionResult(ctx, () => this.logInClientDeviceImpl(ctx.request.body.clientId));
+            await this.handleActionResult(ctx, () => this.logInClientDeviceImpl(ctx.request.body.clientDeviceId));
         });
     }
 
-    // loginClient(): any {
-    //     return route.post(this.apiPrefix + 'login-client', async ctx => {
-    //         await this.handleActionResult(ctx, () => this.logInClientImpl(ctx.request.body.username, ctx.request.body.password));
-    //     });
-    // }
+    logInClient(): any {
+        return route.post(this.apiPrefix + 'login-client', async ctx => {
+            const body = <{ username: string, password: string, clientDeviceId: string }>ctx.request.body;
+            await this.handleActionResult(ctx, () => this.logInClientImpl(body.username, body.password, body.clientDeviceId));
+        });
+    }
 
     checkAuthorization() {
         return this.checkAuthorizationImpl.bind(this);
     }
 
-    // private async logInClientImpl(clientId: string): Promise<IRouteActionResult<IToken> | void> {
-    // }
+    private async logInClientImpl(
+        username: string,
+        password: string,
+        clientDeviceId: string
+    ): Promise<IRouteActionResult<ILogInClientResult> | void> {
+        const result = await this.storageProvider.logInAndGetClientData(username, password, clientDeviceId);
+        if (result.notFound) {
+            return { status: 404, error: { message: 'Not found' } };
+        }
+        if (result.disabled) {
+            return {
+                value: <ILogInClientResult>{
+                    disabled: true
+                }
+            };
+        }
+
+        const data = <IStartClientDeviceData>{
+            args: { deviceId: clientDeviceId },
+            startedAt: this.time.getCurrentTime(),
+            startedAtUptime: this.time.getCurrentUptime(),
+            startedByClientId: result.clientId
+        };
+        const startResult = await this.storageProvider.startClientDevice(data);
+        if (startResult.alreadyStarted) {
+            return { status: 403, error: { message: 'Device already started' } };
+        }
+
+        const token = await this.generateToken(
+            result.clientId,
+            'client',
+            [this.permissionsMapper.permissionIds.clientFullAccess]
+        );
+        return {
+            value: {
+                credit: result.credit,
+                disabled: result.disabled,
+                pricePerHour: result.pricePerHour,
+                token: token
+            }
+        };
+    }
 
     private async logInClientDeviceImpl(clientDeviceId: string): Promise<IRouteActionResult<IToken> | void> {
         const device = await this.storageProvider.getClientDevice(clientDeviceId);

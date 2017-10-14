@@ -28,6 +28,7 @@ export class ClientsService {
             disabled: clientDisplay.client.disabled,
             email: clientDisplay.client.email,
             firstName: clientDisplay.client.firstName,
+            id: clientDisplay.client.id,
             lastName: clientDisplay.client.lastName,
             password: clientDisplay.client.password,
             phone: clientDisplay.client.phone,

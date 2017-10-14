@@ -31,8 +31,9 @@ import { ICreateClientGroupResult } from '../../../shared/interfaces/create-clie
 import { IUpdateClientGroupResult } from '../../../shared/interfaces/update-client-group-result';
 import { IClient } from '../../../shared/interfaces/client';
 import { ICreateEntityResult } from '../../../shared/interfaces/create-entity-result';
-import { IUpdateEntityResult } from '../../../shared/interfaces/update-entity-result';
+// import { IUpdateEntityResult } from '../../../shared/interfaces/update-entity-result';
 import { IIdWithName } from '../../../shared/interfaces/id-with-name';
+import { ILogInAndGetClientDataResult } from '../log-in-and-get-client-data-result';
 
 export class MSSqlDatabaseStorageProvider implements StorageProvider {
     private config: ConnectionConfig;
@@ -45,32 +46,43 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
     }
 
-    async updateClient(client: IClient): Promise<IUpdateEntityResult> {
-        let sql = `
-            IF EXISTS(
-                SELECT TOP 1 [Username]
-                FROM [Clients]
-                WHERE [Username]=@Username
-            )
-            BEGIN
-                SELECT [AlreadyExists]=CAST(1 as bit)
-            END
-            ELSE
-            BEGIN
-                SELECT [AlreadyExists]=CAST(0 as bit)
-                UPDATE [Clients]
-                SET [Username]=@Username,
-                    [Email]=@Email,
-                    [FirstName]=@FirstName,
-                    [LastName]=@LastName,
-                    [Phone]=@Phone,
-                    [Disabled]=@Disabled,
-                    [ClientGroupId]=@ClientGroupId
-                WHERE [Id]=@Id
-            END
+    async logInAndGetClientData(username: string, password: string, clientDeviceId: string): Promise<ILogInAndGetClientDataResult> {
+        const passwordHash = this.dbHelper.getSha512(password);
+        const sql = `
+            SELECT c.[Id], c.[Disabled], c.[Credit], cg.[PricePerHour]
+            FROM [Clients] c
+            INNER JOIN [ClientsGroups] cg ON c.[ClientGroupId]=cg.[Id]
+            INNER JOIN [ClientsGroupsWithDevicesGroups] cgwdg ON cg.[Id]=cgwdg.[ClientGroupId]
+            INNER JOIN [DevicesGroups] dg ON cgwdg.[DeviceGroupId]=dg.[Id]
+            INNER JOIN [ClientDevices] cd ON dg.[Id]=cd.[DeviceGroupId] AND cd.[Id]=@ClientDeviceId
+            WHERE c.[Username]=@Username AND c.[Password]=@PasswordHash
         `;
         const params: IRequestParameter[] = [
-            { name: 'Username', value: client.username, type: TYPES.NVarChar },
+            { name: 'Username', value: username, type: TYPES.NVarChar },
+            { name: 'PasswordHash', value: passwordHash, type: TYPES.NVarChar },
+            { name: 'ClientDeviceId', value: clientDeviceId, type: TYPES.NVarChar }
+        ];
+        const result = await this.dbHelper.execToObjects(sql, params);
+        if (!result.firstResultSet.rows.length) {
+            return <ILogInAndGetClientDataResult>{
+                notFound: true
+            };
+        }
+        return <ILogInAndGetClientDataResult>result.firstResultSet.rows[0];
+    }
+
+    async updateClient(client: IClient): Promise<boolean> {
+        const sql = `
+            UPDATE [Clients]
+            SET [Email]=@Email,
+                [FirstName]=@FirstName,
+                [LastName]=@LastName,
+                [Phone]=@Phone,
+                [Disabled]=@Disabled,
+                [ClientGroupId]=@ClientGroupId
+            WHERE [Id]=@Id
+        `;
+        const params: IRequestParameter[] = [
             { name: 'Email', value: client.email, type: TYPES.NVarChar },
             { name: 'FirstName', value: client.firstName, type: TYPES.NVarChar },
             { name: 'LastName', value: client.lastName, type: TYPES.NVarChar },
@@ -79,12 +91,8 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             { name: 'ClientGroupId', value: client.clientGroupId, type: TYPES.UniqueIdentifierN },
             { name: 'Id', value: client.id, type: TYPES.UniqueIdentifierN }
         ];
-        sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
-        const insertResult = await this.dbHelper.execToObjects(sql, params);
-        const alreadyExists = (<{ alreadyExists: boolean }>insertResult.firstResultSet.rows[0]).alreadyExists;
-        return <IUpdateEntityResult>{
-            alreadyExists: alreadyExists
-        };
+        const updateResult = await this.dbHelper.execRowCount(sql, params);
+        return updateResult === 1;
     }
 
     async createClient(client: IClient): Promise<ICreateEntityResult> {
@@ -102,8 +110,8 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             BEGIN
                 SELECT [AlreadyExists]=CAST(0 as bit)
                 INSERT INTO [Clients]
-                ([Id], [Username], [Password], [Email], [FirstName], [LastName], [Phone], [Disabled], [ClientGroupId]) VALUES
-                (@Id, @Username, @Password, @Email, @FirstName, @LastName, @Phone, @Disabled, @ClientGroupId)
+                ([Id], [Username], [Password], [Email], [FirstName], [LastName], [Phone], [Disabled], [ClientGroupId], [Credit]) VALUES
+                (@Id, @Username, @Password, @Email, @FirstName, @LastName, @Phone, @Disabled, @ClientGroupId, 0)
             END
         `;
         const passwordHash = this.dbHelper.getSha512(client.password);
@@ -133,7 +141,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
 
     async getClients(): Promise<IClient[]> {
         const sql = `
-            SELECT [Id], [Username], [Password], [Email], [FirstName], [LastName], [Phone], [Disabled], [ClientGroupId]
+            SELECT [Id], [Username], [Email], [FirstName], [LastName], [Phone], [Disabled], [ClientGroupId], [Credit]
             FROM [Clients]
             ORDER BY [Username]
         `;

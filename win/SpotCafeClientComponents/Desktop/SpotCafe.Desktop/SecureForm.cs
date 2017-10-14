@@ -64,10 +64,16 @@ namespace SpotCafe.Desktop {
         }
 
         protected virtual void OnSignIn() {
-            SignIn?.Invoke(this, new SignInEventArgs {
+            var args = new SignInEventArgs {
                 Username = textBoxUsername.Text,
                 Password = textBoxPassword.Text
-            });
+            };
+            SignIn?.Invoke(this, args);
+            if (args.Success) {
+
+            } else {
+
+            }
         }
 
         private void StayOnTopTimer_Tick(object sender, EventArgs e) {

@@ -27,7 +27,7 @@ export class RoutesBase {
         }
 
         if (result && result.error) {
-            const status = result.error.number || 500;
+            const status = result.status || 500;
             const message = this.errorMessage.create(result.error.message || '');
             ctx.status = status;
             ctx.message = result.error.message;

@@ -8,5 +8,6 @@ namespace SpotCafe.Desktop {
     public class SignInEventArgs {
         public string Username { get; set; }
         public string Password { get; set; }
+        public bool Success { get; set; }
     }
 }

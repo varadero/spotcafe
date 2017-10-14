@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 namespace SpotCafe.Service.Discovery {
     [DataContract]
     class DiscoveryBroadcastData {
-        [DataMember(Name = "clientId")]
-        public string ClientId { get; set; }
-        [DataMember(Name = "clientName")]
-        public string ClientName { get; set; }
+        [DataMember(Name = "clientDeviceId")]
+        public string ClientDeviceId { get; set; }
+        [DataMember(Name = "clientDeviceName")]
+        public string ClientDeviceName { get; set; }
     }
 }
