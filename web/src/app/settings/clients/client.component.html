@@ -1,5 +1,11 @@
-<md-form-field>
+<md-form-field *ngIf="!hideUsername">
     <input mdInput [(ngModel)]="clientDisplay.client.username" placeholder="Username" />
+</md-form-field>
+<md-form-field *ngIf="!hidePasswords">
+    <input type="password" mdInput [(ngModel)]="clientDisplay.client.password" placeholder="Password" />
+</md-form-field>
+<md-form-field *ngIf="!hidePasswords">
+    <input type="password" mdInput [(ngModel)]="clientDisplay.confirmPassword" placeholder="Confirm password" />
 </md-form-field>
 <md-form-field>
     <input mdInput [(ngModel)]="clientDisplay.client.email" placeholder="Email" />
@@ -13,12 +19,9 @@
 <md-form-field>
     <input mdInput [(ngModel)]="clientDisplay.client.phone" placeholder="Phone" />
 </md-form-field>
-<md-form-field *ngIf="!hidePasswords">
-    <input type="password" mdInput [(ngModel)]="clientDisplay.client.password" placeholder="Password" />
-</md-form-field>
-<md-form-field *ngIf="!hidePasswords">
-    <input type="password" mdInput [(ngModel)]="clientDisplay.confirmPassword" placeholder="Confirm password" />
-</md-form-field>
 <md-select *ngIf="clientDisplay.groups" [(ngModel)]="clientDisplay.selectedGroup" placeholder="Client group">
     <md-option *ngFor="let group of clientDisplay.groups" [value]="group">{{group.clientGroup.name}}</md-option>
 </md-select>
+<md-form-field *ngIf="!hideCredit">
+    <input mdInput readonly [(ngModel)]="clientDisplay.client.credit" placeholder="Credit" />
+</md-form-field>

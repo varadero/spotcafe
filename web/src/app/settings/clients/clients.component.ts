@@ -109,7 +109,8 @@ export class ClientsComponent implements OnInit {
                 lastName: '',
                 password: '',
                 phone: '',
-                username: ''
+                username: '',
+                credit: 0
             },
             groups: this.clientsSvc.cloneClientsGroups(this.clientsGroups)
         };

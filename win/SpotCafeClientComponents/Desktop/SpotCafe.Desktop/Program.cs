@@ -46,15 +46,15 @@ namespace SpotCafe.Desktop {
             Log($"Starting with arguments {string.Join(" ", args)}");
             var cmdArgsParser = new CommandLineArgsParser();
             var commandLineArgs = cmdArgsParser.Parse(args);
-            logger.Log($"ClientID={commandLineArgs.ClientId} ; ServerIP={commandLineArgs.ServerIP}");
+            logger.Log($"ClientDeviceId={commandLineArgs.ClientDeviceId} ; ServerIP={commandLineArgs.ServerIP}");
 
             var startupDesktopHandle = Interop.GetInputDesktopHandle();
 #if DEBUG
             // Send broadcast data to the server
             System.Net.Sockets.UdpClient uc = new System.Net.Sockets.UdpClient(64128, System.Net.Sockets.AddressFamily.InterNetwork);
             uc.MulticastLoopback = false;
-            var json = "{\"clientId\":\"" + commandLineArgs.ClientId + "\",";
-            json += "\"clientName\":\"" + Environment.MachineName + "\"}";
+            var json = "{\"clientDeviceId\":\"" + commandLineArgs.ClientDeviceId + "\",";
+            json += "\"clientDeviceName\":\"" + Environment.MachineName + "\"}";
             var arr = System.Text.Encoding.UTF8.GetBytes(json);
             uc.Send(arr, arr.Length, hostname: "localhost", port: 64129);
             var secureDesktopHandle = startupDesktopHandle;

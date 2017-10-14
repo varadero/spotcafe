@@ -51,7 +51,7 @@
     <Compile Include="REST\ClientFileInfo.cs" />
     <Compile Include="REST\ClientFilesData.cs" />
     <Compile Include="Discovery\DiscoveryDataReceivedEventArgs.cs" />
-    <Compile Include="Discovery\DiscoveryResponse.cs" />
+    <Compile Include="Discovery\DiscoveryResult.cs" />
     <Compile Include="Interop.cs" />
     <Compile Include="LogEventIds.cs" />
     <Compile Include="REST\RestClient.cs" />

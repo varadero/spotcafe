@@ -9,7 +9,7 @@ namespace SpotCafe.Service {
     [DataContract]
     class ServiceConfiguration {
         [DataMember]
-        public string ClientId { get; set; }
+        public string ClientDeviceId { get; set; }
         [DataMember]
         public string ServerIp { get; set; }
         [DataMember]

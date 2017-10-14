@@ -72,7 +72,7 @@ namespace SpotCafe.Service {
             Log($"Config file: {configFileFullPath} ; path for client files: {pathForClientFiles}", LogEventIds.ConfigFile);
 
             serviceConfig = GetServiceConfiguration();
-            discoverer = new ServerDiscoverer(serviceConfig.ClientId, Environment.MachineName, serviceConfig.ServerIp, discoverySearchInterval);
+            discoverer = new ServerDiscoverer(serviceConfig.ClientDeviceId, Environment.MachineName, serviceConfig.ServerIp, discoverySearchInterval);
             discoverer.DiscoveryDataReceived += Discoverer_DataReceived;
             StartServerDiscovery();
             base.OnStart(args);
@@ -223,7 +223,7 @@ namespace SpotCafe.Service {
             Interop.CreateProcessAsUser(
                 duplicatedToken,
                 appName,
-                $"Client-ID={serviceConfig.ClientId} Server-IP={serverIp} Server-Certificate-Thumbprint={serviceConfig.ServerCertificateThumbprint}",
+                $"client-device-id={serviceConfig.ClientDeviceId} server-ip={serverIp} server-certificate-thumbprint={serviceConfig.ServerCertificateThumbprint}",
                 ref sa,
                 ref sa,
                 false,
@@ -305,9 +305,9 @@ namespace SpotCafe.Service {
         private void SaveServiceConfiguration(ServiceConfiguration config) {
             try {
                 File.WriteAllText(configFileFullPath, serializer.Serialize(config));
-                Log($"Configuration written to {configFileFullPath} with ClientId={config.ClientId}", LogEventIds.SaveServiceConfiguration);
+                Log($"Configuration written to {configFileFullPath} with ClientDeviceId={config.ClientDeviceId}", LogEventIds.SaveServiceConfiguration);
             } catch (Exception ex) {
-                LogError($"Can't save configuration. It must be manually selected, otherwise new ClientId will be generated on each start-up. Error: {ex}", LogEventIds.SaveServiceConfigurationError);
+                LogError($"Can't save configuration. It must be manually selected, otherwise new ClientDeviecId will be generated on each start-up. Error: {ex}", LogEventIds.SaveServiceConfigurationError);
             }
         }
 
@@ -316,15 +316,20 @@ namespace SpotCafe.Service {
             try {
                 Log($"Loading service configuration from {configFileFullPath}", LogEventIds.LoadingServiceConfiguration);
                 config = serializer.Deserialize<ServiceConfiguration>(File.ReadAllText(configFileFullPath));
-                if (config != null) {
-                    Log($"Configuration ClientId={config.ClientId}", LogEventIds.LoadingServiceConfiguration);
+                if (config != null && !string.IsNullOrWhiteSpace(config.ClientDeviceId)) {
+                    Log($"Configuration ClientDeviceId={config.ClientDeviceId}", LogEventIds.LoadingServiceConfiguration);
                 } else {
-                    LogWarning($"Configuration is null", LogEventIds.LoadingServiceConfiguration);
+                    LogWarning($"Configuration is null or ClientDeviceId is missing", LogEventIds.LoadingServiceConfiguration);
+                    if (config == null) {
+                        config = new ServiceConfiguration();
+                    }
+                    config.ClientDeviceId = Guid.NewGuid().ToString();
+                    SaveServiceConfiguration(config);
                 }
             } catch (Exception loadEx) {
                 LogWarning($"Can't load configuration. Will create default config file: {loadEx}", LogEventIds.LoadingServiceConfiguration);
                 config = new ServiceConfiguration {
-                    ClientId = Guid.NewGuid().ToString()
+                    ClientDeviceId = Guid.NewGuid().ToString()
                 };
                 SaveServiceConfiguration(config);
             }

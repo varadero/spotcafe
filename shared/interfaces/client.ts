@@ -8,4 +8,5 @@ export interface IClient {
     phone: string;
     disabled: boolean;
     clientGroupId: string;
+    credit: number;
 }

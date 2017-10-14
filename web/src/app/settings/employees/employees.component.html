@@ -39,6 +39,12 @@
             <md-error>User name is required</md-error>
         </md-form-field>
         <md-form-field>
+            <input mdInput [(ngModel)]="newEmployeeWithRoles.employee.password" type="password" placeholder="Password" />
+        </md-form-field>
+        <md-form-field>
+            <input mdInput [(ngModel)]="newEmployeeWithRoles.confirmPassword" type="password" placeholder="Confirm password" />
+        </md-form-field>
+        <md-form-field>
             <input mdInput [(ngModel)]="newEmployeeWithRoles.employee.firstName" placeholder="First name" />
         </md-form-field>
         <md-form-field>
@@ -46,12 +52,6 @@
         </md-form-field>
         <md-form-field>
             <input mdInput [(ngModel)]="newEmployeeWithRoles.employee.email" placeholder="Email" />
-        </md-form-field>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newEmployeeWithRoles.employee.password" type="password" placeholder="Password" />
-        </md-form-field>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newEmployeeWithRoles.confirmPassword" type="password" placeholder="Confirm password" />
         </md-form-field>
         <md-checkbox [(ngModel)]="newEmployeeWithRoles.employee.disabled">Disabled</md-checkbox>
         <md-card>

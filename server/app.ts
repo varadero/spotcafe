@@ -75,6 +75,7 @@ export class App {
         const authRoutes = new AuthenticationRoutes(this.storageProvider, apiPrefix);
         this.koa.use(authRoutes.logInEmployee());
         this.koa.use(authRoutes.logInClientDevice());
+        this.koa.use(authRoutes.logInClient());
 
         this.koa.use(requireToken({ secret: tokenSecret || '' }));
         this.koa.use(authRoutes.checkAuthorization());
@@ -119,6 +120,7 @@ export class App {
         const clientsRoutes = new ClientsRoutes(this.storageProvider, apiPrefix);
         this.koa.use(clientsRoutes.getAllClients());
         this.koa.use(clientsRoutes.createClient());
+        this.koa.use(clientsRoutes.updateClient());
     }
 
     /**

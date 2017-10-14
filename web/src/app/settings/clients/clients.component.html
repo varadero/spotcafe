@@ -7,7 +7,7 @@
             </md-select>
         </div>
         <div *ngIf="selectedClient">
-            <spotcafe-client [clientDisplay]="selectedClient" [hidePasswords]="true"></spotcafe-client>
+            <spotcafe-client [clientDisplay]="selectedClient" [hideUsername]="true" [hidePasswords]="true" [hideCredit]="false"></spotcafe-client>
             <spotcafe-messages #updateClientMessagesComponent></spotcafe-messages>
             <md-card-actions>
                 <button [disabled]="waiting.updatingClient" md-raised-button (click)="updateClient(selectedClient)" color="primary">Update client {{selectedClient.client.username}}</button>
@@ -16,7 +16,7 @@
     </md-card>
     <md-card>
         <md-card-title>New client</md-card-title>
-        <spotcafe-client [clientDisplay]="newClient"></spotcafe-client>
+        <spotcafe-client [clientDisplay]="newClient" [hideCredit]="true"></spotcafe-client>
         <spotcafe-messages #newClientMessagesComponent></spotcafe-messages>
         <md-card-actions>
             <button [disabled]="waiting.creatingClient" md-raised-button (click)="createClient(newClient)" color="primary">Create client {{newClient.client.username}}</button>

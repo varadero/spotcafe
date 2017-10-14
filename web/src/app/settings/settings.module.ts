@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 
 import { SharedModule } from '../shared/shared.module';
-import { SettingsRoutingModule } from './setings-routing.module';
+import { SettingsRoutingModule } from './settings-routing.module';
 import { SettingsComponent } from './settings.component';
 import { EmployeesComponent } from './employees/employees.component';
 import { EmployeesService } from './employees/employees.services';

@@ -39,13 +39,13 @@ namespace SpotCafe.Desktop {
                 return;
             }
             textBox1.Text = currentData.IsStarted.ToString();
-            var switched = SwitchSesktops(currentData.IsStarted);
+            var switched = SwitchDesktops(currentData.IsStarted);
             if (!switched) {
                 Log($"Error on switching desktop: {Marshal.GetLastWin32Error()}");
             }
         }
 
-        private bool SwitchSesktops(bool isStarted) {
+        private bool SwitchDesktops(bool isStarted) {
 #if DEBUG
             return true;
 #endif
@@ -67,19 +67,27 @@ namespace SpotCafe.Desktop {
             Application.Run(threadState.SecureForm);
         }
 
-        private void SecureForm_SignIn(object sender, SignInEventArgs e) {
+        private async void SecureForm_SignIn(object sender, SignInEventArgs e) {
             try {
-
+                var logInRes = await _state.ClientRest.LogInClient(e.Username, e.Password);
+                if (logInRes.Disabled) {
+                    e.Success = false;
+                    _state.SecureThreadState.SecureForm.SignInResult(false, "User is disabled");
+                    return;
+                }
+                e.Success = true;
+                _state.ClientToken = logInRes.Token;
+                _state.SecureThreadState.SecureForm.SignInResult(true, "");
             } catch (Exception ex) {
                 LogError($"Error on sign in: {ex}");
+                _state.SecureThreadState.SecureForm.SignInResult(false, "User name or password is invalid");
             }
-            _state.SecureThreadState.SecureForm.SignInResult(false, "User name or password is invalid");
         }
 
         private async void CurrentDataTimer_Tick(object sender, EventArgs e) {
             try {
                 _state.CurrentDataTimer.Stop();
-                var currentData = await _state.Rest.GetCurrentData();
+                var currentData = await _state.DeviceRest.GetCurrentData();
                 ProcessCurrentData(currentData);
             } catch (Exception ex) {
                 LogError($"Error on getting current data: {ex}");
@@ -89,10 +97,10 @@ namespace SpotCafe.Desktop {
         }
 
         private async void LogInDevice() {
-            for (var i = 0; i < 100; i++) {
+            for (var i = 0; i < 10000; i++) {
                 try {
-                    _state.ClientToken = await _state.Rest.LogIn();
-                    _state.Rest.SetToken(_state.ClientToken);
+                    _state.DeviceToken = await _state.DeviceRest.LogInDevice();
+                    _state.DeviceRest.SetToken(_state.DeviceToken);
                     // TODO Start the application
                     CurrentDataTimer_Tick(_state.CurrentDataTimer, EventArgs.Empty);
                     StartCurrentDataTimer();
@@ -152,8 +160,9 @@ namespace SpotCafe.Desktop {
             _state.CurrentDataTimer.Interval = (int)TimeSpan.FromSeconds(5).TotalMilliseconds;
             _state.CurrentDataTimer.Tick += CurrentDataTimer_Tick;
 
-            // REST client for communication with the server
-            _state.Rest = new RestClient(_state.StartArgs.CommandLineArguments.ServerIP, "api", _state.StartArgs.CommandLineArguments.ClientId);
+            // REST clients for communication with the server
+            _state.DeviceRest = new DeviceRestClient(_state.StartArgs.CommandLineArguments.ServerIP, "api", _state.StartArgs.CommandLineArguments.ClientDeviceId);
+            _state.ClientRest = new ClientRestClient(_state.StartArgs.CommandLineArguments.ServerIP, "api", _state.StartArgs.CommandLineArguments.ClientDeviceId);
 
             _state.SecureThreadState = new SecureThreadState();
             _state.SecureThreadState.SecureDesktopHandle = _state.StartArgs.SecureDesktopHandle;
@@ -161,8 +170,10 @@ namespace SpotCafe.Desktop {
         }
 
         private class MainFormState {
+            public ClientToken DeviceToken { get; set; }
+            public DeviceRestClient DeviceRest { get; set; }
             public ClientToken ClientToken { get; set; }
-            public RestClient Rest { get; set; }
+            public ClientRestClient ClientRest { get; set; }
             public Logger Logger { get; set; }
             public System.Windows.Forms.Timer CurrentDataTimer { get; set; }
             public Thread SecureThread { get; set; }

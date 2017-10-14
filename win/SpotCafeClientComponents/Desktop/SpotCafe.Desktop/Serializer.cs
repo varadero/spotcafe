@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SpotCafe.Desktop {
-    class Serializer {
+    public class Serializer {
         public string Serialize<Т>(Т obj) {
             var ser = GetSerializer(obj.GetType());
             var ms = new MemoryStream();

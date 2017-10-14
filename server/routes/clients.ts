@@ -5,6 +5,7 @@ import { RoutesBase } from './routes-base';
 import { IClient } from '../../shared/interfaces/client';
 import { ICreateEntityResult } from '../../shared/interfaces/create-entity-result';
 import { IRouteActionResult } from './interfaces/route-action-result';
+// import { IUpdateEntityResult } from '../../shared/interfaces/update-entity-result';
 
 export class ClientsRoutes extends RoutesBase {
 
@@ -20,11 +21,24 @@ export class ClientsRoutes extends RoutesBase {
 
     createClient(): any {
         return route.post(this.apiPrefix + 'clients', async ctx => {
-            await this.handleActionResult(ctx, () => this.createClientsImpl(ctx.request.body));
+            await this.handleActionResult(ctx, () => this.createClientImpl(ctx.request.body));
         });
     }
 
-    private async createClientsImpl(
+    updateClient(): any {
+        return route.post(this.apiPrefix + 'clients/:id', async ctx => {
+            await this.handleActionResult(ctx, () => this.updateClientImpl(ctx.request.body));
+        });
+    }
+
+    private async updateClientImpl(
+        client: IClient
+    ): Promise<IRouteActionResult<boolean> | void> {
+        const updateClientResult = await this.storageProvider.updateClient(client);
+        return { value: updateClientResult };
+    }
+
+    private async createClientImpl(
         client: IClient
     ): Promise<IRouteActionResult<ICreateEntityResult> | void> {
         if (client.password.length < 6) {

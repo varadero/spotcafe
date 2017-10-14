@@ -25,7 +25,8 @@ import { IUpdateClientGroupResult } from '../../shared/interfaces/update-client-
 import { ICreateClientGroupResult } from '../../shared/interfaces/create-client-group-result';
 import { IClient } from '../../shared/interfaces/client';
 import { ICreateEntityResult } from '../../shared/interfaces/create-entity-result';
-import { IUpdateEntityResult } from '../../shared/interfaces/update-entity-result';
+import { ILogInAndGetClientDataResult } from './log-in-and-get-client-data-result';
+// import { IUpdateEntityResult } from '../../shared/interfaces/update-entity-result';
 
 export abstract class StorageProvider {
     abstract initialize(config: any, ...args: any[]): void;
@@ -76,5 +77,6 @@ export abstract class StorageProvider {
 
     abstract getClients(): Promise<IClient[]>;
     abstract createClient(client: IClient): Promise<ICreateEntityResult>;
-    abstract updateClient(client: IClient): Promise<IUpdateEntityResult>;
+    abstract updateClient(client: IClient): Promise<boolean>;
+    abstract logInAndGetClientData(username: string, password: string, clientDeviced: string): Promise<ILogInAndGetClientDataResult>;
 }
