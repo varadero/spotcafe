@@ -26,6 +26,7 @@ import { ICreateClientGroupResult } from '../../shared/interfaces/create-client-
 import { IClient } from '../../shared/interfaces/client';
 import { ICreateEntityResult } from '../../shared/interfaces/create-entity-result';
 import { ILogInAndGetClientDataResult } from './log-in-and-get-client-data-result';
+import { IStartedDeviceCalcBillData } from './started-device-calc-bill-data';
 // import { IUpdateEntityResult } from '../../shared/interfaces/update-entity-result';
 
 export abstract class StorageProvider {
@@ -36,6 +37,9 @@ export abstract class StorageProvider {
     abstract prepareStorage(): Promise<IPrepareStorageResult>;
 
     abstract getTokenSecret(): Promise<string | null>;
+
+    abstract getStartedDevicesCalcBillData(): Promise<IStartedDeviceCalcBillData[]>;
+    abstract getStartedDeviceCalcBillData(deviceId: string): Promise<IStartedDeviceCalcBillData>;
 
     abstract getClientDevicesStatus(): Promise<IClientDeviceStatus[]>;
     abstract getClientDeviceStatus(deviceId: string): Promise<IClientDeviceStatus>;
@@ -79,4 +83,6 @@ export abstract class StorageProvider {
     abstract createClient(client: IClient): Promise<ICreateEntityResult>;
     abstract updateClient(client: IClient): Promise<boolean>;
     abstract logInAndGetClientData(username: string, password: string, clientDeviced: string): Promise<ILogInAndGetClientDataResult>;
+
+    abstract getSetting(name: string): Promise<string | null>;
 }

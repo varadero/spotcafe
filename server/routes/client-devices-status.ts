@@ -7,19 +7,17 @@ import { IClientDeviceStatus } from '../../shared/interfaces/client-device-statu
 import { IStartClientDeviceArgs } from '../../shared/interfaces/start-client-device-args';
 import { IStartClientDeviceResult } from '../../shared/interfaces/start-client-device-result';
 import { IStopClientDeviceResult } from '../../shared/interfaces/stop-client-device-result';
-import { Bill } from '../utils/bill';
+import { calcEngine } from '../utils/calc-engine';
 import { Time } from '../utils/time';
-import { DeviceStatus } from '../utils/device-status';
 
 import { IStopClientDeviceData } from '../storage/stop-client-device-data';
 import { IStartClientDeviceData } from '../storage/start-client-device-data';
 import { IServerToken } from './interfaces/server-token';
+import { ICalculatedDeviceBillData } from '../utils/calculated-device-bill-data';
 
 export class ClientDevicesStatusRoutes extends RoutesBase {
 
-    private bill = new Bill();
     private time = new Time();
-    private deviceStatus = new DeviceStatus();
 
     constructor(private storageProvider: StorageProvider, private apiPrefix: string) {
         super();
@@ -46,23 +44,27 @@ export class ClientDevicesStatusRoutes extends RoutesBase {
     private async stopDeviceImpl(
         args: IStartClientDeviceArgs,
         serverToken: IServerToken
-    ): Promise<IRouteActionResult<IStopClientDeviceResult> | void> {
-        const currentStatus = await this.storageProvider.getClientDeviceStatus(args.deviceId);
-        const bill = this.bill.calcBill({
-            startedAt: currentStatus.startedAt,
-            startedAtUptime: currentStatus.startedAtUptime,
-            pricePerHour: currentStatus.pricePerHour
-        });
-        const data = <IStopClientDeviceData>{
-            args: args,
-            lastBill: bill.totalBill,
-            stoppedAt: this.time.getCurrentTime(),
-            stoppedAtUptime: this.time.getCurrentUptime()
-        };
-        if (this.isServerTokenEmployee(serverToken)) {
-            data.stoppedByEmployeeId = serverToken.accountId;
+    ): Promise<IRouteActionResult<IStopClientDeviceResult | null> | void> {
+        // const currentStatus = await this.storageProvider.getClientDeviceStatus(args.deviceId);
+        // const bill = calcEngine.calcBill({
+        //     startedAt: currentStatus.startedAt,
+        //     startedAtUptime: currentStatus.startedAtUptime,
+        //     pricePerHour: currentStatus.pricePerHour
+        // });
+        const bill = await calcEngine.calcStartedDeviceBill(args.deviceId);
+        let result: IStopClientDeviceResult | null = null;
+        if (bill) {
+            const data = <IStopClientDeviceData>{
+                args: args,
+                lastBill: bill.calcBillResult.totalBill,
+                stoppedAt: this.time.getCurrentTime(),
+                stoppedAtUptime: this.time.getCurrentUptime()
+            };
+            if (this.isServerTokenEmployee(serverToken)) {
+                data.stoppedByEmployeeId = serverToken.accountId;
+            }
+            result = await this.storageProvider.stopClientDevice(data);
         }
-        const result = await this.storageProvider.stopClientDevice(data);
         return { value: result };
     }
 
@@ -80,13 +82,33 @@ export class ClientDevicesStatusRoutes extends RoutesBase {
         } else if (this.isServerTokenClient(serverToken)) {
             data.startedByClientId = serverToken.accountId;
         }
+        // TODO Create function at calcEngine for clearing device calculated data and call it
         const result = await this.storageProvider.startClientDevice(data);
         return { value: result };
     }
 
     private async getClientDevicesStatusImpl(): Promise<IRouteActionResult<IClientDeviceStatus[]> | void> {
         const status = await this.storageProvider.getClientDevicesStatus();
-        this.deviceStatus.setDevicesStatusBill(status);
+        const lastCalcData = calcEngine.getLastCalcData();
+        this.setLastCalcDataToClientDeviceStatus(lastCalcData, status);
         return { value: status };
+    }
+
+    private setLastCalcDataToClientDeviceStatus(
+        billsData: ICalculatedDeviceBillData[],
+        clientDevicesStatus: IClientDeviceStatus[]
+    ): void {
+        for (let i = 0; i < clientDevicesStatus.length; i++) {
+            const item = clientDevicesStatus[i];
+            const billData = this.findBillData(billsData, item.deviceId);
+            if (billData) {
+                item.duration = billData.calcBillResult.timeUsed;
+                item.bill = billData.calcBillResult.totalBill;
+            }
+        }
+    }
+
+    private findBillData(billsData: ICalculatedDeviceBillData[], deviceId: string): ICalculatedDeviceBillData | null {
+        return billsData.find(x => x.calcBillData.deviceId === deviceId) || null;
     }
 }

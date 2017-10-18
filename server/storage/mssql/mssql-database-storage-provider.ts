@@ -34,6 +34,7 @@ import { ICreateEntityResult } from '../../../shared/interfaces/create-entity-re
 // import { IUpdateEntityResult } from '../../../shared/interfaces/update-entity-result';
 import { IIdWithName } from '../../../shared/interfaces/id-with-name';
 import { ILogInAndGetClientDataResult } from '../log-in-and-get-client-data-result';
+import { IStartedDeviceCalcBillData } from '../started-device-calc-bill-data';
 
 export class MSSqlDatabaseStorageProvider implements StorageProvider {
     private config: ConnectionConfig;
@@ -45,11 +46,22 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         this.config = <ConnectionConfig>(config);
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
     }
+    async getSetting(name: string): Promise<string | null> {
+        return await this.dbHelper.getDatabaseSetting(null, name);
+    }
+
+    async getStartedDeviceCalcBillData(deviceId: string): Promise<IStartedDeviceCalcBillData> {
+        return (await this.getStartedDevicesCalcBillDataImpl(deviceId))[0];
+    }
+
+    async getStartedDevicesCalcBillData(): Promise<IStartedDeviceCalcBillData[]> {
+        return await this.getStartedDevicesCalcBillDataImpl(null);
+    }
 
     async logInAndGetClientData(username: string, password: string, clientDeviceId: string): Promise<ILogInAndGetClientDataResult> {
         const passwordHash = this.dbHelper.getSha512(password);
         const sql = `
-            SELECT c.[Id], c.[Disabled], c.[Credit], cg.[PricePerHour]
+            SELECT c.[Id] AS [ClientId], c.[Disabled], c.[Credit], cg.[PricePerHour]
             FROM [Clients] c
             INNER JOIN [ClientsGroups] cg ON c.[ClientGroupId]=cg.[Id]
             INNER JOIN [ClientsGroupsWithDevicesGroups] cgwdg ON cg.[Id]=cgwdg.[ClientGroupId]
@@ -961,6 +973,32 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
 
     async prepareStorage(): Promise<IPrepareStorageResult> {
         return this.dbHelper.prepareDatabase();
+    }
+
+    private async getStartedDevicesCalcBillDataImpl(deviceId: string | null): Promise<IStartedDeviceCalcBillData[]> {
+        let sql = `
+            SELECT cds.[DeviceId],
+                   cds.[StartedByClientId],
+                   cds.[StartedByEmployeeId],
+                   cds.[StartedAt],
+                   cds.[StartedAtUptime],
+                   cg.[PricePerHour] AS ClientGroupPricePerHour,
+                   dg.[PricePerHour] AS DeviceGroupPricePerHour,
+                   c.[Credit] AS ClientCredit
+            FROM [ClientDevicesStatus] cds
+            INNER JOIN [ClientDevices] cd ON cds.[DeviceId]=cd.[Id]
+            LEFT OUTER JOIN [Clients] c ON cds.[StartedByClientId]=c.[Id]
+            LEFT OUTER JOIN [ClientsGroups] cg ON c.[ClientGroupId]=cg.[Id]
+            INNER JOIN [DevicesGroups] dg ON cd.[DeviceGroupId]=dg.[Id]
+            WHERE cds.[IsStarted]=1
+        `;
+        const params: IRequestParameter[] = [];
+        if (deviceId) {
+            sql += ' AND cds.[DeviceId]=@DeviceId';
+            params.push({ name: 'DeviceId', value: deviceId, type: TYPES.NVarChar });
+        }
+        const getResult = await this.dbHelper.execToObjects(sql, params);
+        return <IStartedDeviceCalcBillData[]>getResult.firstResultSet.rows;
     }
 
     private async getClientDevicesStatusImpl(deviceId: string | null): Promise<IClientDeviceStatus[]> {

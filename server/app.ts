@@ -31,14 +31,18 @@ import { ClientDeviceCurrentDataRoutes } from './routes/client-device-current-da
 import { DevicesGroupsRoutes } from './routes/devices-groups';
 import { ClientsGroupsRoutes } from './routes/clients-groups';
 import { ClientsRoutes } from './routes/clients';
+import { calcEngine } from './utils/calc-engine';
 
 export class App {
     private logger: Logger;
     private koa: Koa;
     private storageProvider: StorageProvider;
     private server: https.Server | http.Server;
+    private calcEngine: typeof calcEngine;
 
-    constructor(private options: IAppOptions) { }
+    constructor(private options: IAppOptions) {
+        this.calcEngine = calcEngine;
+    }
 
     /**
      * Prepares storage (eventually updates it) and starts listening for connections
@@ -213,9 +217,33 @@ export class App {
             return null;
         }
         await this.setClientFiles();
+        await this.startCalcEngine();
         this.server = await this.startWebServer();
         await this.startDiscoveryListener();
         return this.server;
+    }
+
+    private async startCalcEngine(): Promise<void> {
+        const billsCalcInterval = await this.getNumberSetting('bills.calculateInterval', 5000);
+        this.calcEngine.initialize({
+            billsCalcInterval: billsCalcInterval,
+            storageProvider: this.storageProvider,
+            logger: this.logger
+        });
+        await calcEngine.execCalcBillsAndSetLastData();
+        this.calcEngine.start();
+    }
+
+    private async getNumberSetting(name: string, defaultValue: number): Promise<number> {
+        const settingValue = await this.storageProvider.getSetting(name);
+        let result: number;
+        if (settingValue) {
+            result = parseInt(settingValue, 10);
+        } else {
+            result = defaultValue;
+        }
+        result = result || defaultValue;
+        return result;
     }
 
     private async startWebServer(): Promise<https.Server | http.Server> {
