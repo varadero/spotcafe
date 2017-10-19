@@ -104,6 +104,10 @@ export class ClientDevicesStatusRoutes extends RoutesBase {
             if (billData) {
                 item.duration = billData.calcBillResult.timeUsed;
                 item.bill = billData.calcBillResult.totalBill;
+            } else {
+                if (item.startedAt && item.startedAtUptime && item.stoppedAt && item.stoppedAtUptime) {
+                    item.duration = calcEngine.getMaxDiff(item.startedAt, item.startedAtUptime, item.stoppedAt, item.stoppedAtUptime);
+                }
             }
         }
     }
