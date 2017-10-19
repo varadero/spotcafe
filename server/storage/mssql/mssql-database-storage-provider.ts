@@ -4,6 +4,7 @@ import { StorageProvider } from '../storage-provider';
 import { IPrepareStorageResult } from '../prepare-storage-result';
 import { ICreateStorageResult } from '../create-storage-result';
 import { DatabaseHelper, IRequestParameter } from './database-helper';
+import { ReportsHelper } from './reports-helper';
 import { IPermission } from '../../../shared/interfaces/permission';
 import { IEmployeeWithRolesAndPermissions } from '../../../shared/interfaces/employee-with-roles-and-permissions';
 // import { IRoleWithPermissions } from '../../../shared/interfaces/role-with-permissions';
@@ -31,6 +32,7 @@ import { ICreateClientGroupResult } from '../../../shared/interfaces/create-clie
 import { IUpdateClientGroupResult } from '../../../shared/interfaces/update-client-group-result';
 import { IClient } from '../../../shared/interfaces/client';
 import { ICreateEntityResult } from '../../../shared/interfaces/create-entity-result';
+import { IReportTotalsByEntity } from '../../../shared/interfaces/report-totals-by-entity';
 // import { IUpdateEntityResult } from '../../../shared/interfaces/update-entity-result';
 import { IIdWithName } from '../../../shared/interfaces/id-with-name';
 import { ILogInAndGetClientDataResult } from '../log-in-and-get-client-data-result';
@@ -39,13 +41,28 @@ import { IStartedDeviceCalcBillData } from '../started-device-calc-bill-data';
 export class MSSqlDatabaseStorageProvider implements StorageProvider {
     private config: ConnectionConfig;
     private dbHelper: DatabaseHelper;
+    private reportsHelper: ReportsHelper;
     private logger: { log: Function, error: Function };
 
     initialize(config: any, logger: any): void {
         this.logger = logger;
         this.config = <ConnectionConfig>(config);
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
+        this.reportsHelper = new ReportsHelper(this.dbHelper);
     }
+
+    async getTotalsByDeviceReport(startedAt: number, stoppedAt: number): Promise<IReportTotalsByEntity[]> {
+        return await this.reportsHelper.totalsByDevice(startedAt, stoppedAt);
+    }
+
+    async getTotalsByClientReport(startedAt: number, stoppedAt: number): Promise<IReportTotalsByEntity[]> {
+        return await this.reportsHelper.totalsByClient(startedAt, stoppedAt);
+    }
+
+    async getTotalsByEmployeeReport(startedAt: number, stoppedAt: number): Promise<IReportTotalsByEntity[]> {
+        return await this.reportsHelper.totalsByEmployee(startedAt, stoppedAt);
+    }
+
     async getSetting(name: string): Promise<string | null> {
         return await this.dbHelper.getDatabaseSetting(null, name);
     }
