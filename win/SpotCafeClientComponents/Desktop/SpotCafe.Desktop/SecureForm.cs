@@ -68,6 +68,7 @@ namespace SpotCafe.Desktop {
                 Username = textBoxUsername.Text,
                 Password = textBoxPassword.Text
             };
+            textBoxPassword.Clear();
             SignIn?.Invoke(this, args);
             if (args.Success) {
 
