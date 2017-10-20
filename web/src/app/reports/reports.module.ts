@@ -1,12 +1,14 @@
 import { NgModule } from '@angular/core';
 
+import { SharedModule } from '../shared/shared.module';
 import { ReportsRoutingModule } from './reports-routing.module';
 import { ReportsComponent } from './reports.component';
-import { SharedModule } from '../shared/shared.module';
+import { TotalsByComponent } from './totals-by/totals-by.component';
 
 @NgModule({
     declarations: [
-        ReportsComponent
+        ReportsComponent,
+        TotalsByComponent
     ],
     imports: [
         SharedModule,

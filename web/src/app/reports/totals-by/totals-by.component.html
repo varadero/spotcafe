@@ -1,0 +1,78 @@
+<md-card>
+    <md-card-title>Totals by client, device and employee</md-card-title>
+    <table>
+        <tbody>
+            <tr>
+                <td>From</td>
+                <td class="space-column"></td>
+                <td>
+                    <spotcafe-date-time-selector [value]="startedAfter"></spotcafe-date-time-selector>
+                </td>
+            </tr>
+            <tr>
+                <td>To</td>
+                <td class="space-column"></td>
+                <td>
+                    <spotcafe-date-time-selector [value]="stoppedBefore"></spotcafe-date-time-selector>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <md-card-actions>
+        <button (click)="load()" md-raised-button color="primary">Show</button>
+    </md-card-actions>
+</md-card>
+
+<div *ngIf="report">
+    <md-card>
+        <md-card-title>Clients</md-card-title>
+        <table class="total-by-entity-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let row of report.clients">
+                    <td>{{row.name}}</td>
+                    <td>{{row.total}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </md-card>
+    <md-card>
+        <md-card-title>Devices</md-card-title>
+        <table class="total-by-entity-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let row of report.devices">
+                    <td>{{row.name}}</td>
+                    <td>{{row.total}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </md-card>
+    <md-card>
+        <md-card-title>Employees</md-card-title>
+        <table class="total-by-entity-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let row of report.employees">
+                    <td>{{row.name}}</td>
+                    <td>{{row.total}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </md-card>
+</div>

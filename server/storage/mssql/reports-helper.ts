@@ -36,7 +36,8 @@ export class ReportsHelper {
             { name: 'StoppedAt', value: stoppedAt, type: TYPES.Decimal }
         ];
         const result = await this.dbHelper.execToObjects(sql, params);
-        return <IReportTotalsByEntity[]>result.firstResultSet.rows;
+        const renamed = this.toReporTotalsByEntity(result.firstResultSet.rows);
+        return renamed;
     }
 
     async totalsByEmployee(startedAt: number, stoppedAt: number): Promise<IReportTotalsByEntity[]> {
@@ -52,6 +53,13 @@ export class ReportsHelper {
             { name: 'StoppedAt', value: stoppedAt, type: TYPES.Decimal }
         ];
         const result = await this.dbHelper.execToObjects(sql, params);
-        return <IReportTotalsByEntity[]>result.firstResultSet.rows;
+        const renamed = this.toReporTotalsByEntity(result.firstResultSet.rows);
+        return renamed;
+    }
+
+    private toReporTotalsByEntity(objects: any[]): IReportTotalsByEntity[] {
+        const mapObject = { username: 'name', total: '' };
+        const renamed = <IReportTotalsByEntity[]>this.dbHelper.mapToObjects(objects, mapObject);
+        return renamed;
     }
 }

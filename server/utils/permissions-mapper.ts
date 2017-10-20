@@ -21,6 +21,7 @@ export class PermissionsMapper {
         clientsView: string;
         clientsModify: string;
         clientFullAccess: string;
+        reportsView: string;
     };
 
     private permissionsOrder: string[] = [];
@@ -47,6 +48,7 @@ export class PermissionsMapper {
         po.push(pids.clientsView = '2745ED16-1FCD-4F4A-B1D3-AC4916E5D7E7');
         po.push(pids.clientsModify = 'D2DD76AE-1403-46E9-881E-F6048ABD8410');
         po.push(pids.clientFullAccess = '5C10C8F1-B92F-4630-85A8-63B06FABBFD9');
+        po.push(pids.reportsView = 'BCC1956C-FB45-4A97-A121-78F9C7DCD368');
     }
 
     mapToBinaryString(permissionIds: string[]): string {

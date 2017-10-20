@@ -32,6 +32,7 @@ import { DevicesGroupsRoutes } from './routes/devices-groups';
 import { ClientsGroupsRoutes } from './routes/clients-groups';
 import { ClientsRoutes } from './routes/clients';
 import { calcEngine } from './utils/calc-engine';
+import { ReportsRoutes } from './routes/reports';
 
 export class App {
     private logger: Logger;
@@ -125,6 +126,9 @@ export class App {
         this.koa.use(clientsRoutes.getAllClients());
         this.koa.use(clientsRoutes.createClient());
         this.koa.use(clientsRoutes.updateClient());
+
+        const reportsRoutes = new ReportsRoutes(this.storageProvider, apiPrefix);
+        this.koa.use(reportsRoutes.getTotalsByClientDeviceAndEmployee());
     }
 
     /**

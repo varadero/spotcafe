@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import 'rxjs/add/operator/toPromise';
 
 import { AuthService } from './auth.service';
@@ -25,6 +25,9 @@ import { ICreateClientGroupResult } from '../../../../shared/interfaces/create-c
 import { IClient } from '../../../../shared/interfaces/client';
 import { ICreateEntityResult } from '../../../../shared/interfaces/create-entity-result';
 import { IUpdateEntityResult } from '../../../../shared/interfaces/update-entity-result';
+import { IDateAndTime } from '../../../../shared/interfaces/date-and-time';
+import { IFromToDateAndTime } from '../../../../shared/interfaces/from-to-date-and-time';
+import { ITotalsByClientDeviceAndEmployee } from '../../../../shared/interfaces/totals-by-client-device-and-employee';
 
 @Injectable()
 export class DataService {
@@ -36,6 +39,10 @@ export class DataService {
         private authSvc: AuthService // ,
         // private cacheSvc: CacheService
     ) { }
+
+    getTotalsByClientDeviceAndEmployee(from: IDateAndTime, to: IDateAndTime): Promise<ITotalsByClientDeviceAndEmployee> {
+        return this.getWithParams('reports/totals-by-client-device-and-employee', this.periodToParams(from, to));
+    }
 
     getClients(): Promise<IClient[]> {
         return this.get('clients');
@@ -163,6 +170,19 @@ export class DataService {
         );
     }
 
+    private getWithParams(url: string, params: any): Promise<any> {
+        const headers = this.getHeaders();
+        let httpParams = new HttpParams();
+        const paramsKeys = Object.getOwnPropertyNames(params);
+        for (const key of paramsKeys) {
+            httpParams = httpParams.append(key, params[key]);
+        }
+        return this.http.get(this.getApiUrl(url), { headers: headers, params: httpParams }).toPromise().then(
+            res => res,
+            err => this.handleErr(err, url)
+        );
+    }
+
     private post(url: string, body: any): Promise<any> {
         const headers = this.getHeaders();
         return this.http.post(this.getApiUrl(url), body, { headers: headers }).toPromise().then(
@@ -216,4 +236,11 @@ export class DataService {
     //     }
     //     this.cacheSvc.setItem(key, item);
     // }
+
+    private periodToParams(from: IDateAndTime, to: IDateAndTime): IFromToDateAndTime {
+        return {
+            fromYear: from.year, fromMonth: from.month, fromDay: from.day, fromMinute: from.minute,
+            toYear: to.year, toMonth: to.month, toDay: to.day, toMinute: to.minute,
+        };
+    }
 }

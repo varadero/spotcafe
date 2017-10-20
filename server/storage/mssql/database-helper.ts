@@ -482,6 +482,41 @@ export class DatabaseHelper {
         return hash;
     }
 
+    /**
+     * Maps specified source object to resulting object with possible renaming of properties specified in mapObject
+     * @param sourceObject Source object
+     * @param mapObject Object containing properties with names from source object
+     *  and values for the property names for the destination object. If the value is falsy,
+     *  source property will be used as name for the destination property
+     * @param mapObjectPropertyNames For performane reasons only - array with property names of mapObject
+     */
+    mapToObject(
+        sourceObject: any,
+        mapObject: { [key: string]: string },
+        mapObjectPropertyNames?: string[]
+    ): any {
+        const result: { [key: string]: any } = {};
+        const mapObjectPropNames = mapObjectPropertyNames || Object.getOwnPropertyNames(mapObject);
+        for (let i = 0; i < mapObjectPropNames.length; i++) {
+            const srcPropName = mapObjectPropNames[i];
+            const dstPropName = mapObject[srcPropName] || srcPropName;
+            result[dstPropName] = sourceObject[srcPropName];
+        }
+        return result;
+    }
+
+    mapToObjects(
+        sourceObjects: any[],
+        mapObject: { [key: string]: string },
+        mapObjectPropertyNames?: string[]
+    ): any {
+        const result = [];
+        for (let i = 0; i < sourceObjects.length; i++) {
+            result.push(this.mapToObject(sourceObjects[i], mapObject, mapObjectPropertyNames));
+        }
+        return result;
+    }
+
     private createConnectionPool(config: IConnectionPoolConfig, logger: { log: Function, error: Function }): ConnectionPool {
         return new ConnectionPool(config, logger);
     }
@@ -494,29 +529,6 @@ export class DatabaseHelper {
             if (!excludePropNames.includes(propName)) {
                 result[propName] = obj[propName];
             }
-        }
-        return result;
-    }
-
-    /**
-     * Maps specified source object to resulting object with possible renaming of properties specified in mapObject
-     * @param sourceObject Source object
-     * @param mapObject Object containing properties with names from source object
-     *  and values for the property names for the destination object. If the value is falsy,
-     *  source property will be used as name for the destination property
-     * @param mapObjectPropertyNames For performane reasons only - array with property names of mapObject
-     */
-    private mapToObject(
-        sourceObject: any,
-        mapObject: { [key: string]: string },
-        mapObjectPropertyNames?: string[]
-    ): any {
-        const result: { [key: string]: any } = {};
-        const mapObjectPropNames = mapObjectPropertyNames || Object.getOwnPropertyNames(mapObject);
-        for (let i = 0; i < mapObjectPropNames.length; i++) {
-            const srcPropName = mapObjectPropNames[i];
-            const dstPropName = mapObject[srcPropName] || srcPropName;
-            result[dstPropName] = sourceObject[srcPropName];
         }
         return result;
     }

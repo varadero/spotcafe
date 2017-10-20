@@ -187,6 +187,9 @@ export class AuthenticationRoutes extends RoutesBase {
         if (this.apiPathIs(urlPath, 'clients')) {
             return this.selectPermissionsIds(method, [pids.clientsView], [pids.clientsModify]);
         }
+        if (urlPath.startsWith(this.apiPrefix + 'reports/')) {
+            return [pids.reportsView];
+        }
 
         return [];
     }

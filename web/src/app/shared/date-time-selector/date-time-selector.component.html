@@ -1,0 +1,12 @@
+<md-select placeholder="Year" [(ngModel)]="value.selectedYear">
+    <md-option *ngFor="let year of value.years" [value]="year">{{year.name}}</md-option>
+</md-select>
+<md-select placeholder="Month" [(ngModel)]="value.selectedMonth">
+    <md-option *ngFor="let month of value.months" [value]="month">{{month.name}}</md-option>
+</md-select>
+<md-select placeholder="Day" [(ngModel)]="value.selectedDay">
+    <md-option *ngFor="let day of value.days" [value]="day">{{day.name}}</md-option>
+</md-select>
+<md-select placeholder="Hour" [(ngModel)]="value.selectedHour">
+    <md-option *ngFor="let hour of value.hours" [value]="hour">{{hour.name}}</md-option>
+</md-select>
