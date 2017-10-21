@@ -19,7 +19,7 @@ export class ClientDevicesComponent implements OnInit {
         updateDevice: false
     };
 
-    @ViewChild('loadDevicesMessagesComponent') private loadDevicesMessagesComponent: DisplayMessagesComponent;
+    @ViewChild('loadClientDevicesMessagesComponent') private loadClientDevicesMessagesComponent: DisplayMessagesComponent;
 
     constructor(private dataSvc: DataService, private clientDevicesSvc: ClientDevicesService) { }
 
@@ -51,7 +51,7 @@ export class ClientDevicesComponent implements OnInit {
             this.clientDevices = this.clientDevicesSvc.createClientDeviceDiplayItems(clientDevices, this.devicesGroups);
             this.sortClientDevices();
         } catch (err) {
-            this.handleError(err, this.loadDevicesMessagesComponent, 'Loading devices');
+            this.handleError(err, this.loadClientDevicesMessagesComponent, 'Loading devices');
         } finally {
             this.waiting.loadDevices = false;
         }
