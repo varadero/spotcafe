@@ -1,21 +1,19 @@
 import { NgModule, Optional, SkipSelf } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
-import { BrowserModule } from '@angular/platform-browser';
 
-import { MaterialSubsetModule } from '../shared/material-subset.module';
 import { DataService } from './data.service';
 import { AuthService } from './auth.service';
 import { CacheService } from './cache.service';
 
 const allModules = [
-    MaterialSubsetModule,
-    HttpClientModule,
-    BrowserModule
+    HttpClientModule
 ];
 
 @NgModule({
     imports: allModules,
-    exports: allModules,
+    exports: [
+        ...allModules
+    ],
     providers: [
         DataService,
         AuthService,

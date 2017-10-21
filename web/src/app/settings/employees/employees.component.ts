@@ -10,7 +10,7 @@ import {
     IEmployeeWithSelectableRoles,
     ISelectableRole,
     INewEmployeeWithSelectableRoles
-} from './employees.services';
+} from './employees.service';
 import { ErrorsService } from '../../shared/errors.service';
 
 @Component({

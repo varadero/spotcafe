@@ -1,10 +1,7 @@
-import { Injectable } from '@angular/core';
 import { IRoleWithPermissionsIds } from '../../../../../shared/interfaces/role-with-permissions-ids';
-// import { IRoleWithPermissions } from '../../../../../shared/interfaces/role-with-permissions';
 import { IRole } from '../../../../../shared/interfaces/role';
 import { IPermission } from '../../../../../shared/interfaces/permission';
 
-@Injectable()
 export class RolesService {
     clonePermissions(permissions: IPermission[]): ISelectablePermission[] {
         const selectablePermissions: ISelectablePermission[] = [];

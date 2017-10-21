@@ -4,7 +4,7 @@ import { SharedModule } from '../shared/shared.module';
 import { SettingsRoutingModule } from './settings-routing.module';
 import { SettingsComponent } from './settings.component';
 import { EmployeesComponent } from './employees/employees.component';
-import { EmployeesService } from './employees/employees.services';
+import { EmployeesService } from './employees/employees.service';
 import { ClientDevicesComponent } from './client-devices/client-devices.component';
 import { ClientDeviceComponent } from './client-devices/client-device.component';
 import { ClientDevicesService } from './client-devices/client-devices.service';
@@ -16,7 +16,6 @@ import { ClientsGroupsService } from './clients-groups/clients-groups.service';
 import { ClientsComponent } from './clients/clients.component';
 import { ClientsService } from './clients/clients.service';
 import { ClientComponent } from './clients/client.component';
-import { DurationPipe } from '../core/duration.pipe';
 
 @NgModule({
     declarations: [
@@ -28,8 +27,7 @@ import { DurationPipe } from '../core/duration.pipe';
         ClientsGroupsComponent,
         ClientsComponent,
         ClientComponent,
-        RolesComponent,
-        DurationPipe
+        RolesComponent
     ],
     imports: [
         SharedModule,

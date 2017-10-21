@@ -1,0 +1,16 @@
+<table class="total-by-entity-table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Total</th>
+            <th>Total time</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let row of rows">
+            <td>{{row.name}}</td>
+            <td>{{row.total}}</td>
+            <td>{{row.totalTime | duration}}</td>
+        </tr>
+    </tbody>
+</table>

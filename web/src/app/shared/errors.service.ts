@@ -1,6 +1,3 @@
-import { Injectable } from '@angular/core';
-
-@Injectable()
 export class ErrorsService {
     getNetworkErrorMessage(err: any, messagePrefix: string): string {
         if (!err) {

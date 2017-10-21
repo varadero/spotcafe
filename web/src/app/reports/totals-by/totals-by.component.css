@@ -1,11 +1,3 @@
 .space-column {
     width: 2em;
 }
-
-.total-by-entity-table {
-    width: 100%;
-}
-
-.total-by-entity-table th {
-    text-align: left;
-}

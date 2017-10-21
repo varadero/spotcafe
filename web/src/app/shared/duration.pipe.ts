@@ -8,6 +8,9 @@ export class DurationPipe implements PipeTransform {
     }
 
     private millisecondsToDisplayText(value: number): string {
+        if (!value) {
+            return '';
+        }
         const millisecondsRoundedToNearestSecond = 1000 * Math.round(value / 1000);
         const totalSeconds = Math.floor(millisecondsRoundedToNearestSecond / 1000);
         const hours = Math.floor(totalSeconds / 3600);

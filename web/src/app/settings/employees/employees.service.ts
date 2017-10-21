@@ -1,10 +1,7 @@
-import { Injectable } from '@angular/core';
-
 import { IRole } from '../../../../../shared/interfaces/role';
 import { IEmployeeWithRoles } from '../../../../../shared/interfaces/employee-with-roles';
 import { IEmployee } from '../../../../../shared/interfaces/employee';
 
-@Injectable()
 export class EmployeesService {
     cloneRoles(roles: IRole[]): IRole[] {
         const result: IRole[] = [];
