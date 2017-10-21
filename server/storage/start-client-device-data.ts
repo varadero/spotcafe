@@ -6,4 +6,8 @@ export interface IStartClientDeviceData {
     startedByEmployeeId?: string;
     startedAt: number;
     startedAtUptime: number;
+    // For now always undefined when starting client device
+    stoppedByEmployeeId?: string;
+    stoppedAt?: number;
+    stoppedAtUptime?: number;
 }

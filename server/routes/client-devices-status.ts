@@ -51,7 +51,7 @@ export class ClientDevicesStatusRoutes extends RoutesBase {
         //     startedAtUptime: currentStatus.startedAtUptime,
         //     pricePerHour: currentStatus.pricePerHour
         // });
-        const bill = await calcEngine.calcStartedDeviceBill(args.deviceId);
+        const bill = await calcEngine.loadStartedDeviceAndCalcBill(args.deviceId);
         let result: IStopClientDeviceResult | null = null;
         if (bill) {
             const data = <IStopClientDeviceData>{
@@ -82,9 +82,11 @@ export class ClientDevicesStatusRoutes extends RoutesBase {
         } else if (this.isServerTokenClient(serverToken)) {
             data.startedByClientId = serverToken.accountId;
         }
-        // TODO Create function at calcEngine for clearing device calculated data and call it
         const result = await this.storageProvider.startClientDevice(data);
-        return { value: result };
+        if (result.startedDeviceCallBillData) {
+            calcEngine.setClientDeviceStarted(result.startedDeviceCallBillData);
+        }
+        return { value: { alreadyStarted: result.alreadyStarted } };
     }
 
     private async getClientDevicesStatusImpl(): Promise<IRouteActionResult<IClientDeviceStatus[]> | void> {
@@ -95,12 +97,12 @@ export class ClientDevicesStatusRoutes extends RoutesBase {
     }
 
     private setLastCalcDataToClientDeviceStatus(
-        billsData: ICalculatedDeviceBillData[],
+        calcData: ICalculatedDeviceBillData[],
         clientDevicesStatus: IClientDeviceStatus[]
     ): void {
         for (let i = 0; i < clientDevicesStatus.length; i++) {
             const item = clientDevicesStatus[i];
-            const billData = this.findBillData(billsData, item.deviceId);
+            const billData = this.findBillData(calcData, item.deviceId);
             if (billData) {
                 item.duration = billData.calcBillResult.timeUsed;
                 item.bill = billData.calcBillResult.totalBill;

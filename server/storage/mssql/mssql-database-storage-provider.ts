@@ -19,7 +19,7 @@ import { IRoleWithPermissionsIds } from '../../../shared/interfaces/role-with-pe
 import { IRoleWithPermissions } from '../../../shared/interfaces/role-with-permissions';
 import { ICreateRoleWithPermissionsIdsResult } from '../../../shared/interfaces/create-role-with-permissions-ids-result';
 import { IClientDeviceStatus } from '../../../shared/interfaces/client-device-status';
-import { IStartClientDeviceResult } from '../../../shared/interfaces/start-client-device-result';
+import { IStartClientDeviceResult } from '../start-client-device-result';
 import { IStopClientDeviceResult } from '../../../shared/interfaces/stop-client-device-result';
 import { IClientStartupData } from '../client-startup-data';
 import { IDeviceGroup } from '../../../shared/interfaces/device-group';
@@ -474,13 +474,20 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
                 ELSE
                 BEGIN
                     SELECT [AlreadyStarted]=CAST(0 as bit)
+
                     UPDATE [ClientDevicesStatus]
                     SET [IsStarted]=1,
                         [StartedAt]=@StartedAt,
                         [StartedAtUptime]=@StartedAtUptime,
                         [StartedByClientId]=@StartedByClientId,
-                        [StartedByEmployeeId]=@StartedByEmployeeId
+                        [StartedByEmployeeId]=@StartedByEmployeeId,
+                        [StoppedAt]=@StoppedAt,
+                        [StoppedAtUptime]=@StoppedAtUptime,
+                        [StoppedByEmployeeId]=@StoppedByEmployeeId
                     WHERE [DeviceId]=@DeviceId
+
+                    ${this.getStartedDevicesCalcBillDataSql()}
+                    AND [DeviceId]=@DeviceId
                 END
         `;
         const params: IRequestParameter[] = [
@@ -488,14 +495,20 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             { name: 'StartedAt', value: data.startedAt, type: TYPES.Decimal },
             { name: 'StartedAtUptime', value: data.startedAtUptime, type: TYPES.Decimal },
             { name: 'StartedByClientId', value: data.startedByClientId, type: TYPES.UniqueIdentifierN },
-            { name: 'StartedByEmployeeId', value: data.startedByEmployeeId, type: TYPES.UniqueIdentifierN }
+            { name: 'StartedByEmployeeId', value: data.startedByEmployeeId, type: TYPES.UniqueIdentifierN },
+            { name: 'StoppedAt', value: data.stoppedAt, type: TYPES.Decimal },
+            { name: 'StoppedAtUptime', value: data.stoppedAtUptime, type: TYPES.Decimal },
+            { name: 'StoppedByEmployeeId', value: data.stoppedByEmployeeId, type: TYPES.UniqueIdentifierN }
         ];
         sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
         const execResult = await this.dbHelper.execToObjects(sql, params);
         const alreadyStarted = (<{ alreadyStarted: boolean }>execResult.firstResultSet.rows[0]).alreadyStarted;
-        const result: IStartClientDeviceResult = {
+        const result = <IStartClientDeviceResult>{
             alreadyStarted: alreadyStarted
         };
+        if (execResult.allResultSets[1]) {
+            result.startedDeviceCallBillData = <IStartedDeviceCalcBillData>execResult.allResultSets[1].rows[0];
+        }
         return result;
     }
 
@@ -992,8 +1005,8 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         return this.dbHelper.prepareDatabase();
     }
 
-    private async getStartedDevicesCalcBillDataImpl(deviceId: string | null): Promise<IStartedDeviceCalcBillData[]> {
-        let sql = `
+    private getStartedDevicesCalcBillDataSql(): string {
+        const sql = `
             SELECT cds.[DeviceId],
                    cds.[StartedByClientId],
                    cds.[StartedByEmployeeId],
@@ -1009,6 +1022,11 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             INNER JOIN [DevicesGroups] dg ON cd.[DeviceGroupId]=dg.[Id]
             WHERE cds.[IsStarted]=1
         `;
+        return sql;
+    }
+
+    private async getStartedDevicesCalcBillDataImpl(deviceId: string | null): Promise<IStartedDeviceCalcBillData[]> {
+        let sql = this.getStartedDevicesCalcBillDataSql();
         const params: IRequestParameter[] = [];
         if (deviceId) {
             sql += ' AND cds.[DeviceId]=@DeviceId';

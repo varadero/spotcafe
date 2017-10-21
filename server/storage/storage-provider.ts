@@ -12,7 +12,7 @@ import { IRoleWithPermissionsIds } from '../../shared/interfaces/role-with-permi
 import { IEmployee } from '../../shared/interfaces/employee';
 import { ICreateRoleWithPermissionsIdsResult } from '../../shared/interfaces/create-role-with-permissions-ids-result';
 import { IClientDeviceStatus } from '../../shared/interfaces/client-device-status';
-import { IStartClientDeviceResult } from '../../shared/interfaces/start-client-device-result';
+import { IStartClientDeviceResult } from './start-client-device-result';
 import { IStopClientDeviceResult } from '../../shared/interfaces/stop-client-device-result';
 import { IClientStartupData } from './client-startup-data';
 import { IDeviceGroup } from '../../shared/interfaces/device-group';

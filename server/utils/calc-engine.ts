@@ -33,11 +33,15 @@ class CalcEngine {
         return this.lastCalculatedData;
     }
 
+    setClientDeviceStarted(billData: IStartedDeviceCalcBillData): void {
+        this.calcBillsAndAddToLastCalcData([billData]);
+    }
+
     /**
      * Contacts storage and calculates started device bill. For use when the device is about to be stopped
      * @param deviceId Device id
      */
-    async calcStartedDeviceBill(deviceId: string): Promise<ICalculatedDeviceBillData | null> {
+    async loadStartedDeviceAndCalcBill(deviceId: string): Promise<ICalculatedDeviceBillData | null> {
         let billData: IStartedDeviceCalcBillData | null = null;
         try {
             // Get all devices with their status and prices per hour
@@ -48,14 +52,14 @@ class CalcEngine {
         if (!billData) {
             return null;
         }
-        return this.calcBills([billData])[0];
+        return this.calcBillsAndAddToLastCalcData([billData])[0];
     }
 
     /**
      * Calculates started devices bills and caches the data
      */
     async execCalcBillsAndSetLastData(): Promise<ICalculatedDeviceBillData[] | null> {
-        const calculatedBills = await this.calculateBills();
+        const calculatedBills = await this.loadStartedDevicesAndCalculateBills();
         if (calculatedBills) {
             this.lastCalculatedData = calculatedBills;
         }
@@ -110,7 +114,7 @@ class CalcEngine {
         return result;
     }
 
-    private async calculateBills(): Promise<ICalculatedDeviceBillData[] | null> {
+    private async loadStartedDevicesAndCalculateBills(): Promise<ICalculatedDeviceBillData[] | null> {
         let billData: IStartedDeviceCalcBillData[] | null = null;
         try {
             // Get all devices with their status and prices per hour
@@ -121,10 +125,10 @@ class CalcEngine {
         if (!billData) {
             return null;
         }
-        return this.calcBills(billData);
+        return this.calcBillsAndAddToLastCalcData(billData);
     }
 
-    private calcBills(calcBillsData: IStartedDeviceCalcBillData[]): ICalculatedDeviceBillData[] {
+    private calcBillsAndAddToLastCalcData(calcBillsData: IStartedDeviceCalcBillData[]): ICalculatedDeviceBillData[] {
         const result: ICalculatedDeviceBillData[] = [];
         for (let i = 0; i < calcBillsData.length; i++) {
             const item = calcBillsData[i];
