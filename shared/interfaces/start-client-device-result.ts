@@ -1,3 +1,5 @@
+import { IClientDeviceAlreadyStartedInfo } from './client-device-already-started-info';
+
 export interface IStartClientDeviceResult {
-    alreadyStarted: boolean;
+    alreadyStartedInfo: IClientDeviceAlreadyStartedInfo;
 }

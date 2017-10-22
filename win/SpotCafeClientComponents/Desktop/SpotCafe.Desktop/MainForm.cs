@@ -72,7 +72,17 @@ namespace SpotCafe.Desktop {
                 var logInRes = await _state.ClientRest.LogInClient(e.Username, e.Password);
                 if (logInRes.Disabled) {
                     e.Success = false;
-                    _state.SecureThreadState.SecureForm.SignInResult(false, "User is disabled");
+                    _state.SecureThreadState.SecureForm.SignInResult(false, "Client account is disabled");
+                    return;
+                }
+                if (logInRes.ClientAlreadyInUse) {
+                    e.Success = false;
+                    _state.SecureThreadState.SecureForm.SignInResult(false, $"Client account already in use at {logInRes.ClientAlreadyInUseDeviceName}");
+                    return;
+                }
+                if (logInRes.DeviceAlreadyStarted) {
+                    e.Success = false;
+                    _state.SecureThreadState.SecureForm.SignInResult(false, "Device already started");
                     return;
                 }
                 e.Success = true;

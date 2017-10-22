@@ -5,4 +5,7 @@ export interface ILogInClientResult {
     disabled: boolean;
     pricePerHour: number;
     credit: number;
+    deviceAlreadyStarted: boolean;
+    clientAlreadyInUse: boolean;
+    clientAlreadyInUseDeviceName?: string;
 }

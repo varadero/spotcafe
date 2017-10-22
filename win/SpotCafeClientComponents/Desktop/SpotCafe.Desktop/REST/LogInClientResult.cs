@@ -15,9 +15,18 @@ namespace SpotCafe.Desktop.REST {
         public ClientToken Token { get; set; }
 
         [DataMember(Name = "disabled")]
-        public Boolean Disabled { get; set; }
+        public bool Disabled { get; set; }
 
         [DataMember(Name = "pricePerHour")]
         public decimal PricePerHour { get; set; }
+
+        [DataMember(Name = "deviceAlreadyStarted")]
+        public bool DeviceAlreadyStarted { get; set; }
+
+        [DataMember(Name = "clientAlreadyInUse")]
+        public bool ClientAlreadyInUse { get; set; }
+
+        [DataMember(Name = "clientAlreadyInUseDeviceName")]
+        public string ClientAlreadyInUseDeviceName { get; set; }
     }
 }

@@ -69,8 +69,16 @@ export class AuthenticationRoutes extends RoutesBase {
             startedByClientId: result.clientId
         };
         const startResult = await this.storageProvider.startClientDevice(data);
-        if (startResult.alreadyStarted) {
-            return { status: 403, error: { message: 'Device already started' } };
+        const startedInfo = startResult.clientDeviceAlreadyStartedInfo;
+        if (startedInfo.alreadyStarted) {
+            const alreadyStartedResult = {
+                value: <ILogInClientResult>{
+                    clientAlreadyInUseDeviceName: startedInfo.clientAccountAlreadyInUseDeviceName,
+                    clientAlreadyInUse: startedInfo.clientAccountAlreadyInUse,
+                    deviceAlreadyStarted: startedInfo.alreadyStarted
+                }
+            };
+            return alreadyStartedResult;
         }
 
         const token = await this.generateToken(
@@ -83,7 +91,9 @@ export class AuthenticationRoutes extends RoutesBase {
                 credit: result.credit,
                 disabled: result.disabled,
                 pricePerHour: result.pricePerHour,
-                token: token
+                token: token,
+                clientAlreadyInUse: false,
+                deviceAlreadyStarted: false
             }
         };
     }

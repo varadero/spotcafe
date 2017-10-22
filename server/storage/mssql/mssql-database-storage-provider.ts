@@ -37,6 +37,7 @@ import { IReportTotalsByEntity } from '../../../shared/interfaces/report-totals-
 import { IIdWithName } from '../../../shared/interfaces/id-with-name';
 import { ILogInAndGetClientDataResult } from '../log-in-and-get-client-data-result';
 import { IStartedDeviceCalcBillData } from '../started-device-calc-bill-data';
+import { IClientDeviceAlreadyStartedInfo } from '../../../shared/interfaces/client-device-already-started-info';
 
 export class MSSqlDatabaseStorageProvider implements StorageProvider {
     private config: ConnectionConfig;
@@ -463,18 +464,34 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
 
     async startClientDevice(data: IStartClientDeviceData): Promise<IStartClientDeviceResult> {
         let sql = `
-            IF EXISTS (
-                SELECT TOP 1 [IsStarted]
-                FROM [ClientDevicesStatus]
-                WHERE [DeviceId]=@DeviceId AND [IsStarted]=1
-            )
-                BEGIN
-                    SELECT [AlreadyStarted]=CAST(1 as bit)
-                END
-                ELSE
-                BEGIN
-                    SELECT [AlreadyStarted]=CAST(0 as bit)
+            DECLARE @AlreadyStarted bit
+            DECLARE @AlreadyStartedClientUsername nvarchar(250)
+            DECLARE @ClientAccountAlreadyInUse bit
+            DECLARE @ClientAccountAlreadyInUseDeviceName nvarchar(250)
 
+            SET @AlreadyStarted=0
+            SET @ClientAccountAlreadyInUse=0
+
+            SELECT TOP 1 @AlreadyStarted=1,
+                         @AlreadyStartedClientUsername=c.[Username]
+            FROM [ClientDevicesStatus] cds
+            INNER JOIN [ClientDevices] cd ON cds.[DeviceId]=cd.[Id]
+            LEFT OUTER JOIN [Clients] c ON cds.[StartedByClientId]=c.[Id]
+            WHERE cds.[DeviceId]=@DeviceId AND cds.[IsStarted]=1
+
+            SELECT TOP 1 @ClientAccountAlreadyInUse=1,
+                         @ClientAccountAlreadyInUseDeviceName=cd.[Name]
+            FROM [ClientDevicesStatus] cds
+            INNER JOIN [ClientDevices] cd On cds.[DeviceId]=cd.[Id]
+            WHERE @StartedByClientId IS NOT NULL AND cds.[StartedByClientId]=@StartedByClientId AND cds.[IsStarted]=1
+
+            SELECT @AlreadyStarted AS [AlreadyStarted],
+                   @AlreadyStartedClientUsername AS [AlreadyStartedClientUsername],
+                   @ClientAccountAlreadyInUse AS [ClientAccountAlreadyInUse],
+                   @ClientAccountAlreadyInUseDeviceName AS [ClientAccountAlreadyInUseDeviceName]
+
+            IF (@AlreadyStarted=0 AND @ClientAccountAlreadyInUse=0)
+                BEGIN
                     UPDATE [ClientDevicesStatus]
                     SET [IsStarted]=1,
                         [StartedAt]=@StartedAt,
@@ -502,9 +519,9 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         ];
         sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
         const execResult = await this.dbHelper.execToObjects(sql, params);
-        const alreadyStarted = (<{ alreadyStarted: boolean }>execResult.firstResultSet.rows[0]).alreadyStarted;
+        const alreadyStartedResult = <IClientDeviceAlreadyStartedInfo>execResult.firstResultSet.rows[0];
         const result = <IStartClientDeviceResult>{
-            alreadyStarted: alreadyStarted
+            clientDeviceAlreadyStartedInfo: alreadyStartedResult
         };
         if (execResult.allResultSets[1]) {
             result.startedDeviceCallBillData = <IStartedDeviceCalcBillData>execResult.allResultSets[1].rows[0];
