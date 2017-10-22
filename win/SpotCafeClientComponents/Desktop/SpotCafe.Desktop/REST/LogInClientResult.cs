@@ -28,5 +28,8 @@ namespace SpotCafe.Desktop.REST {
 
         [DataMember(Name = "clientAlreadyInUseDeviceName")]
         public string ClientAlreadyInUseDeviceName { get; set; }
+
+        [DataMember(Name = "notEnoughCredit")]
+        public bool NotEnoughCredit { get; set; }
     }
 }

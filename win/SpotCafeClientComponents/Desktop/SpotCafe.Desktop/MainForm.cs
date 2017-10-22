@@ -85,6 +85,11 @@ namespace SpotCafe.Desktop {
                     _state.SecureThreadState.SecureForm.SignInResult(false, "Device already started");
                     return;
                 }
+                if (logInRes.NotEnoughCredit) {
+                    e.Success = false;
+                    _state.SecureThreadState.SecureForm.SignInResult(false, "Not enough credit");
+                    return;
+                }
                 e.Success = true;
                 _state.ClientToken = logInRes.Token;
                 _state.SecureThreadState.SecureForm.SignInResult(true, "");

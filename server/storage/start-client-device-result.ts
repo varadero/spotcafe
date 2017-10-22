@@ -3,5 +3,6 @@ import { IClientDeviceAlreadyStartedInfo } from '../../shared/interfaces/client-
 
 export interface IStartClientDeviceResult {
     clientDeviceAlreadyStartedInfo: IClientDeviceAlreadyStartedInfo;
+    notEnoughCredit: boolean;
     startedDeviceCallBillData?: IStartedDeviceCalcBillData;
 }

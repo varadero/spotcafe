@@ -468,6 +468,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             DECLARE @AlreadyStartedClientUsername nvarchar(250)
             DECLARE @ClientAccountAlreadyInUse bit
             DECLARE @ClientAccountAlreadyInUseDeviceName nvarchar(250)
+            DECLARE @ClientCredit money
 
             SET @AlreadyStarted=0
             SET @ClientAccountAlreadyInUse=0
@@ -479,6 +480,10 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             LEFT OUTER JOIN [Clients] c ON cds.[StartedByClientId]=c.[Id]
             WHERE cds.[DeviceId]=@DeviceId AND cds.[IsStarted]=1
 
+            SELECT TOP 1 @ClientCredit=[Credit]
+            FROM [Clients]
+            WHERE [Id]=@StartedByClientId
+
             SELECT TOP 1 @ClientAccountAlreadyInUse=1,
                          @ClientAccountAlreadyInUseDeviceName=cd.[Name]
             FROM [ClientDevicesStatus] cds
@@ -488,9 +493,10 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             SELECT @AlreadyStarted AS [AlreadyStarted],
                    @AlreadyStartedClientUsername AS [AlreadyStartedClientUsername],
                    @ClientAccountAlreadyInUse AS [ClientAccountAlreadyInUse],
-                   @ClientAccountAlreadyInUseDeviceName AS [ClientAccountAlreadyInUseDeviceName]
+                   @ClientAccountAlreadyInUseDeviceName AS [ClientAccountAlreadyInUseDeviceName],
+                   @ClientCredit AS [ClientCredit]
 
-            IF (@AlreadyStarted=0 AND @ClientAccountAlreadyInUse=0)
+            IF (@AlreadyStarted=0 AND @ClientAccountAlreadyInUse=0 AND (@ClientCredit IS NOT NULL AND @ClientCredit>0))
                 BEGIN
                     UPDATE [ClientDevicesStatus]
                     SET [IsStarted]=1,
@@ -521,7 +527,8 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         const execResult = await this.dbHelper.execToObjects(sql, params);
         const alreadyStartedResult = <IClientDeviceAlreadyStartedInfo>execResult.firstResultSet.rows[0];
         const result = <IStartClientDeviceResult>{
-            clientDeviceAlreadyStartedInfo: alreadyStartedResult
+            clientDeviceAlreadyStartedInfo: alreadyStartedResult,
+            notEnoughCredit: alreadyStartedResult.clientCredit <= 0
         };
         if (execResult.allResultSets[1]) {
             result.startedDeviceCallBillData = <IStartedDeviceCalcBillData>execResult.allResultSets[1].rows[0];

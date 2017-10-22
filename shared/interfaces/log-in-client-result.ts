@@ -6,6 +6,7 @@ export interface ILogInClientResult {
     pricePerHour: number;
     credit: number;
     deviceAlreadyStarted: boolean;
+    notEnoughCredit: boolean;
     clientAlreadyInUse: boolean;
     clientAlreadyInUseDeviceName?: string;
 }

@@ -69,6 +69,13 @@ export class AuthenticationRoutes extends RoutesBase {
             startedByClientId: result.clientId
         };
         const startResult = await this.storageProvider.startClientDevice(data);
+        if (startResult.notEnoughCredit) {
+            return {
+                value: <ILogInClientResult>{
+                    notEnoughCredit: startResult.notEnoughCredit
+                }
+            };
+        }
         const startedInfo = startResult.clientDeviceAlreadyStartedInfo;
         if (startedInfo.alreadyStarted) {
             const alreadyStartedResult = {
@@ -93,7 +100,8 @@ export class AuthenticationRoutes extends RoutesBase {
                 pricePerHour: result.pricePerHour,
                 token: token,
                 clientAlreadyInUse: false,
-                deviceAlreadyStarted: false
+                deviceAlreadyStarted: false,
+                notEnoughCredit: false
             }
         };
     }
