@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 
 import { IDateAndTime } from '../../../../../shared/interfaces/date-and-time';
-import { IModel } from '../../shared/date-time-selector/date-time-selector.component';
+import { IDateTimeSelectorModel } from '../../shared/date-time-selector/date-time-selector.component';
 import { DataService } from '../../core/data.service';
 import { ITotalsByClientDeviceAndEmployee } from '../../../../../shared/interfaces/totals-by-client-device-and-employee';
 
@@ -10,8 +10,8 @@ import { ITotalsByClientDeviceAndEmployee } from '../../../../../shared/interfac
     styleUrls: ['./totals-by.component.css']
 })
 export class TotalsByComponent {
-    startedAfter = <IModel>{};
-    stoppedBefore = <IModel>{};
+    startedAfter = <IDateTimeSelectorModel>{};
+    stoppedBefore = <IDateTimeSelectorModel>{};
     report: ITotalsByClientDeviceAndEmployee;
 
     constructor(private dataSvc: DataService) {
@@ -29,7 +29,7 @@ export class TotalsByComponent {
         }
     }
 
-    private toDateTime(value: IModel): IDateAndTime {
+    private toDateTime(value: IDateTimeSelectorModel): IDateAndTime {
         const result = <IDateAndTime>{
             year: value.selectedYear.value,
             month: value.selectedMonth.value,

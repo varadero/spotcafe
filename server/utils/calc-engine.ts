@@ -3,6 +3,8 @@ import { Time } from './time';
 import { IStartedDeviceCalcBillData } from '../storage/started-device-calc-bill-data';
 import { ICalculatedDeviceBillData } from './calculated-device-bill-data';
 import { Logger } from './logger';
+import { IStopClientDeviceData } from '../storage/stop-client-device-data';
+import { IStopClientDeviceResult } from '../../shared/interfaces/stop-client-device-result';
 
 /**
  * Calculates devices bills and durations at regular intervals
@@ -62,6 +64,7 @@ class CalcEngine {
         const calculatedBills = await this.loadStartedDevicesAndCalculateBills();
         if (calculatedBills) {
             this.lastCalculatedData = calculatedBills;
+            this.stopDevicesWithoutClientCredit(calculatedBills);
         }
         return calculatedBills;
     }
@@ -85,11 +88,43 @@ class CalcEngine {
         return maxTimeDiff;
     }
 
+    private async stopDevicesWithoutClientCredit(
+        calculatedBills: ICalculatedDeviceBillData[]
+    ): Promise<IStopClientDeviceResult[]> {
+        // Stop all devices started for clients with bills greater than client credit
+        const stopData: IStopClientDeviceData[] = [];
+        for (const item of calculatedBills) {
+            if (item.calcBillData && item.calcBillResult) {
+                if (item.calcBillResult.isClient
+                    && item.calcBillData.startedByClientId
+                    && item.calcBillData.clientCredit
+                    && item.calcBillResult.totalBill > item.calcBillData.clientCredit) {
+                    stopData.push({
+                        args: { deviceId: item.calcBillData.deviceId },
+                        // Set client credit as last bill, not calculated totalBill
+                        // This will make client credit 0 instead of (eventually) negative
+                        lastBill: item.calcBillData.clientCredit,
+                        stoppedAt: this.time.getCurrentTime(),
+                        stoppedAtUptime: this.time.getCurrentUptime()
+                    });
+                }
+            }
+        }
+        if (stopData.length > 0) {
+            return await this.storageProvider.stopClientDevices(stopData);
+        } else {
+            return Promise.resolve([]);
+        }
+    }
+
     private calcBill(calcBillData: IStartedDeviceCalcBillData): ICalcBillResult {
         const result: ICalcBillResult = {
             timeUsed: 0,
-            totalBill: 0
+            totalBill: 0,
+            clientCredit: calcBillData.clientCredit,
+            isClient: !!calcBillData.startedByClientId
         };
+
         if (!calcBillData.startedAt || !calcBillData.startedAtUptime) {
             return result;
         }
@@ -186,6 +221,8 @@ export class InitializeOptions {
 
 export interface ICalcBillResult {
     totalBill: number;
+    isClient: boolean;
+    clientCredit: number;
     timeUsed: number;
 }
 

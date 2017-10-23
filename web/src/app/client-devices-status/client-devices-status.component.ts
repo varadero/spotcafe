@@ -30,8 +30,12 @@ export class ClientDevicesStatusComponent implements OnInit, OnDestroy {
   async startDevice(deviceId: string): Promise<void> {
     try {
       const result = await this.dataSvc.startClientDevice(deviceId);
-      if (result.alreadyStarted) {
+      if (result.alreadyStartedInfo.alreadyStarted) {
         // TODO Device is already started
+      } else if (result.alreadyStartedInfo.clientAccountAlreadyInUse) {
+        // Client accoun is already in use - can happen if employees are able to start computer on behalf of a client
+      } else if (result.notEnoughCredit) {
+        // The client has not enough credit
       }
       // TODO Instead of refreshing all devices, return device status in the result
       this.loadData();

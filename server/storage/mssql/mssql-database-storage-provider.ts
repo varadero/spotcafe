@@ -405,7 +405,16 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         return <IDeviceGroup[]>getResult.firstResultSet.rows;
     }
 
+    async stopClientDevices(data: IStopClientDeviceData[]): Promise<IStopClientDeviceResult[]> {
+        const result: IStopClientDeviceResult[] = [];
+        for (const item of data) {
+            result.push(await this.stopClientDevice(item));
+        }
+        return result;
+    }
+
     async stopClientDevice(data: IStopClientDeviceData): Promise<IStopClientDeviceResult> {
+        // TODO Needs to decrease client credit with data.lastBill if device was started for client
         const newId = this.dbHelper.generateId();
         let sql = `
             IF EXISTS (
@@ -437,6 +446,13 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
                            @CurrentStartedAtUptime=[StartedAtUptime]
                     FROM [ClientDevicesStatus]
                     WHERE [DeviceId]=@DeviceId
+
+                    IF (@CurrentStartedByClientId IS NOT NULL)
+                        BEGIN
+                            UPDATE TOP (1) [Clients]
+                            SET [Credit]=[Credit]-@LastBill
+                            WHERE [Id]=@CurrentStartedByClientId
+                        END
 
                     INSERT INTO [ClientDevicesStatusHistory]
                     ([Id], [DeviceId], [StartedByClientId], [StartedByEmployeeId], [StartedAt], [StartedAtUptime],
@@ -496,7 +512,8 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
                    @ClientAccountAlreadyInUseDeviceName AS [ClientAccountAlreadyInUseDeviceName],
                    @ClientCredit AS [ClientCredit]
 
-            IF (@AlreadyStarted=0 AND @ClientAccountAlreadyInUse=0 AND (@ClientCredit IS NOT NULL AND @ClientCredit>0))
+            IF (@AlreadyStarted=0 AND @ClientAccountAlreadyInUse=0
+                AND (@StartedByClientId IS NULL OR (@StartedByClientId IS NOT NULL AND @ClientCredit IS NOT NULL AND @ClientCredit>0)))
                 BEGIN
                     UPDATE [ClientDevicesStatus]
                     SET [IsStarted]=1,

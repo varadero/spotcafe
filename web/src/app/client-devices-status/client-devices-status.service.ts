@@ -6,6 +6,7 @@ export class ClientDevicesStatusService {
         for (let i = 0; i < clientDevicesStatus.length; i++) {
             const item = clientDevicesStatus[i];
             const convertedItem = <IClentDeviceStatusDisplay>Object.assign({}, item);
+            convertedItem.billText = '0.00';
             if (item.isStarted) {
                 convertedItem.billText = convertedItem.bill ? convertedItem.bill.toFixed(2) : '0.00';
             } else if (convertedItem.lastBill) {

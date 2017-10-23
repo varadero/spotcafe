@@ -71,6 +71,7 @@ export abstract class StorageProvider {
     abstract updateClientDevice(clientDevice: IClientDevice): Promise<void>;
     abstract startClientDevice(data: IStartClientDeviceData): Promise<IStartClientDeviceResult>;
     abstract stopClientDevice(data: IStopClientDeviceData): Promise<IStopClientDeviceResult>;
+    abstract stopClientDevices(data: IStopClientDeviceData[]): Promise<IStopClientDeviceResult[]>;
 
     abstract getClientStartupData(): Promise<IClientStartupData | null>;
 

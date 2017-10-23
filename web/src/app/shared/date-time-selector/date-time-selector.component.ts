@@ -5,7 +5,7 @@ import { Component, OnInit, Input } from '@angular/core';
     templateUrl: './date-time-selector.component.html'
 })
 export class DateTimeSelectorComponent implements OnInit {
-    @Input() value: IModel;
+    @Input() value: IDateTimeSelectorModel;
 
     private defaultStartYear = 2017;
     private currentDate = new Date();
@@ -14,8 +14,8 @@ export class DateTimeSelectorComponent implements OnInit {
         this.prepareValue();
     }
 
-    private createNewValue(): IModel {
-        const result = <IModel>{};
+    private createNewValue(): IDateTimeSelectorModel {
+        const result = <IDateTimeSelectorModel>{};
 
         result.years = this.createYears();
         result.months = this.createMonths();
@@ -110,7 +110,7 @@ export class DateTimeSelectorComponent implements OnInit {
     }
 }
 
-export interface IModel {
+export interface IDateTimeSelectorModel {
     years: INameWithValue[];
     selectedYear: INameWithValue;
     months: INameWithValue[];

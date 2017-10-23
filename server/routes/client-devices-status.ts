@@ -86,7 +86,12 @@ export class ClientDevicesStatusRoutes extends RoutesBase {
         if (result.startedDeviceCallBillData) {
             calcEngine.setClientDeviceStarted(result.startedDeviceCallBillData);
         }
-        return { value: { alreadyStartedInfo: result.clientDeviceAlreadyStartedInfo } };
+        return {
+            value: {
+                alreadyStartedInfo: result.clientDeviceAlreadyStartedInfo,
+                notEnoughCredit: result.notEnoughCredit
+            }
+        };
     }
 
     private async getClientDevicesStatusImpl(): Promise<IRouteActionResult<IClientDeviceStatus[]> | void> {
