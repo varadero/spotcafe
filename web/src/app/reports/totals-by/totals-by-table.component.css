@@ -1,7 +1,11 @@
 .total-by-entity-table {
-    width: 100%;
+    border-spacing: 1em;
 }
 
-.total-by-entity-table th {
+.text-cell {
     text-align: left;
+}
+
+.value-cell {
+    text-align: right;
 }

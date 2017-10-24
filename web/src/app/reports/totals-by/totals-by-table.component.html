@@ -1,16 +1,18 @@
 <table class="total-by-entity-table">
     <thead>
         <tr>
-            <th>Name</th>
-            <th>Total</th>
-            <th>Total time</th>
+            <th class="text-cell">Name</th>
+            <th class="value-cell">Total</th>
+            <th class="value-cell">Time</th>
+            <th class="value-cell">Count</th>
         </tr>
     </thead>
     <tbody>
         <tr *ngFor="let row of rows">
-            <td>{{row.name}}</td>
-            <td>{{row.total}}</td>
-            <td>{{row.totalTime | duration}}</td>
+            <td class="text-cell">{{row.name}}</td>
+            <td class="value-cell">{{row.total | money}}</td>
+            <td class="value-cell">{{row.totalTime | duration}}</td>
+            <td class="value-cell">{{row.totalCount}}</td>
         </tr>
     </tbody>
 </table>

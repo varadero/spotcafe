@@ -5,6 +5,7 @@ import { ReportsRoutingModule } from './reports-routing.module';
 import { ReportsComponent } from './reports.component';
 import { TotalsByComponent } from './totals-by/totals-by.component';
 import { TotalsByTableComponent } from './totals-by/totals-by-table.component';
+import { ReportsService } from './reports.service';
 
 @NgModule({
     declarations: [
@@ -18,6 +19,9 @@ import { TotalsByTableComponent } from './totals-by/totals-by-table.component';
     ],
     exports: [
         ReportsRoutingModule
+    ],
+    providers: [
+        ReportsService
     ]
 })
 export class ReportsModule { }

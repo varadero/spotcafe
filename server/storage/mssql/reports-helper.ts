@@ -12,11 +12,13 @@ export class ReportsHelper {
             SELECT cd.[Name],
                    SUM(cdsh.[Bill]) AS [Total],
                    SUM(cdsh.[StoppedAt]-cdsh.[StartedAt]) AS [TotalTimeByDateDiff],
-                   SUM(cdsh.[StoppedAtUptime]-cdsh.[StartedAtUptime]) AS [TotalTimeByUptimeDiff]
+                   SUM(cdsh.[StoppedAtUptime]-cdsh.[StartedAtUptime]) AS [TotalTimeByUptimeDiff],
+                   COUNT(*) AS [TotalCount]
             FROM [ClientDevicesStatusHistory] cdsh
             INNER JOIN [ClientDevices] cd ON cdsh.[DeviceId]=cd.[Id]
             WHERE cdsh.[StartedAt]>=@StartedAt AND cdsh.[StoppedAt]<=@StoppedAt
             GROUP BY cd.[Name]
+            ORDER BY [Total] DESC
         `;
         const params: IRequestParameter[] = [
             { name: 'StartedAt', value: startedAt, type: TYPES.Decimal },
@@ -32,11 +34,13 @@ export class ReportsHelper {
             SELECT c.[Username] AS [Name],
                    SUM(cdsh.[Bill]) AS [Total],
                    SUM(cdsh.[StoppedAt]-cdsh.[StartedAt]) AS [TotalTimeByDateDiff],
-                   SUM(cdsh.[StoppedAtUptime]-cdsh.[StartedAtUptime]) AS [TotalTimeByUptimeDiff]
+                   SUM(cdsh.[StoppedAtUptime]-cdsh.[StartedAtUptime]) AS [TotalTimeByUptimeDiff],
+                   COUNT(*) AS [TotalCount]
             FROM [ClientDevicesStatusHistory] cdsh
             INNER JOIN [Clients] c ON cdsh.[StartedByClientId]=c.[Id]
             WHERE cdsh.[StartedAt]>=@StartedAt AND cdsh.[StoppedAt]<=@StoppedAt
             GROUP BY c.[Username]
+            ORDER BY [Total] DESC
         `;
         const params: IRequestParameter[] = [
             { name: 'StartedAt', value: startedAt, type: TYPES.Decimal },
@@ -52,11 +56,13 @@ export class ReportsHelper {
             SELECT e.[Username] AS [Name],
                    SUM(cdsh.[Bill]) AS [Total],
                    SUM(cdsh.[StoppedAt]-cdsh.[StartedAt]) AS [TotalTimeByDateDiff],
-                   SUM(cdsh.[StoppedAtUptime]-cdsh.[StartedAtUptime]) AS [TotalTimeByUptimeDiff]
+                   SUM(cdsh.[StoppedAtUptime]-cdsh.[StartedAtUptime]) AS [TotalTimeByUptimeDiff],
+                   COUNT(*) AS [TotalCount]
             FROM [ClientDevicesStatusHistory] cdsh
             INNER JOIN [Employees] e ON cdsh.[StartedByEmployeeId]=e.Id
             WHERE cdsh.[StartedAt]>=@StartedAt AND cdsh.[StoppedAt]<=@StoppedAt
             GROUP BY e.[Username]
+            ORDER BY [Total] DESC
         `;
         const params: IRequestParameter[] = [
             { name: 'StartedAt', value: startedAt, type: TYPES.Decimal },
@@ -80,7 +86,8 @@ export class ReportsHelper {
             result.push({
                 name: item.name,
                 total: item.total,
-                totalTime: totalTime
+                totalTime: totalTime,
+                totalCount: item.totalCount
             });
         }
         return result;

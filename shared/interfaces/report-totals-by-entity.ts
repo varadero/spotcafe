@@ -1,5 +1,6 @@
 export interface IReportTotalsByEntity {
-    total: number;
     name: string;
+    total: number;
     totalTime: number;
+    totalCount: number;
 }
