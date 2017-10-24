@@ -36,7 +36,7 @@ export class RolesService {
                     description: permission.description,
                     id: permission.id,
                     name: permission.name,
-                    selected: roleWithPermissionsIds.permissionsIds.includes(permission.id)
+                    selected: this.includes(roleWithPermissionsIds.permissionsIds, permission.id)
                 };
                 permissions.push(selectablePermission);
             }
@@ -68,6 +68,15 @@ export class RolesService {
         errors.nameIsEmpty = (!role.name || !role.name.trim());
         errors.hasErrors = (errors.nameIsEmpty);
         return errors;
+    }
+
+    private includes(array: any[], value: any): boolean {
+        for (let i = 0; i < array.length; i++) {
+            if (array[i] === value) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 
