@@ -5,7 +5,7 @@ import { RoutesBase } from './routes-base';
 import { IClient } from '../../shared/interfaces/client';
 import { ICreateEntityResult } from '../../shared/interfaces/create-entity-result';
 import { IRouteActionResult } from './interfaces/route-action-result';
-// import { IUpdateEntityResult } from '../../shared/interfaces/update-entity-result';
+import { IAddClientCreditArgs } from '../../shared/interfaces/add-client-credit-args';
 
 export class ClientsRoutes extends RoutesBase {
 
@@ -29,6 +29,21 @@ export class ClientsRoutes extends RoutesBase {
         return route.post(this.apiPrefix + 'clients/:id', async ctx => {
             await this.handleActionResult(ctx, () => this.updateClientImpl(ctx.request.body));
         });
+    }
+
+    addClientCredit(): any {
+        return route.post(this.apiPrefix + 'client-credit/:id', async ctx => {
+            const args = <IAddClientCreditArgs>ctx.request.body;
+            args.credit = +args.credit;
+            await this.handleActionResult(ctx, () => this.addClientCreditImpl(args));
+        });
+    }
+
+    private async addClientCreditImpl(
+        args: IAddClientCreditArgs
+    ): Promise<IRouteActionResult<number> | void> {
+        const newCredit = await this.storageProvider.addClientCredit(args.clientId, args.credit);
+        return { value: newCredit };
     }
 
     private async updateClientImpl(

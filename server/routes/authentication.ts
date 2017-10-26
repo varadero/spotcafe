@@ -208,6 +208,9 @@ export class AuthenticationRoutes extends RoutesBase {
         if (urlPath.startsWith(this.apiPrefix + 'reports/')) {
             return [pids.reportsView];
         }
+        if (urlPath.startsWith(this.apiPrefix + 'client-credit/')) {
+            return [pids.clientsAddCredit];
+        }
 
         return [];
     }

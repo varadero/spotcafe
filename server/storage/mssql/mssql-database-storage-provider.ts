@@ -52,6 +52,22 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         this.reportsHelper = new ReportsHelper(this.dbHelper);
     }
 
+    async addClientCredit(clientId: string, amount: number): Promise<number> {
+        const sql = `
+            DECLARE @NewCredit money
+            UPDATE TOP (1) [Clients]
+            SET [Credit]=[Credit]+@Amount, @NewCredit=[Credit]+@Amount
+            WHERE [Id]='29ADDD9F-58AB-44D5-A619-CF3F0E4DF837'
+            SELECT @NewCredit
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'Amount', value: amount, type: TYPES.Money },
+            { name: 'Id', value: clientId, type: TYPES.UniqueIdentifierN }
+        ];
+        const newCredit = (await this.dbHelper.execScalar(sql, params)).value;
+        return <number>newCredit;
+    }
+
     async getTotalsByDeviceReport(startedAt: number, stoppedAt: number): Promise<IReportTotalsByEntity[]> {
         return await this.reportsHelper.totalsByDevice(startedAt, stoppedAt);
     }

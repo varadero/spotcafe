@@ -1,10 +1,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
+
 import { IClientDisplay } from './client-display';
 import { DataService } from '../../core/data.service';
 import { ClientsService } from './clients.service';
 import { IClientGroupWithDevicesGroupsIds } from '../../../../../shared/interfaces/client-group-with-devices-groups-ids';
 import { DisplayMessagesComponent } from '../../shared/display-messages.component';
 import { ErrorsService } from '../../shared/errors.service';
+import { Numbers } from '../../../../../shared/numbers';
 
 @Component({
     templateUrl: './clients.component.html'
@@ -17,11 +19,13 @@ export class ClientsComponent implements OnInit {
         updatingClient: false,
         creatingClient: false
     };
+    addCreditAmount = 0;
 
     @ViewChild('newClientMessagesComponent') private newClientMessagesComponent: DisplayMessagesComponent;
     @ViewChild('updateClientMessagesComponent') private updateClientMessagesComponent: DisplayMessagesComponent;
 
     private clientsGroups: IClientGroupWithDevicesGroupsIds[] = [];
+    private numbers = new Numbers();
 
     constructor(
         private dataSvc: DataService,
@@ -31,6 +35,30 @@ export class ClientsComponent implements OnInit {
     ngOnInit(): void {
         this.resetNewClient();
         this.loadData();
+    }
+
+    addCreditChanged(stringValue: string): void {
+        this.addCreditAmount = this.numbers.stringToNumber(stringValue);
+    }
+
+    async addClientCredit(): Promise<void> {
+        if (isNaN(this.addCreditAmount)) {
+            const errorMessage = 'Specified credit to add is not a number';
+            this.updateClientMessagesComponent.addErrorMessage(errorMessage);
+            return;
+        }
+
+        try {
+            this.waiting.updatingClient = true;
+            const newCredit = await this.dataSvc.addClienCredit(this.selectedClient.client.id, this.addCreditAmount);
+            const clientUsername = this.selectedClient.client.username;
+            this.updateClientMessagesComponent.addSuccessMessage(`Client '${clientUsername}' credit is now ${newCredit}`);
+            this.loadData();
+        } catch (err) {
+            this.handleError(err, this.updateClientMessagesComponent, 'Add credit error:');
+        } finally {
+            this.waiting.updatingClient = false;
+        }
     }
 
     async updateClient(selectedClient: IClientDisplay): Promise<void> {
@@ -87,14 +115,22 @@ export class ClientsComponent implements OnInit {
 
     private async loadData(): Promise<void> {
         try {
+            let selectedClientId = '';
+            if (this.selectedClient) {
+                selectedClientId = this.selectedClient.client.id;
+            }
             const clientsResult = await this.dataSvc.getClients();
             this.clientsGroups = await this.dataSvc.getClientsGroups();
             this.clients = this.clientsSvc.createClientDiplayItems(clientsResult, this.clientsGroups);
             this.resetNewClient();
+            if (selectedClientId) {
+                const selectedClient = this.clients.find(x => x.client.id === selectedClientId);
+                if (selectedClient) {
+                    this.selectedClient = selectedClient;
+                }
+            }
         } catch (err) {
-
         } finally {
-
         }
     }
 

@@ -126,6 +126,7 @@ export class App {
         this.koa.use(clientsRoutes.getAllClients());
         this.koa.use(clientsRoutes.createClient());
         this.koa.use(clientsRoutes.updateClient());
+        this.koa.use(clientsRoutes.addClientCredit());
 
         const reportsRoutes = new ReportsRoutes(this.storageProvider, apiPrefix);
         this.koa.use(reportsRoutes.getTotalsByClientDeviceAndEmployee());

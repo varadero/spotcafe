@@ -4,7 +4,7 @@ import { StorageProvider } from '../storage/storage-provider';
 import { RoutesBase } from './routes-base';
 import { IRouteActionResult } from './interfaces/route-action-result';
 import { IClientGroupWithDevicesGroupsIds } from '../../shared/interfaces/client-group-with-devices-groups-ids';
-import { Numbers } from '../utils/numbers';
+import { Numbers } from '../../shared/numbers';
 import { IUpdateClientGroupResult } from '../../shared/interfaces/update-client-group-result';
 import { ICreateClientGroupResult } from '../../shared/interfaces/create-client-group-result';
 

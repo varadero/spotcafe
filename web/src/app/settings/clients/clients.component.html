@@ -11,6 +11,10 @@
             <spotcafe-messages #updateClientMessagesComponent></spotcafe-messages>
             <md-card-actions>
                 <button [disabled]="waiting.updatingClient" md-raised-button (click)="updateClient(selectedClient)" color="primary">Update client {{selectedClient.client.username}}</button>
+                <md-form-field>
+                    <input (input)="addCreditChanged($event.target.value)" mdInput placeholder="Add credit" />
+                </md-form-field>
+                <button *ngIf="addCreditAmount" md-raised-button (click)="addClientCredit()" color="warn">Add credit {{addCreditAmount}} to {{selectedClient.client.username}}</button>
             </md-card-actions>
         </div>
     </md-card>

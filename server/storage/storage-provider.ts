@@ -39,6 +39,8 @@ export abstract class StorageProvider {
 
     abstract getTokenSecret(): Promise<string | null>;
 
+    abstract addClientCredit(clientId: string, amount: number): Promise<number>;
+
     abstract getTotalsByDeviceReport(startedAd: number, stoppedAt: number): Promise<IReportTotalsByEntity[]>;
     abstract getTotalsByClientReport(startedAd: number, stoppedAt: number): Promise<IReportTotalsByEntity[]>;
     abstract getTotalsByEmployeeReport(startedAd: number, stoppedAt: number): Promise<IReportTotalsByEntity[]>;

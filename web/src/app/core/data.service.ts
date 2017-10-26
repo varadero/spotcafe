@@ -28,6 +28,7 @@ import { IUpdateEntityResult } from '../../../../shared/interfaces/update-entity
 import { IDateAndTime } from '../../../../shared/interfaces/date-and-time';
 import { IFromToDateAndTime } from '../../../../shared/interfaces/from-to-date-and-time';
 import { ITotalsByClientDeviceAndEmployee } from '../../../../shared/interfaces/totals-by-client-device-and-employee';
+import { IAddClientCreditArgs } from '../../../../shared/interfaces/add-client-credit-args';
 
 @Injectable()
 export class DataService {
@@ -39,6 +40,14 @@ export class DataService {
         private authSvc: AuthService // ,
         // private cacheSvc: CacheService
     ) { }
+
+    addClienCredit(clientId: string, credit: number): Promise<number> {
+        const args: IAddClientCreditArgs = {
+            clientId: clientId,
+            credit: credit
+        };
+        return this.post('client-credit/' + encodeURIComponent(clientId), args);
+    }
 
     getTotalsByClientDeviceAndEmployee(from: IDateAndTime, to: IDateAndTime): Promise<ITotalsByClientDeviceAndEmployee> {
         return this.getWithParams('reports/totals-by-client-device-and-employee', this.periodToParams(from, to));
