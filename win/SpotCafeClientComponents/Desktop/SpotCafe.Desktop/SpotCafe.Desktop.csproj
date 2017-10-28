@@ -77,6 +77,7 @@
     <Compile Include="SecureFormStartArgs.cs" />
     <Compile Include="Serializer.cs" />
     <Compile Include="SignInEventArgs.cs" />
+    <Compile Include="WebSocketManager.cs" />
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>

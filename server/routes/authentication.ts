@@ -90,6 +90,7 @@ export class AuthenticationRoutes extends RoutesBase {
 
         const token = await this.generateToken(
             result.clientId,
+            clientDeviceId,
             'client',
             [this.permissionsMapper.permissionIds.clientFullAccess]
         );
@@ -115,6 +116,7 @@ export class AuthenticationRoutes extends RoutesBase {
         // Create token object for crypting including mapped permissions
         const token = await this.generateToken(
             clientDeviceId,
+            device.id,
             'client-device',
             [this.permissionsMapper.permissionIds.clientDeviceFullAccess]
         );
@@ -138,12 +140,14 @@ export class AuthenticationRoutes extends RoutesBase {
 
     private async generateToken(
         accountId: string,
+        deviceId: string,
         type: 'employee' | 'client' | 'client-device',
         allPermissionIds: string[]
     ): Promise<IToken> {
         // Create token object for crypting including mapped permissions
         const serverToken: IServerToken = <IServerToken>{};
         serverToken.accountId = accountId;
+        serverToken.deviceId = deviceId;
         serverToken.type = type;
         serverToken.permissions = this.permissionsMapper.mapToBinaryString(allPermissionIds);
         const tokenSecret = this.tokenSecret || await this.getTokenSecret();
@@ -255,6 +259,7 @@ export class AuthenticationRoutes extends RoutesBase {
         // Create token object for crypting including mapped permissions
         const token = await this.generateToken(
             userWithPermissions.employee.id,
+            '',
             'employee',
             allPermissionIds
         );

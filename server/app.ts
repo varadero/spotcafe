@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as Koa from 'koa';
 import * as koaStatic from 'koa-static';
 import * as bodyParser from 'koa-bodyparser';
+import { Observable } from 'rxjs/Observable';
 
 import { UdpDiscoveryListener } from './udp-discovery-listener';
 import { notFound } from './middleware/not-found';
@@ -33,6 +34,7 @@ import { ClientsGroupsRoutes } from './routes/clients-groups';
 import { ClientsRoutes } from './routes/clients';
 import { calcEngine } from './utils/calc-engine';
 import { ReportsRoutes } from './routes/reports';
+import { WebSocketServer, IWebSocketMessageData } from './web-socket-server';
 
 export class App {
     private logger: Logger;
@@ -40,6 +42,9 @@ export class App {
     private storageProvider: StorageProvider;
     private server: https.Server | http.Server;
     private calcEngine: typeof calcEngine;
+    private tokenSecret: string;
+    private wsServer: WebSocketServer;
+    private ws$: Observable<IWebSocketMessageData>;
 
     constructor(private options: IAppOptions) {
         this.calcEngine = calcEngine;
@@ -59,7 +64,7 @@ export class App {
         return this.startImpl(createStorage, appAdministratorPassword);
     }
 
-    private createKoa(tokenSecret: string | null): void {
+    private createKoa(tokenSecret: string): void {
         const apiPrefix = '/api/';
         this.koa = new Koa();
 
@@ -82,7 +87,7 @@ export class App {
         this.koa.use(authRoutes.logInClientDevice());
         this.koa.use(authRoutes.logInClient());
 
-        this.koa.use(requireToken({ secret: tokenSecret || '' }));
+        this.koa.use(requireToken({ secret: tokenSecret }));
         this.koa.use(authRoutes.checkAuthorization());
 
         // Everything below must be authenticated and authorized
@@ -221,11 +226,21 @@ export class App {
             // Can't prepare storage
             return null;
         }
+        this.tokenSecret = (await this.storageProvider.getTokenSecret()) || '';
         await this.setClientFiles();
         await this.startCalcEngine();
-        this.server = await this.startWebServer();
+        this.server = await this.startHttpServer();
+        this.startWebSocketServer(this.server);
         await this.startDiscoveryListener();
         return this.server;
+    }
+
+    private startWebSocketServer(server: https.Server | http.Server): void {
+        this.wsServer = new WebSocketServer(this.tokenSecret, this.logger);
+        this.ws$ = this.wsServer.startServer(server);
+        this.ws$.subscribe(data => {
+            console.log('WS Message', data.data);
+        });
     }
 
     private async startCalcEngine(): Promise<void> {
@@ -251,8 +266,8 @@ export class App {
         return result;
     }
 
-    private async startWebServer(): Promise<https.Server | http.Server> {
-        this.logger.log('Starting web server');
+    private async startHttpServer(): Promise<https.Server | http.Server> {
+        this.logger.log('Starting HTTP server');
         const server = await this.startServer();
         const listenAddress = JSON.stringify(server.address());
         const listenProtocol = this.options.config.httpServer.secure ? 'HTTPS' : 'HTTP';
@@ -302,8 +317,7 @@ export class App {
     }
 
     private async startServer(): Promise<https.Server | http.Server> {
-        const tokenSecret = await this.storageProvider.getTokenSecret();
-        this.createKoa(tokenSecret);
+        this.createKoa(this.tokenSecret);
 
         let result: Promise<https.Server | http.Server>;
         const httpConf = this.options.config.httpServer;

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Net;
@@ -116,13 +117,33 @@ namespace SpotCafe.Desktop {
                 try {
                     _state.DeviceToken = await _state.DeviceRest.LogInDevice();
                     _state.DeviceRest.SetToken(_state.DeviceToken);
-                    // TODO Start the application
+                    StartWebSocketManager(_state.DeviceToken.Token);
                     CurrentDataTimer_Tick(_state.CurrentDataTimer, EventArgs.Empty);
                     StartCurrentDataTimer();
                     break;
                 } catch (Exception ex) {
                     LogError($"Error logging in: {ex}");
                     await Task.Delay(TimeSpan.FromSeconds(5));
+                }
+            }
+        }
+
+        private void StartWebSocketManager(string token) {
+            if (_state.WebSocketManager != null) {
+                _state.WebSocketManager = null;
+            }
+            var wssAddr = $"wss://{_state.StartArgs.CommandLineArguments.ServerIP}/api/websocket";
+            _state.WebSocketManager = new WebSocketManager();
+            _state.WebSocketManager.Start(wssAddr, _state.DeviceToken.Token, true, false);
+            _state.WebSocketManager.SocketEvent += WebSocketManager_SocketEvent;
+        }
+
+        private void WebSocketManager_SocketEvent(object sender, WebSocketEventArgs e) {
+            Log($"WebSocket event: {e.Name}");
+            if (e.Name == SocketEventName.Message) {
+                Log($"WebSocket message: {e.Data.Name}");
+                if (e.Data.Name == "get-folder-content") {
+                    var folderName = (string)e.Data.Data;
                 }
             }
         }
@@ -194,7 +215,9 @@ namespace SpotCafe.Desktop {
             public Thread SecureThread { get; set; }
             public MainFormStartArgs StartArgs { get; set; }
             public SecureThreadState SecureThreadState { get; set; }
+            public WebSocketManager WebSocketManager { get; set; }
         }
+
         private class SecureThreadState {
             public SecureForm SecureForm { get; set; }
             public IntPtr SecureDesktopHandle { get; set; }
