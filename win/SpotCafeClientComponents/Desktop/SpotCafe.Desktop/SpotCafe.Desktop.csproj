@@ -47,6 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActionsUtils.cs" />
     <Compile Include="CommandLineArgs.cs" />
     <Compile Include="CommandLineArgsParser.cs" />
     <Compile Include="Interop.cs" />
@@ -78,6 +79,7 @@
     <Compile Include="Serializer.cs" />
     <Compile Include="SignInEventArgs.cs" />
     <Compile Include="WebSocketManager.cs" />
+    <Compile Include="WebSocketMessageName.cs" />
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>

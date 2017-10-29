@@ -16,6 +16,7 @@ import { ClientsGroupsService } from './clients-groups/clients-groups.service';
 import { ClientsComponent } from './clients/clients.component';
 import { ClientsService } from './clients/clients.service';
 import { ClientComponent } from './clients/client.component';
+import { ApplicationProfilesComponent } from './application-profiles/application-profiles.component';
 
 @NgModule({
     declarations: [
@@ -27,7 +28,8 @@ import { ClientComponent } from './clients/client.component';
         ClientsGroupsComponent,
         ClientsComponent,
         ClientComponent,
-        RolesComponent
+        RolesComponent,
+        ApplicationProfilesComponent
     ],
     imports: [
         SharedModule,

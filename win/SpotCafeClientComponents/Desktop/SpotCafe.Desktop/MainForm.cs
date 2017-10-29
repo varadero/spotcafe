@@ -136,16 +136,24 @@ namespace SpotCafe.Desktop {
             _state.WebSocketManager = new WebSocketManager();
             _state.WebSocketManager.Start(wssAddr, _state.DeviceToken.Token, true, false);
             _state.WebSocketManager.SocketEvent += WebSocketManager_SocketEvent;
+            _state.WebSocketManager.MessageReceived += WebSocketManager_MessageReceived;
+        }
+
+        private void WebSocketManager_MessageReceived(object sender, WebSocketMessageReceivedEventArgs e) {
+            Log($"WebSocket message: {e.Name} : {e.StringData}");
+            if (e.Name == WebSocketMessageName.GetDrivesRequest) {
+                _state.WebSocketManager.SendDrives(_state.ActionsUtils.GetDrives());
+            }
+            //if (e.Name == SocketEventName.Message) {
+            //    Log($"WebSocket message: {e.Data.Name}");
+            //    if (e.Data.Name == WebSocketMessageName.GetDrives) {
+            //        _state.WebSocketManager.SendDrives(_state.ActionsUtils.GetDrives());
+            //    }
+            //}
         }
 
         private void WebSocketManager_SocketEvent(object sender, WebSocketEventArgs e) {
             Log($"WebSocket event: {e.Name}");
-            if (e.Name == SocketEventName.Message) {
-                Log($"WebSocket message: {e.Data.Name}");
-                if (e.Data.Name == "get-folder-content") {
-                    var folderName = (string)e.Data.Data;
-                }
-            }
         }
 
         private void StartCurrentDataTimer() {
@@ -203,6 +211,8 @@ namespace SpotCafe.Desktop {
             _state.SecureThreadState = new SecureThreadState();
             _state.SecureThreadState.SecureDesktopHandle = _state.StartArgs.SecureDesktopHandle;
             _state.SecureThread = new Thread(new ParameterizedThreadStart(SecureThread));
+
+            _state.ActionsUtils = new ActionsUtils();
         }
 
         private class MainFormState {
@@ -216,6 +226,7 @@ namespace SpotCafe.Desktop {
             public MainFormStartArgs StartArgs { get; set; }
             public SecureThreadState SecureThreadState { get; set; }
             public WebSocketManager WebSocketManager { get; set; }
+            public ActionsUtils ActionsUtils { get; set; }
         }
 
         private class SecureThreadState {

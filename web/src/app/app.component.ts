@@ -3,7 +3,7 @@ import { Observable } from 'rxjs/Observable';
 
 import { DataService } from './core/data.service';
 import { AuthService } from './core/auth.service';
-import { WebSocketManager, IWebSocketEventArgs } from './core/web-socket-manager';
+import { WebSocketService, IWebSocketEventArgs } from './core/web-socket.service';
 import { IToken } from '../../../shared/interfaces/token';
 
 @Component({
@@ -15,10 +15,12 @@ export class AppComponent implements OnInit {
   sidenavCollapsed = true;
 
   private wsAddr: string;
-  private wsMan: WebSocketManager;
   private wsEvents: Observable<IWebSocketEventArgs>;
 
-  constructor(private dataSvc: DataService, private authSvc: AuthService) {
+  constructor(
+    private dataSvc: DataService,
+    private authSvc: AuthService,
+    private wsSvc: WebSocketService) {
     this.wsAddr = this.getWebSocketAddress();
   }
 
@@ -42,8 +44,9 @@ export class AppComponent implements OnInit {
   private handleLoggedIn(token: IToken | null): void {
     this.isLoggedIn = !!token;
     if (token && this.isLoggedIn) {
-      this.wsMan = this.createWebSocketManager();
-      this.wsEvents = this.wsMan.connect(this.wsAddr, token.token, true, false);
+      this.closeWebSocketService();
+      this.wsSvc.connect(this.wsAddr, token.token, true, false);
+      this.wsEvents = this.wsSvc.getSubject();
       this.wsEvents.subscribe(data => {
         this.handleWebSocketData(data);
       });
@@ -64,16 +67,8 @@ export class AppComponent implements OnInit {
     }
   }
 
-  private createWebSocketManager(): WebSocketManager {
-    this.disposeWebSocketManager();
-    const wsMan = new WebSocketManager();
-    return wsMan;
-  }
-
-  private disposeWebSocketManager(): void {
-    if (this.wsMan) {
-      this.wsMan.close();
-    }
+  private closeWebSocketService(): void {
+    this.wsSvc.close();
   }
 
   private getWebSocketAddress(): string {

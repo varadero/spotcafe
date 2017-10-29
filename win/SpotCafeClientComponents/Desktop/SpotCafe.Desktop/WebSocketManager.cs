@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 namespace SpotCafe.Desktop {
     public class WebSocketManager {
         public event EventHandler<WebSocketEventArgs> SocketEvent;
+        public event EventHandler<WebSocketMessageReceivedEventArgs> MessageReceived;
 
         private WebSocketManagerState _state;
 
@@ -22,15 +23,30 @@ namespace SpotCafe.Desktop {
             _state.ReconnectOnClose = reconnectOnClose;
             _state.ReconnectOnError = reconnectOnError;
             _state.Uri = new Uri(baseUrl + "?token=" + token);
-            await ConnectWebSocket();
+            try {
+                await ConnectWebSocket();
+            } catch { }
+            StartReconnectTimer();
+        }
+
+        public void SendDrives(GetDrivesResult data) {
+            Send(WebSocketMessageName.GetDrivesResponse, data);
+        }
+
+        public void Send<T>(string name, T data) {
+            try {
+                var wsData = new WebSocketData<T> { Name = name, Data = data };
+                var arrData = GetArraySegment(wsData);
+                _state.WebSocket.SendAsync(arrData, WebSocketMessageType.Text, true, CancellationToken.None);
+            } catch { }
         }
 
         protected virtual void OnConnected() {
             SocketEvent?.Invoke(this, new WebSocketEventArgs { Name = SocketEventName.Open });
         }
 
-        protected virtual void OnMessage(WebSocketData data) {
-            SocketEvent?.Invoke(this, new WebSocketEventArgs { Name = SocketEventName.Message, Data = data });
+        protected virtual void OnMessage(string name, string stringData) {
+            MessageReceived?.Invoke(this, new WebSocketMessageReceivedEventArgs { Name = name, StringData = stringData });
         }
 
         private async Task ConnectWebSocket() {
@@ -74,8 +90,8 @@ namespace SpotCafe.Desktop {
                         ms.Seek(0, SeekOrigin.Begin);
                         if (result.MessageType == WebSocketMessageType.Text) {
                             var data = Encoding.UTF8.GetString(ms.ToArray());
-                            var deserialized = _state.Serializer.Deserialize<WebSocketData>(data);
-                            OnMessage(deserialized);
+                            var deserialized = _state.Serializer.Deserialize<WebSocketData<object>>(data);
+                            OnMessage(deserialized.Name, data);
                         } else if (result.MessageType == WebSocketMessageType.Binary) {
                             // Still don't have binary messages
                         }
@@ -114,7 +130,8 @@ namespace SpotCafe.Desktop {
                 return;
             }
             try {
-                var buffer = GetArraySegment(new WebSocketData { Name = "ping" });
+                _state.PingStarted = true;
+                var buffer = GetArraySegment(new WebSocketData<string> { Name = WebSocketMessageName.Ping });
                 await _state.WebSocket.SendAsync(buffer, WebSocketMessageType.Text, true, new CancellationToken());
             } catch {
 
@@ -123,7 +140,7 @@ namespace SpotCafe.Desktop {
             }
         }
 
-        private void StarReconnectTimer() {
+        private void StartReconnectTimer() {
             _state.ReconnectTimer.Change(_state.ReconnectTimerInterval, _state.ReconnectTimerInterval);
         }
 
@@ -138,20 +155,30 @@ namespace SpotCafe.Desktop {
                 }
                 Dispose();
                 ConnectWebSocket();
+                StartReconnectTimer();
             } catch { }
         }
 
-        private ArraySegment<byte> GetArraySegment(WebSocketData data) {
-            var json = _state.Serializer.Serialize(data);
+        private ArraySegment<byte> GetArraySegment(object data) {
+            var json = GetSerializedJsonSring(data);
             var bytes = Encoding.UTF8.GetBytes(json);
             var result = new ArraySegment<byte>(bytes);
             return result;
         }
 
+        private string GetSerializedJsonSring(object data) {
+            var json = _state.Serializer.Serialize(data);
+            return json;
+        }
+
         private void InitializeState() {
             _state = new WebSocketManagerState();
             _state.PingTimer = new Timer(PingTimerCallback);
+#if DEBUG
             _state.PingTimerInterval = TimeSpan.FromSeconds(10);
+#else
+            _state.PingTimerInterval = TimeSpan.FromSeconds(10);
+#endif
             _state.ReconnectTimer = new Timer(ReconnectTimerCallback);
             _state.ReconnectTimerInterval = TimeSpan.FromSeconds(3);
             _state.Serializer = new Serializer();
@@ -174,22 +201,26 @@ namespace SpotCafe.Desktop {
     public enum SocketEventName {
         Unknown = 0,
         Open = 1,
-        Message = 2,
-        Error = 3,
-        Close = 4
+        Error = 2,
+        Close = 3
+    }
+
+    public class WebSocketMessageReceivedEventArgs : EventArgs {
+        public string Name { get; set; }
+        public string StringData { get; set; }
     }
 
     public class WebSocketEventArgs : EventArgs {
         public SocketEventName Name { get; set; }
-        public WebSocketData Data { get; set; }
+        public WebSocketData<object> Data { get; set; }
     }
 
     [DataContract]
-    public class WebSocketData {
+    public class WebSocketData<T> {
         [DataMember(Name = "name")]
         public string Name { get; set; }
 
         [DataMember(Name = "data")]
-        public object Data { get; set; }
+        public T Data { get; set; }
     }
 }

@@ -1,0 +1,7 @@
+<h3>
+    Application profiles
+</h3>
+<button (click)="loadDrives()" md-button>Load drives</button>
+<ul *ngIf="drives">
+    <li *ngFor="let drive of drives">{{drive}}</li>
+</ul>

@@ -1,29 +1,39 @@
 import { Subject } from 'rxjs/Subject';
-import { Observable } from 'rxjs/Observable';
 
-export class WebSocketManager {
+import { WebSocketMessageName } from '../../../../shared/web-socket-message-name';
+import { IWebSocketData } from '../../../../shared/interfaces/web-socket/web-socket-data';
+
+export class WebSocketService {
     private fullUrl: string;
     private reconnectOnClose: boolean;
     private reconnectOnError: boolean;
     private ws: WebSocket;
     private ws$: Subject<IWebSocketEventArgs>;
-    private wsObservable: Observable<IWebSocketEventArgs>;
     private reconnectDelay = 3000;
     private reconnectTimeoutHandle: number;
-    private pingDelay = 100;
+    private pingDelay = 10000;
     private pingIntervalHandle: number;
 
     constructor() {
         this.ws$ = new Subject<IWebSocketEventArgs>();
-        this.wsObservable = this.ws$.asObservable();
     }
 
-    connect(baseUrl: string, token: string, reconnectOnClose: boolean, reconnectOnError: boolean): Observable<IWebSocketEventArgs> {
+    getSubject(): Subject<IWebSocketEventArgs> {
+        return this.ws$;
+    }
+
+    connect(baseUrl: string, token: string, reconnectOnClose: boolean, reconnectOnError: boolean): void {
         this.reconnectOnClose = reconnectOnClose;
         this.reconnectOnError = reconnectOnError;
         this.fullUrl = baseUrl + '?token=' + encodeURIComponent(token);
         this.ws = this.connectWebSocket();
-        return this.wsObservable;
+    }
+
+    send(data: IWebSocketData): void {
+        try {
+            this.ws.send(JSON.stringify(data));
+        } catch (err) {
+        }
     }
 
     close(): void {
@@ -52,20 +62,14 @@ export class WebSocketManager {
                 this.reconnect();
             }
         };
+        this.ws = ws;
         return ws;
-    }
-
-    private send(data: IWebSocketData): void {
-        try {
-            this.ws.send(JSON.stringify(data));
-        } catch (err) {
-        }
     }
 
     private startPinging(): void {
         this.stopPinging();
         this.pingIntervalHandle = window.setInterval(() => {
-            this.send({ name: 'ping', data: null });
+            this.send({ name: WebSocketMessageName.ping, data: null });
         }, this.pingDelay);
     }
 
@@ -94,7 +98,6 @@ export class WebSocketManager {
                 this.ws = <any>null;
             }
         } catch (err) {
-
         }
     }
 }
@@ -103,10 +106,3 @@ export interface IWebSocketEventArgs {
     name: 'open' | 'message' | 'error' | 'close';
     data: any;
 }
-
-export interface IWebSocketData {
-    name: 'ping';
-    data: any;
-}
-
-

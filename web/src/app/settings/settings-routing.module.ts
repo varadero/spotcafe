@@ -9,6 +9,7 @@ import { RolesComponent } from './roles/roles.component';
 import { DevicesGroupsComponent } from './devices-groups/devices-groups.component';
 import { ClientsGroupsComponent } from './clients-groups/clients-groups.component';
 import { ClientsComponent } from './clients/clients.component';
+import { ApplicationProfilesComponent } from './application-profiles/application-profiles.component';
 
 const routes: Routes = [
     {
@@ -32,6 +33,9 @@ const routes: Routes = [
         }, {
             path: 'clients',
             component: ClientsComponent
+        }, {
+            path: 'application-profiles',
+            component: ApplicationProfilesComponent
         }]
     }
 ];

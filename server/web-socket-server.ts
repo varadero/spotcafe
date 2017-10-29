@@ -7,36 +7,80 @@ import { Subject } from 'rxjs/Subject';
 import { Observable } from 'rxjs/Observable';
 
 import { IServerToken } from './routes/interfaces/server-token';
-import { Logger } from './utils/logger';
 
 export class WebSocketServer {
     private wsServer: ws.Server;
+    private evt$: Subject<IWebSocketEventData>;
+    private evtObs: Observable<IWebSocketEventData>;
     private msg$: Subject<IWebSocketMessageData>;
+    private msgObs: Observable<IWebSocketMessageData>;
 
-    constructor(private tokenSecret: string, private logger: Logger) {
+    constructor(private tokenSecret: string) {
+        this.evt$ = new Subject<IWebSocketEventData>();
+        this.evtObs = this.evt$.asObservable();
         this.msg$ = new Subject<IWebSocketMessageData>();
+        this.msgObs = this.msg$.asObservable();
     }
 
-    startServer(httpServer: https.Server | http.Server): Observable<IWebSocketMessageData> {
+    startServer(httpServer: https.Server | http.Server): void {
         this.wsServer = new ws.Server({
             server: httpServer,
             path: '/api/websocket',
             verifyClient: this.verifyWebSocketClient.bind(this)
         });
         this.wsServer.on('error', err => {
-            this.logger.error('WS Error', err);
+            const errorEventData: IWebSocketServerEventErrorData = { wsServer: this.wsServer, error: err };
+            this.evt$.next({ name: EventName.error, data: errorEventData });
         });
         this.wsServer.on('connection', (socket: ws, request: http.IncomingMessage) => {
-            this.logger.log('WS Connected', request.connection.remoteAddress);
-            socket.on('disconnect', () => {
-                this.logger.log('WS Disconnected');
+            if (request) { }
+            const connectionEventData: IWebSocketServerEventConnectionData = {
+                socket: socket,
+                token: this.getTokenFromWebSocketUrl(request.url || '')
+            };
+            this.evt$.next({ name: EventName.connection, data: connectionEventData });
+            socket.on('error', err => {
+                const errorEventData: IWebSocketEventErrorData = { socket: socket, error: err };
+                this.evt$.next({ name: EventName.socketError, data: errorEventData });
+            });
+            socket.on('close', (code, reason) => {
+                const closeEventData: IWebSocketEventCloseData = { socket: socket, code: code, reason: reason };
+                this.evt$.next({ name: EventName.socketClose, data: closeEventData });
             });
             socket.on('message', (data: any) => {
-                this.msg$.next(<IWebSocketMessageData>{ socket: socket, data: data });
-                socket.send(JSON.stringify({ name: 'get-folder-content', data: 'C:\\Windows' }));
+                const messageEvenData: IWebSocketMessageData = { socket: socket, data: data };
+                this.msg$.next(messageEvenData);
             });
         });
-        return this.msg$.asObservable();
+    }
+
+    send(socket: ws, name: string, data: any): void {
+        if (!socket) {
+            return;
+        }
+        try {
+            socket.send(JSON.stringify({ name: name, data: data }));
+        } catch (err) { }
+    }
+
+    getMessageReceivedObservable(): Observable<IWebSocketMessageData> {
+        return this.msgObs;
+    }
+
+    getSocketEventObservable(): Observable<IWebSocketEventData> {
+        return this.evtObs;
+    }
+
+    private getTokenFromWebSocketUrl(urlValue: string): string {
+        if (!urlValue) {
+            return '';
+        }
+        try {
+            const parsedUrl = url.parse(urlValue, true);
+            return parsedUrl.query.token;
+        } catch (err) {
+            return '';
+        }
     }
 
     private verifyWebSocketClient(
@@ -45,34 +89,27 @@ export class WebSocketServer {
     ): void {
         const tokenString = this.getTokenFromWebSocketUrl(info.req.url || '');
         if (!tokenString) {
+            this.evt$.next({
+                name: EventName.authentiactionFailed,
+                data: {
+                    origin: info.origin,
+                    secure: info.secure,
+                    request: info.req
+                }
+            });
             callback(false, 403, 'Token not provided');
             return;
         }
         try {
-            const verifyTokenResult = <IServerToken>jwt.verify(tokenString, this.tokenSecret);
-            this.logger.log(
-                'WS Authenticated',
-                info.req.connection.remoteAddress,
-                verifyTokenResult.accountId,
-                verifyTokenResult.deviceId,
-                verifyTokenResult.type,
-                verifyTokenResult.exp
-            );
+            const serverToken = <IServerToken>jwt.verify(tokenString, this.tokenSecret);
+            const authSuccData: IWebSocketServerEventAuthenticationSuccededData = {
+                serverToken: serverToken,
+                tokenString: tokenString
+            };
+            this.evt$.next({ name: EventName.authenticationSucceeded, data: authSuccData });
             callback(true);
         } catch (err) {
-            this.logger.error(`WS Token invalid: ${tokenString}`, err);
-        }
-    }
-
-    private getTokenFromWebSocketUrl(urlValue: string): string | null {
-        if (!urlValue) {
-            return null;
-        }
-        try {
-            const parsedUrl = url.parse(urlValue, true);
-            return parsedUrl.query.token;
-        } catch (err) {
-            return null;
+            this.evt$.next({ name: EventName.tokenVerificationError, data: err });
         }
     }
 }
@@ -80,4 +117,45 @@ export class WebSocketServer {
 export interface IWebSocketMessageData {
     socket: ws;
     data: any;
+}
+
+export interface IWebSocketServerEventConnectionData {
+    socket: ws;
+    token: string;
+}
+
+export interface IWebSocketEventCloseData {
+    socket: ws;
+    code: number;
+    reason: string;
+}
+
+export interface IWebSocketEventErrorData {
+    socket: ws;
+    error: Error;
+}
+
+export interface IWebSocketServerEventErrorData {
+    wsServer: ws.Server;
+    error: Error;
+}
+
+export interface IWebSocketServerEventAuthenticationSuccededData {
+    serverToken: IServerToken;
+    tokenString: string;
+}
+
+export interface IWebSocketEventData {
+    name: EventName;
+    data: any;
+}
+
+export enum EventName {
+    connection = 'connection',
+    error = 'error',
+    socketError = 'socket-error',
+    socketClose = 'socket-close',
+    authentiactionFailed = 'authentiaction-failed',
+    authenticationSucceeded = 'authentication-succeeded',
+    tokenVerificationError = 'token-verification-error'
 }

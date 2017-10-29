@@ -4,6 +4,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { DataService } from './data.service';
 import { AuthService } from './auth.service';
 import { CacheService } from './cache.service';
+import { WebSocketService } from './web-socket.service';
 
 const allModules = [
     HttpClientModule
@@ -17,7 +18,8 @@ const allModules = [
     providers: [
         DataService,
         AuthService,
-        CacheService
+        CacheService,
+        WebSocketService
     ]
 })
 export class CoreModule {

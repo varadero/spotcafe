@@ -5,7 +5,6 @@ import * as fs from 'fs';
 import * as Koa from 'koa';
 import * as koaStatic from 'koa-static';
 import * as bodyParser from 'koa-bodyparser';
-import { Observable } from 'rxjs/Observable';
 
 import { UdpDiscoveryListener } from './udp-discovery-listener';
 import { notFound } from './middleware/not-found';
@@ -34,7 +33,8 @@ import { ClientsGroupsRoutes } from './routes/clients-groups';
 import { ClientsRoutes } from './routes/clients';
 import { calcEngine } from './utils/calc-engine';
 import { ReportsRoutes } from './routes/reports';
-import { WebSocketServer, IWebSocketMessageData } from './web-socket-server';
+import { WebSocketServer } from './web-socket-server';
+import { WebSocketActions } from './web-socket-actions';
 
 export class App {
     private logger: Logger;
@@ -44,7 +44,7 @@ export class App {
     private calcEngine: typeof calcEngine;
     private tokenSecret: string;
     private wsServer: WebSocketServer;
-    private ws$: Observable<IWebSocketMessageData>;
+    private webSocketActions: WebSocketActions;
 
     constructor(private options: IAppOptions) {
         this.calcEngine = calcEngine;
@@ -236,11 +236,9 @@ export class App {
     }
 
     private startWebSocketServer(server: https.Server | http.Server): void {
-        this.wsServer = new WebSocketServer(this.tokenSecret, this.logger);
-        this.ws$ = this.wsServer.startServer(server);
-        this.ws$.subscribe(data => {
-            console.log('WS Message', data.data);
-        });
+        this.wsServer = new WebSocketServer(this.tokenSecret);
+        this.wsServer.startServer(server);
+        this.webSocketActions = new WebSocketActions(this.wsServer, this.storageProvider);
     }
 
     private async startCalcEngine(): Promise<void> {
