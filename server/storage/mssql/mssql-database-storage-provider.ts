@@ -57,7 +57,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             DECLARE @NewCredit money
             UPDATE TOP (1) [Clients]
             SET [Credit]=[Credit]+@Amount, @NewCredit=[Credit]+@Amount
-            WHERE [Id]='29ADDD9F-58AB-44D5-A619-CF3F0E4DF837'
+            WHERE [Id]=@Id
             SELECT @NewCredit
         `;
         const params: IRequestParameter[] = [
