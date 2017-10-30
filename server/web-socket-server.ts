@@ -8,6 +8,8 @@ import { Observable } from 'rxjs/Observable';
 
 import { IServerToken } from './routes/interfaces/server-token';
 import { ISenderData } from '../shared/interfaces/web-socket/sender-data';
+import { WebSocketMessageName } from '../shared/web-socket-message-name';
+import { IWebSocketPayload, IWebSocketData } from '../shared/interfaces/web-socket/web-socket-data';
 
 export class WebSocketServer {
     private wsServer: ws.Server;
@@ -55,12 +57,43 @@ export class WebSocketServer {
         });
     }
 
-    send(socket: ws, name: string, sender: ISenderData | null, data: any): void {
+    /**
+     *
+     * @param socket {ws} Socket to use to send the data
+     * @param name {WebSocketMessageName} Name of the message
+     * @param sender {ISenderData} Sender of the data - in case the data was sent by a client device
+     * @param payload {IWebSocketPayload} Payload to send
+     */
+    sendToWebClient(socket: ws, name: WebSocketMessageName, sender: ISenderData | null, payload?: IWebSocketPayload | null): void {
         if (!socket) {
             return;
         }
         try {
-            socket.send(JSON.stringify({ name: name, sender: sender, data: data }));
+            const obj = <IWebSocketData>{
+                name: name
+            };
+            if (sender) {
+                obj.sender = sender;
+            }
+            if (payload) {
+                obj.payload = payload;
+            }
+            socket.send(JSON.stringify(obj));
+        } catch (err) { }
+    }
+
+    sendToDevice(socket: ws, name: WebSocketMessageName, data?: any): void {
+        if (!socket) {
+            return;
+        }
+        try {
+            const obj = <IWebSocketData>{
+                name: name
+            };
+            if (data) {
+                obj.payload = data;
+            }
+            socket.send(JSON.stringify(obj));
         } catch (err) { }
     }
 

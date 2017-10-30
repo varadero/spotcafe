@@ -31,7 +31,8 @@ export class WebSocketService {
 
     send(data: IWebSocketData): void {
         try {
-            this.ws.send(JSON.stringify(data));
+            const dataToSend = JSON.stringify(data);
+            this.ws.send(dataToSend);
         } catch (err) {
         }
     }
@@ -69,7 +70,10 @@ export class WebSocketService {
     private startPinging(): void {
         this.stopPinging();
         this.pingIntervalHandle = window.setInterval(() => {
-            this.send({ name: WebSocketMessageName.ping, sender: null, data: null });
+            this.send({
+                targetDeviceId: '',
+                name: WebSocketMessageName.ping
+            });
         }, this.pingDelay);
     }
 

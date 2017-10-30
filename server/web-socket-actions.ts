@@ -11,9 +11,11 @@ import {
 } from './web-socket-server';
 import { StorageProvider } from './storage/storage-provider';
 import { IServerToken } from './routes/interfaces/server-token';
-import { WebSocketMessageName } from '../shared/web-socket-message-name';
-import { IGetDrivesRequest } from '../shared/interfaces/web-socket/get-drives-request';
+import { WebSocketMessageName, WebSocketMessageErrorNumber } from '../shared/web-socket-message-name';
+import { IWebSocketData, IWebSocketPayload } from '../shared/interfaces/web-socket/web-socket-data';
+// import { IGetDrivesRequest } from '../shared/interfaces/web-socket/get-drives-request';
 import { ISenderData } from '../shared/interfaces/web-socket/sender-data';
+import { IGetFolderItemsRequest } from '../shared/interfaces/web-socket/get-folder-items-request';
 
 export class WebSocketActions {
     private socketsInfo: ISocketInfo[];
@@ -50,7 +52,7 @@ export class WebSocketActions {
     private handleMessageReceived(value: IWebSocketMessageData): void {
         let json = null;
         try {
-            json = <IClientWebSocketData>JSON.parse(value.data);
+            json = <IWebSocketData>JSON.parse(value.data);
         } catch (err) { }
 
         if (json) {
@@ -58,68 +60,157 @@ export class WebSocketActions {
         }
     }
 
-    private handleMessage(socket: ws, receivedData: IClientWebSocketData): void {
+    private handleMessage(socket: ws, receivedData: IWebSocketData): void {
         const callerInfo = this.getInfoBySocket(socket);
         if (!callerInfo) {
             return;
         }
+        const targetDeviceId = receivedData.targetDeviceId;
         const name = receivedData.name;
-        const data = receivedData.data;
+        const data = receivedData.payload;
         if (name === WebSocketMessageName.ping) {
             this.handlePingMessage(callerInfo);
         } else if (name === WebSocketMessageName.getDrivesRequest) {
-            this.handleGetDrivesRequestMessage(callerInfo, data);
+            this.handleGetDrivesRequestMessage(callerInfo, targetDeviceId, data);
         } else if (name === WebSocketMessageName.getDrivesResponse) {
             this.handleGetDrivesResponseMessage(callerInfo, data);
+        } else if (name === WebSocketMessageName.getFolderItemsRequest) {
+            this.handleGetFolderItemsRequestMessage(callerInfo, targetDeviceId, data);
+        } else if (name === WebSocketMessageName.getFolderItemsResponse) {
+            this.handleGetFolderItemsResponseMessage(callerInfo, data);
         }
     }
 
-    private handleGetDrivesResponseMessage(callerInfo: ISocketInfo, data: any): void {
+    private handleGetFolderItemsResponseMessage(callerInfo: ISocketInfo, payload?: IWebSocketPayload): void {
+        const requestCallers = this.getInfosByRequestData(
+            WebSocketMessageName.getFolderItemsRequest,
+            callerInfo.serverToken.deviceId,
+            null
+        );
+        if (!requestCallers) {
+            return;
+        }
+        for (const getCaller of requestCallers) {
+            // Remove not fullfilled request because now it will be fullfilled
+            this.removeNotFullfilledRequest(
+                getCaller,
+                WebSocketMessageName.getFolderItemsRequest,
+                callerInfo.serverToken.deviceId,
+                null
+            );
+            this.wss.sendToWebClient(
+                getCaller.socket,
+                WebSocketMessageName.getFolderItemsResponse,
+                <ISenderData>{ deviceId: callerInfo.serverToken.deviceId },
+                payload
+            );
+        }
+    }
+
+    private handleGetFolderItemsRequestMessage(callerInfo: ISocketInfo, targetDeviceId: string, payload?: IWebSocketPayload): void {
+        if (!targetDeviceId) {
+            return;
+        }
+        if (!payload || !payload.data) {
+            return;
+        }
+        const infoByDeviceId = this.getInfoByDeviceId(targetDeviceId);
+        if (!infoByDeviceId) {
+            this.sendDeviceNotFound(callerInfo.socket);
+            return;
+        }
+        const getFolderItemsReq = <IGetFolderItemsRequest>payload.data;
+        // Send message to target device
+        callerInfo.notFullfilledRequests.push({
+            data: getFolderItemsReq,
+            deviceId: targetDeviceId,
+            name: WebSocketMessageName.getFolderItemsRequest,
+            requestedAt: Date.now()
+        });
+        this.wss.sendToDevice(infoByDeviceId.socket, WebSocketMessageName.getFolderItemsRequest, payload);
+    }
+
+    private handleGetDrivesResponseMessage(callerInfo: ISocketInfo, payload?: IWebSocketPayload): void {
         // Find who asked for this request and send the response to all of them
         const getDrivesRequestCallers = this.getInfosByRequestData(
             WebSocketMessageName.getDrivesRequest,
             callerInfo.serverToken.deviceId,
             null
         );
-        if (getDrivesRequestCallers) {
-            for (const getDrivesCaller of getDrivesRequestCallers) {
-                // Remove not fullfilled request because now it will be fullfilled
-                this.removeNotFullfilledRequest(
-                    getDrivesCaller,
-                    WebSocketMessageName.getDrivesRequest,
-                    callerInfo.serverToken.deviceId,
-                    null
-                );
-                this.wss.send(
-                    getDrivesCaller.socket,
-                    WebSocketMessageName.getDrivesResponse,
-                    <ISenderData>{ deviceId: callerInfo.serverToken.deviceId },
-                    data
-                );
-            }
+        if (!getDrivesRequestCallers) {
+            return;
+        }
+        for (const getDrivesCaller of getDrivesRequestCallers) {
+            // Remove not fullfilled request because now it will be fullfilled
+            this.removeNotFullfilledRequest(
+                getDrivesCaller,
+                WebSocketMessageName.getDrivesRequest,
+                callerInfo.serverToken.deviceId,
+                null
+            );
+            this.wss.sendToWebClient(
+                getDrivesCaller.socket,
+                WebSocketMessageName.getDrivesResponse,
+                <ISenderData>{ deviceId: callerInfo.serverToken.deviceId },
+                payload
+            );
         }
     }
+
+    private handleGetDrivesRequestMessage(callerInfo: ISocketInfo, targetDeviceId: string, payload?: IWebSocketPayload): void {
+        if (!targetDeviceId) {
+            return;
+        }
+        const infoByDeviceId = this.getInfoByDeviceId(targetDeviceId);
+        if (!infoByDeviceId) {
+            this.sendDeviceNotFound(callerInfo.socket);
+            return;
+        }
+        // Send message to target device
+        callerInfo.notFullfilledRequests.push({
+            data: payload ? payload.data : null,
+            deviceId: targetDeviceId,
+            name: WebSocketMessageName.getDrivesRequest,
+            requestedAt: Date.now()
+        });
+        this.wss.sendToDevice(infoByDeviceId.socket, WebSocketMessageName.getDrivesRequest);
+    }
+
+    private createDeviceNotConnectedErrorResponse() {
+        return this.createErrorResponse(
+            'Device not connected',
+            WebSocketMessageErrorNumber.deviceNotConnected,
+            null
+        );
+    }
+
+    private sendDeviceNotFound(socket: ws): void {
+        this.wss.sendToWebClient(
+            socket,
+            WebSocketMessageName.getFolderItemsResponse,
+            null,
+            this.createDeviceNotConnectedErrorResponse()
+        );
+    }
+
+    private createErrorResponse(
+        message: string,
+        number: number,
+        data: any
+    ): IWebSocketPayload {
+        const result = <IWebSocketPayload>{
+            data: data,
+            error: {
+                number: number,
+                message: message
+            }
+        };
+        return result;
+    }
+
 
     private handlePingMessage(callerInfo: ISocketInfo): void {
         callerInfo.lastPing = Date.now();
-    }
-
-    private handleGetDrivesRequestMessage(callerInfo: ISocketInfo, data: any): void {
-        // Find for which device id is the request
-        const getDrivesReq = <IGetDrivesRequest>data;
-        if (getDrivesReq.deviceId) {
-            const infoByDeviceId = this.getInfoByDeviceId(getDrivesReq.deviceId);
-            if (infoByDeviceId) {
-                // Send message to target device
-                callerInfo.notFullfilledRequests.push({
-                    data: data,
-                    deviceId: getDrivesReq.deviceId,
-                    name: WebSocketMessageName.getDrivesRequest,
-                    requestedAt: Date.now()
-                });
-                this.wss.send(infoByDeviceId.socket, WebSocketMessageName.getDrivesRequest, null, null);
-            }
-        }
     }
 
     private subscribe(): void {
@@ -229,9 +320,4 @@ interface INotFullfilledRequests {
     deviceId: string;
     data: any;
     requestedAt: number;
-}
-
-export interface IClientWebSocketData {
-    name: WebSocketMessageName;
-    data: any;
 }

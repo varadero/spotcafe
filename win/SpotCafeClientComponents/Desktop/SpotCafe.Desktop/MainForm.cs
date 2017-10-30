@@ -134,22 +134,30 @@ namespace SpotCafe.Desktop {
             }
             var wssAddr = $"wss://{_state.StartArgs.CommandLineArguments.ServerIP}/api/websocket";
             _state.WebSocketManager = new WebSocketManager();
-            _state.WebSocketManager.Start(wssAddr, _state.DeviceToken.Token, true, false);
+            _state.WebSocketManager.Start(wssAddr, _state.DeviceToken.Token);
             _state.WebSocketManager.SocketEvent += WebSocketManager_SocketEvent;
             _state.WebSocketManager.MessageReceived += WebSocketManager_MessageReceived;
         }
 
         private void WebSocketManager_MessageReceived(object sender, WebSocketMessageReceivedEventArgs e) {
             Log($"WebSocket message: {e.Name} : {e.StringData}");
-            if (e.Name == WebSocketMessageName.GetDrivesRequest) {
-                _state.WebSocketManager.SendDrives(_state.ActionsUtils.GetDrives());
+            try {
+                HandleWebSocketMessageReceived(e.Name, e.StringData);
+            } catch (Exception ex) {
+                LogError($"WebSocket message error: {ex}");
             }
-            //if (e.Name == SocketEventName.Message) {
-            //    Log($"WebSocket message: {e.Data.Name}");
-            //    if (e.Data.Name == WebSocketMessageName.GetDrives) {
-            //        _state.WebSocketManager.SendDrives(_state.ActionsUtils.GetDrives());
-            //    }
-            //}
+
+        }
+
+        private void HandleWebSocketMessageReceived(string name, string data) {
+            if (name == WebSocketMessageName.GetDrivesRequest) {
+                _state.WebSocketManager.SendDrives(_state.ActionsUtils.GetDrives());
+            } else if (name == WebSocketMessageName.GetFolderItemsRequest) {
+                var req = _state.Serializer.Deserialize<WebSocketData<GetFolderItemsRequest>>(data);
+                var payloadData = req.Payload.Data;
+                var res = _state.ActionsUtils.GetFolderItems(payloadData.Folder, payloadData.SubFolder, payloadData.PathSegments, payloadData.SearchPattern);
+                _state.WebSocketManager.SendFolderItems(res);
+            }
         }
 
         private void WebSocketManager_SocketEvent(object sender, WebSocketEventArgs e) {
@@ -213,6 +221,7 @@ namespace SpotCafe.Desktop {
             _state.SecureThread = new Thread(new ParameterizedThreadStart(SecureThread));
 
             _state.ActionsUtils = new ActionsUtils();
+            _state.Serializer = new Serializer();
         }
 
         private class MainFormState {
@@ -227,6 +236,7 @@ namespace SpotCafe.Desktop {
             public SecureThreadState SecureThreadState { get; set; }
             public WebSocketManager WebSocketManager { get; set; }
             public ActionsUtils ActionsUtils { get; set; }
+            public Serializer Serializer { get; set; }
         }
 
         private class SecureThreadState {
