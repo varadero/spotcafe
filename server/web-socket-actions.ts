@@ -13,6 +13,7 @@ import { StorageProvider } from './storage/storage-provider';
 import { IServerToken } from './routes/interfaces/server-token';
 import { WebSocketMessageName } from '../shared/web-socket-message-name';
 import { IGetDrivesRequest } from '../shared/interfaces/web-socket/get-drives-request';
+import { ISenderData } from '../shared/interfaces/web-socket/sender-data';
 
 export class WebSocketActions {
     private socketsInfo: ISocketInfo[];
@@ -89,7 +90,12 @@ export class WebSocketActions {
                     callerInfo.serverToken.deviceId,
                     null
                 );
-                this.wss.send(getDrivesCaller.socket, WebSocketMessageName.getDrivesResponse, data);
+                this.wss.send(
+                    getDrivesCaller.socket,
+                    WebSocketMessageName.getDrivesResponse,
+                    <ISenderData>{ deviceId: callerInfo.serverToken.deviceId },
+                    data
+                );
             }
         }
     }
@@ -111,7 +117,7 @@ export class WebSocketActions {
                     name: WebSocketMessageName.getDrivesRequest,
                     requestedAt: Date.now()
                 });
-                this.wss.send(infoByDeviceId.socket, WebSocketMessageName.getDrivesRequest, null);
+                this.wss.send(infoByDeviceId.socket, WebSocketMessageName.getDrivesRequest, null, null);
             }
         }
     }

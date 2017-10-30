@@ -1,7 +1,11 @@
-<h3>
-    Application profiles
-</h3>
-<button (click)="loadDrives()" md-button>Load drives</button>
-<ul *ngIf="drives">
-    <li *ngFor="let drive of drives">{{drive}}</li>
-</ul>
+<div class="settings-feature card-container">
+    <md-card>
+        <md-card-title>Select application from a device</md-card-title>
+        <md-select mdInput [(ngModel)]="selectedDevice" placeholder="Device" (change)="loadDrives(selectedDevice.id)">
+            <md-option *ngFor="let device of devices" [value]="device">{{device.name}}</md-option>
+        </md-select>
+        <md-select mdInput *ngIf="selectedDevice" [(ngModel)]="selectedDrive" placeholder="Drive">
+            <md-option *ngFor="let drive of drives" [value]="drive">{{drive}}</md-option>
+        </md-select>
+    </md-card>
+</div>

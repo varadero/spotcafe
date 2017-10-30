@@ -69,7 +69,7 @@ export class WebSocketService {
     private startPinging(): void {
         this.stopPinging();
         this.pingIntervalHandle = window.setInterval(() => {
-            this.send({ name: WebSocketMessageName.ping, data: null });
+            this.send({ name: WebSocketMessageName.ping, sender: null, data: null });
         }, this.pingDelay);
     }
 

@@ -7,6 +7,7 @@ import { Subject } from 'rxjs/Subject';
 import { Observable } from 'rxjs/Observable';
 
 import { IServerToken } from './routes/interfaces/server-token';
+import { ISenderData } from '../shared/interfaces/web-socket/sender-data';
 
 export class WebSocketServer {
     private wsServer: ws.Server;
@@ -54,12 +55,12 @@ export class WebSocketServer {
         });
     }
 
-    send(socket: ws, name: string, data: any): void {
+    send(socket: ws, name: string, sender: ISenderData | null, data: any): void {
         if (!socket) {
             return;
         }
         try {
-            socket.send(JSON.stringify({ name: name, data: data }));
+            socket.send(JSON.stringify({ name: name, sender: sender, data: data }));
         } catch (err) { }
     }
 
