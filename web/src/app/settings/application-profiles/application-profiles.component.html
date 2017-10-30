@@ -1,11 +1,27 @@
 <div class="settings-feature card-container">
     <md-card>
         <md-card-title>Select application from a device</md-card-title>
+        <spotcafe-messages #loadInfoMessagesComponent></spotcafe-messages>
         <md-select mdInput [(ngModel)]="selectedDevice" placeholder="Device" (change)="loadDrives(selectedDevice.id)">
             <md-option *ngFor="let device of devices" [value]="device">{{device.name}}</md-option>
         </md-select>
-        <md-select mdInput *ngIf="selectedDevice" [(ngModel)]="selectedDrive" placeholder="Drive">
+        <md-select mdInput *ngIf="selectedDevice" [(ngModel)]="selectedDrive" placeholder="Drive" (change)="driveSelected(selectedDrive)">
             <md-option *ngFor="let drive of drives" [value]="drive">{{drive}}</md-option>
         </md-select>
+        <h2>Current folder:
+            <button *ngFor="let segment of currentPathSegments; let i=index" (click)="segmentIndexSelected(i)" md-raised-button>{{segment}}</button>
+        </h2>
+        <h3>Directories</h3>
+        <md-list *ngIf="directories">
+            <md-list-item *ngFor="let dir of directories">
+                <button (click)="subFolderSelected(dir)" md-button class="folder-item-button">{{dir}}</button>
+            </md-list-item>
+        </md-list>
+        <h3>Files</h3>
+        <md-list *ngIf="files">
+            <md-list-item *ngFor="let file of files">
+                <button md-button class="folder-item-button">{{file}}</button>
+            </md-list-item>
+        </md-list>
     </md-card>
 </div>

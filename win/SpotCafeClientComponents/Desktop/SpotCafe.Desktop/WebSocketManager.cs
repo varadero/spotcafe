@@ -19,9 +19,7 @@ namespace SpotCafe.Desktop {
             InitializeState();
         }
 
-        public async void Start(string baseUrl, string token, bool reconnectOnClose, bool reconnectOnError) {
-            _state.ReconnectOnClose = reconnectOnClose;
-            _state.ReconnectOnError = reconnectOnError;
+        public async void Start(string baseUrl, string token) {
             _state.Uri = new Uri(baseUrl + "?token=" + token);
             try {
                 await ConnectWebSocket();
@@ -29,13 +27,17 @@ namespace SpotCafe.Desktop {
             StartReconnectTimer();
         }
 
-        public void SendDrives(GetDrivesResult data) {
+        public void SendDrives(GetDrivesResponse data) {
             Send(WebSocketMessageName.GetDrivesResponse, data);
+        }
+
+        public void SendFolderItems(GetFolderItemsResponse data) {
+            Send(WebSocketMessageName.GetFolderItemsResponse, data);
         }
 
         public void Send<T>(string name, T data) {
             try {
-                var wsData = new WebSocketData<T> { Name = name, Data = data };
+                var wsData = new WebSocketData<T> { Name = name, Payload = new WebSocketPayload<T> { Data = data } };
                 var arrData = GetArraySegment(wsData);
                 _state.WebSocket.SendAsync(arrData, WebSocketMessageType.Text, true, CancellationToken.None);
             } catch { }
@@ -131,7 +133,7 @@ namespace SpotCafe.Desktop {
             }
             try {
                 _state.PingStarted = true;
-                var buffer = GetArraySegment(new WebSocketData<string> { Name = WebSocketMessageName.Ping });
+                var buffer = GetArraySegment(new WebSocketData<object> { Name = WebSocketMessageName.Ping });
                 await _state.WebSocket.SendAsync(buffer, WebSocketMessageType.Text, true, new CancellationToken());
             } catch {
 
@@ -174,19 +176,13 @@ namespace SpotCafe.Desktop {
         private void InitializeState() {
             _state = new WebSocketManagerState();
             _state.PingTimer = new Timer(PingTimerCallback);
-#if DEBUG
             _state.PingTimerInterval = TimeSpan.FromSeconds(10);
-#else
-            _state.PingTimerInterval = TimeSpan.FromSeconds(10);
-#endif
             _state.ReconnectTimer = new Timer(ReconnectTimerCallback);
             _state.ReconnectTimerInterval = TimeSpan.FromSeconds(3);
             _state.Serializer = new Serializer();
         }
 
         private class WebSocketManagerState {
-            public bool ReconnectOnClose { get; set; }
-            public bool ReconnectOnError { get; set; }
             public Uri Uri { get; set; }
             public ClientWebSocket WebSocket { get; set; }
             public Timer PingTimer { get; set; }
@@ -220,7 +216,26 @@ namespace SpotCafe.Desktop {
         [DataMember(Name = "name")]
         public string Name { get; set; }
 
+        [DataMember(Name = "payload")]
+        public WebSocketPayload<T> Payload { get; set; }
+    }
+
+
+    [DataContract]
+    public class WebSocketPayload<T> {
         [DataMember(Name = "data")]
         public T Data { get; set; }
+
+        [DataMember(Name = "error")]
+        public WebSocketPayloadError Error { get; set; }
+    }
+
+    [DataContract]
+    public class WebSocketPayloadError {
+        [DataMember(Name = "message")]
+        public string Message { get; set; }
+
+        [DataMember(Name = "number")]
+        public int Number { get; set; }
     }
 }

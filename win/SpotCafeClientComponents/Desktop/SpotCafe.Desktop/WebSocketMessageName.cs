@@ -9,5 +9,7 @@ namespace SpotCafe.Desktop {
         public const string Ping = "ping";
         public const string GetDrivesRequest = "get-drives-request";
         public const string GetDrivesResponse = "get-drives-response";
+        public const string GetFolderItemsRequest = "get-folder-items-request";
+        public const string GetFolderItemsResponse = "get-folder-items-response";
     }
 }
