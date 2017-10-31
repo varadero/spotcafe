@@ -26,10 +26,11 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
     devices: IClientDevice[] = [];
     selectedDevice: IClientDevice;
     selectedDrive: string;
-    currentFolder: string;
-    currentPathSegments: string[];
-    directories: string[];
-    files: string[];
+    currentFolder = '';
+    selectedFile = '';
+    currentPathSegments: string[] = [];
+    directories: string[] = [];
+    files: string[] = [];
 
     @ViewChild('loadInfoMessagesComponent') private loadInfoMessagesComponent: DisplayMessagesComponent;
 
@@ -95,6 +96,10 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
                 }
             }
         });
+    }
+
+    fileSelected(file: string): void {
+        this.selectedFile = this.currentFolder + '\\' + file;
     }
 
     async loadDevices(): Promise<void> {

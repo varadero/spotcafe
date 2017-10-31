@@ -39,7 +39,7 @@
             <input mdInput [(ngModel)]="newRoleWithPermissions.role.description" placeholder="Description" />
         </md-form-field>
         <md-card>
-            <md-card-subtitle>Roles</md-card-subtitle>
+            <md-card-subtitle>Permissions</md-card-subtitle>
             <md-list>
                 <md-list-item *ngFor="let permission of newRoleWithPermissions.permissions">
                     <md-checkbox [(ngModel)]="permission.selected">

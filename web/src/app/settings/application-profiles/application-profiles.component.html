@@ -11,17 +11,25 @@
         <h2>Current folder:
             <button *ngFor="let segment of currentPathSegments; let i=index" (click)="segmentIndexSelected(i)" md-raised-button>{{segment}}</button>
         </h2>
-        <h3>Directories</h3>
+        <h3>Directories:</h3>
         <md-list *ngIf="directories">
             <md-list-item *ngFor="let dir of directories">
                 <button (click)="subFolderSelected(dir)" md-button class="folder-item-button">{{dir}}</button>
             </md-list-item>
         </md-list>
-        <h3>Files</h3>
+        <h3>Files:</h3>
         <md-list *ngIf="files">
             <md-list-item *ngFor="let file of files">
-                <button md-button class="folder-item-button">{{file}}</button>
+                <button (click)="fileSelected(file)" md-button class="folder-item-button">{{file}}</button>
             </md-list-item>
         </md-list>
+        <div>
+            <md-form-field class="full-width">
+                <input mdInput [(ngModel)]="selectedFile" placeholder="Selected file" />
+            </md-form-field>
+        </div>
+        <md-card-actions>
+            <button md-raised-button color="primary">Add</button>
+        </md-card-actions>
     </md-card>
 </div>

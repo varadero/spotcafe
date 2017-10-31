@@ -215,6 +215,9 @@ export class AuthenticationRoutes extends RoutesBase {
         if (urlPath.startsWith(this.apiPrefix + 'client-credit/')) {
             return [pids.clientsAddCredit];
         }
+        if (this.apiPathIs(urlPath, 'application-profiles')) {
+            return this.selectPermissionsIds(method, [pids.applicationProfilesView], [pids.applicationProfilesModify]);
+        }
 
         return [];
     }
