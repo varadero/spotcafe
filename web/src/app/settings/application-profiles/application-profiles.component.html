@@ -1,6 +1,22 @@
 <div class="settings-feature card-container">
     <md-card>
-        <md-card-title>Select application from a device</md-card-title>
+        <md-card-title>
+            Existing application groups
+        </md-card-title>
+        <md-card-title>
+            New application group
+        </md-card-title>
+    </md-card>
+    <md-card>
+        <md-card-title>
+            Existing application profiles
+        </md-card-title>
+        <md-card-title>
+            New application profile
+        </md-card-title>
+    </md-card>
+    <md-card>
+        <md-card-title>Select application file from device</md-card-title>
         <spotcafe-messages #loadInfoMessagesComponent></spotcafe-messages>
         <md-select mdInput [(ngModel)]="selectedDevice" placeholder="Device" (change)="loadDrives(selectedDevice.id)">
             <md-option *ngFor="let device of devices" [value]="device">{{device.name}}</md-option>
@@ -28,8 +44,5 @@
                 <input mdInput [(ngModel)]="selectedFile" placeholder="Selected file" />
             </md-form-field>
         </div>
-        <md-card-actions>
-            <button md-raised-button color="primary">Add</button>
-        </md-card-actions>
     </md-card>
 </div>

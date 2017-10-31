@@ -218,6 +218,9 @@ export class AuthenticationRoutes extends RoutesBase {
         if (this.apiPathIs(urlPath, 'application-profiles')) {
             return this.selectPermissionsIds(method, [pids.applicationProfilesView], [pids.applicationProfilesModify]);
         }
+        if (this.apiPathIs(urlPath, 'application-groups')) {
+            return this.selectPermissionsIds(method, [pids.applicationProfilesView], [pids.applicationProfilesModify]);
+        }
 
         return [];
     }
