@@ -1,78 +1,77 @@
 <div class="settings-feature card-container">
-    <md-card>
-        <md-card-title>Existing employees</md-card-title>
+    <mat-card>
+        <mat-card-title>Existing employees</mat-card-title>
         <spotcafe-messages #loadEmployeesMessagesComponent></spotcafe-messages>
-        <md-select *ngIf="employeesWithRoles && roles" [(ngModel)]="selectedEmployeeWithRoles">
-            <md-option *ngFor="let employeeWithRole of employeesWithRoles" [value]="employeeWithRole">{{employeeWithRole.employee.username}} ({{employeeWithRole.employee.firstName}} {{employeeWithRole.employee.lastName}})</md-option>
-        </md-select>
+        <mat-form-field *ngIf="employeesWithRoles && roles">
+            <mat-select [(ngModel)]="selectedEmployeeWithRoles" placeholder="Select employee">
+                <mat-option *ngFor="let employeeWithRole of employeesWithRoles" [value]="employeeWithRole">{{employeeWithRole.employee.username}} ({{employeeWithRole.employee.firstName}} {{employeeWithRole.employee.lastName}})</mat-option>
+            </mat-select>
+        </mat-form-field>
         <div *ngIf="selectedEmployeeWithRoles">
-            <md-form-field>
-                <input mdInput [(ngModel)]="selectedEmployeeWithRoles?.employee.firstName" placeholder="First name" />
-            </md-form-field>
-            <md-form-field>
-                <input mdInput [(ngModel)]="selectedEmployeeWithRoles?.employee.lastName" placeholder="Last name" />
-            </md-form-field>
-            <md-form-field>
-                <input mdInput [(ngModel)]="selectedEmployeeWithRoles?.employee.email" placeholder="Email" />
-            </md-form-field>
-            <md-checkbox [(ngModel)]="selectedEmployeeWithRoles?.employee.disabled">Disabled</md-checkbox>
-            <md-card>
-                <md-card-subtitle>Roles</md-card-subtitle>
-                <md-list>
-                    <md-list-item *ngFor="let role of selectedEmployeeWithRoles?.roles">
-                        <md-checkbox [(ngModel)]="role.selected">
+            <mat-form-field>
+                <input matInput [(ngModel)]="selectedEmployeeWithRoles?.employee.firstName" placeholder="First name" />
+            </mat-form-field>
+            <mat-form-field>
+                <input matInput [(ngModel)]="selectedEmployeeWithRoles?.employee.lastName" placeholder="Last name" />
+            </mat-form-field>
+            <mat-form-field>
+                <input matInput [(ngModel)]="selectedEmployeeWithRoles?.employee.email" placeholder="Email" />
+            </mat-form-field>
+            <mat-checkbox [(ngModel)]="selectedEmployeeWithRoles?.employee.disabled">Disabled</mat-checkbox>
+            <mat-card>
+                <mat-card-subtitle>Roles</mat-card-subtitle>
+                <mat-list>
+                    <mat-list-item *ngFor="let role of selectedEmployeeWithRoles?.roles">
+                        <mat-checkbox [(ngModel)]="role.selected">
                             {{role.name}} : {{role.description}}
-                        </md-checkbox>
-                    </md-list-item>
-                </md-list>
-            </md-card>
-            <md-card-actions>
+                        </mat-checkbox>
+                    </mat-list-item>
+                </mat-list>
+            </mat-card>
+            <mat-card-actions>
                 <spotcafe-messages #updateEmployeeMessagesComponent></spotcafe-messages>
-                <button md-raised-button (click)="updateEmployeeWithRoles(selectedEmployeeWithRoles)" color="primary">Update employee {{selectedEmployeeWithRoles?.employee.username}}</button>
-            </md-card-actions>
+                <button mat-raised-button (click)="updateEmployeeWithRoles(selectedEmployeeWithRoles)" color="primary">Update employee {{selectedEmployeeWithRoles?.employee.username}}</button>
+            </mat-card-actions>
         </div>
-    </md-card>
-    <md-card>
-        <md-card-title>New employee</md-card-title>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newEmployeeWithRoles.employee.username" maxlength="250" placeholder="User name" />
-            <md-error>User name is required</md-error>
-        </md-form-field>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newEmployeeWithRoles.employee.password" type="password" placeholder="Password" />
-        </md-form-field>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newEmployeeWithRoles.confirmPassword" type="password" placeholder="Confirm password" />
-        </md-form-field>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newEmployeeWithRoles.employee.firstName" placeholder="First name" />
-        </md-form-field>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newEmployeeWithRoles.employee.lastName" placeholder="Last name" />
-        </md-form-field>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newEmployeeWithRoles.employee.email" placeholder="Email" />
-        </md-form-field>
-        <md-checkbox [(ngModel)]="newEmployeeWithRoles.employee.disabled">Disabled</md-checkbox>
-        <md-card>
-            <md-card-subtitle>Roles</md-card-subtitle>
-            <md-list>
-                <md-list-item *ngFor="let role of newEmployeeWithRoles.roles">
-                    <md-checkbox [(ngModel)]="role.selected">
+    </mat-card>
+    <mat-card>
+        <mat-card-title>New employee</mat-card-title>
+        <mat-form-field>
+            <input matInput [(ngModel)]="newEmployeeWithRoles.employee.username" maxlength="250" placeholder="User name" />
+            <mat-error>User name is required</mat-error>
+        </mat-form-field>
+        <mat-form-field>
+            <input matInput [(ngModel)]="newEmployeeWithRoles.employee.password" type="password" placeholder="Password" />
+        </mat-form-field>
+        <mat-form-field>
+            <input matInput [(ngModel)]="newEmployeeWithRoles.confirmPassword" type="password" placeholder="Confirm password" />
+        </mat-form-field>
+        <mat-form-field>
+            <input matInput [(ngModel)]="newEmployeeWithRoles.employee.firstName" placeholder="First name" />
+        </mat-form-field>
+        <mat-form-field>
+            <input matInput [(ngModel)]="newEmployeeWithRoles.employee.lastName" placeholder="Last name" />
+        </mat-form-field>
+        <mat-form-field>
+            <input matInput [(ngModel)]="newEmployeeWithRoles.employee.email" placeholder="Email" />
+        </mat-form-field>
+        <mat-checkbox [(ngModel)]="newEmployeeWithRoles.employee.disabled">Disabled</mat-checkbox>
+        <mat-card>
+            <mat-card-subtitle>Roles</mat-card-subtitle>
+            <mat-list>
+                <mat-list-item *ngFor="let role of newEmployeeWithRoles.roles">
+                    <mat-checkbox [(ngModel)]="role.selected">
                         {{role.name}} : {{role.description}}
-                    </md-checkbox>
-                </md-list-item>
-            </md-list>
-        </md-card>
-        <md-card-actions>
-            <spotcafe-messages *ngIf="newEmployeeErrors.usernameNotSupplied" [staticMessage]="{text:
-                    'User name can not be empty', type: 'error'}"></spotcafe-messages>
-            <spotcafe-messages *ngIf="newEmployeeErrors.passwordsDontMatch" [staticMessage]="{text:
-                    'Passwords do not match', type: 'error'}"></spotcafe-messages>
-            <spotcafe-messages *ngIf="newEmployeeErrors.passwordTooShort" [staticMessage]="{text:
-                        'Password must be at least 6 characters', type: 'error'}"></spotcafe-messages>
+                    </mat-checkbox>
+                </mat-list-item>
+            </mat-list>
+        </mat-card>
+        <mat-card-actions>
+            <spotcafe-messages *ngIf="newEmployeeErrors.usernameNotSupplied" [staticMessage]="{text: 'User name can not be empty', type: 'error'}"></spotcafe-messages>
+            <spotcafe-messages *ngIf="newEmployeeErrors.passwordsDontMatch" [staticMessage]="{text: 'Passwords do not match', type: 'error'}"></spotcafe-messages>
+            <spotcafe-messages *ngIf="newEmployeeErrors.passwordTooShort" [staticMessage]="{text: 'Password must be at least 6 characters', type: 'error'}"></spotcafe-messages>
             <spotcafe-messages #newEmployeeMessagesComponent></spotcafe-messages>
-            <button md-raised-button (click)="createEmployeeWithRoles(newEmployeeWithRoles)" color="primary">Create employee {{newEmployeeWithRoles.employee.username}}</button>
-        </md-card-actions>
-    </md-card>
+            <button mat-raised-button (click)="createEmployeeWithRoles(newEmployeeWithRoles)" color="primary">Create employee {{newEmployeeWithRoles.employee.username}}</button>
+        </mat-card-actions>
+    </mat-card>
 </div>

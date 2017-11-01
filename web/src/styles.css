@@ -1,5 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
-html, body, app-root, md-sidenav-container, .primary-content {
+html, body, app-root, mat-sidenav-container, .primary-content {
     margin: 0;
     width: 100%;
     height: 100%;
@@ -26,7 +26,7 @@ html, body, app-root, md-sidenav-container, .primary-content {
     border-right: 4px solid lightseagreen;
 }
 
-.active-nav-item md-icon {
+.active-nav-item mat-icon {
     color: lightseagreen;    
 }
 
@@ -38,7 +38,7 @@ html, body, app-root, md-sidenav-container, .primary-content {
     margin-top: 6px;
 }
 
-.card-container md-card {
+.card-container mat-card {
     margin-top: 4px;
     margin-left: 6px;
     margin-right: 6px;

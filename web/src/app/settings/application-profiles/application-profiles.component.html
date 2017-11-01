@@ -1,65 +1,71 @@
 <div class="settings-feature card-container">
-    <md-card>
-        <md-card-title>
+    <mat-card>
+        <mat-card-title>
             Existing application groups
-        </md-card-title>
+        </mat-card-title>
         <div *ngIf="applicationGroups">
-            <md-select [(ngModel)]="selectedApplicationGroup" placeholder="Select application group">
-                <md-option *ngFor="let group of applicationGroups" [value]="group">{{group.name}}</md-option>
-            </md-select>
+            <mat-form-field>
+                <mat-select [(ngModel)]="selectedApplicationGroup" placeholder="Select application group">
+                    <mat-option *ngFor="let group of applicationGroups" [value]="group">{{group.name}}</mat-option>
+                </mat-select>
+            </mat-form-field>
         </div>
         <spotcafe-base-entity *ngIf="selectedApplicationGroup" [entity]="selectedApplicationGroup"></spotcafe-base-entity>
         <spotcafe-messages #updateApplicationGroupMessagesComponent></spotcafe-messages>
-        <md-card-actions *ngIf="selectedApplicationGroup">
-            <button (click)="updateApplicationGroup(selectedApplicationGroup)" md-raised-button color="primary">Update group {{selectedApplicationGroup.name}}</button>
-        </md-card-actions>
-    </md-card>
-    <md-card>
-        <md-card-title>
+        <mat-card-actions *ngIf="selectedApplicationGroup">
+            <button (click)="updateApplicationGroup(selectedApplicationGroup)" mat-raised-button color="primary">Update group {{selectedApplicationGroup.name}}</button>
+        </mat-card-actions>
+    </mat-card>
+    <mat-card>
+        <mat-card-title>
             New application group
-        </md-card-title>
+        </mat-card-title>
         <spotcafe-base-entity [entity]="newApplicationGroup"></spotcafe-base-entity>
         <spotcafe-messages #newApplicationGroupMessagesComponent></spotcafe-messages>
-        <md-card-actions>
-            <button (click)="createApplicationGroup(newApplicationGroup)" md-raised-button color="primary">Create application group {{newApplicationGroup.name}}</button>
-        </md-card-actions>
-    </md-card>
-    <md-card>
-        <md-card-title>
+        <mat-card-actions>
+            <button (click)="createApplicationGroup(newApplicationGroup)" mat-raised-button color="primary">Create application group {{newApplicationGroup.name}}</button>
+        </mat-card-actions>
+    </mat-card>
+    <mat-card>
+        <mat-card-title>
             Existing application profiles
-        </md-card-title>
-        <md-card-title>
+        </mat-card-title>
+        <mat-card-title>
             New application profile
-        </md-card-title>
-    </md-card>
-    <md-card>
-        <md-card-title>Select application file from device</md-card-title>
+        </mat-card-title>
+    </mat-card>
+    <mat-card>
+        <mat-card-title>Select application file from device</mat-card-title>
         <spotcafe-messages #loadInfoMessagesComponent></spotcafe-messages>
-        <md-select mdInput [(ngModel)]="selectedDevice" placeholder="Device" (change)="loadDrives(selectedDevice.id)">
-            <md-option *ngFor="let device of devices" [value]="device">{{device.name}}</md-option>
-        </md-select>
-        <md-select mdInput *ngIf="selectedDevice" [(ngModel)]="selectedDrive" placeholder="Drive" (change)="driveSelected(selectedDrive)">
-            <md-option *ngFor="let drive of drives" [value]="drive">{{drive}}</md-option>
-        </md-select>
+        <mat-form-field>
+            <mat-select matInput [(ngModel)]="selectedDevice" placeholder="Select device" (change)="loadDrives(selectedDevice.id)">
+                <mat-option *ngFor="let device of devices" [value]="device">{{device.name}}</mat-option>
+            </mat-select>
+        </mat-form-field>
+        <mat-form-field *ngIf="selectedDevice">
+            <mat-select matInput [(ngModel)]="selectedDrive" placeholder="Select drive" (change)="driveSelected(selectedDrive)">
+                <mat-option *ngFor="let drive of drives" [value]="drive">{{drive}}</mat-option>
+            </mat-select>
+        </mat-form-field>
         <h2>Current folder:
-            <button *ngFor="let segment of currentPathSegments; let i=index" (click)="segmentIndexSelected(i)" md-raised-button>{{segment}}</button>
+            <button *ngFor="let segment of currentPathSegments; let i=index" (click)="segmentIndexSelected(i)" mat-raised-button>{{segment}}</button>
         </h2>
         <h3>Directories:</h3>
-        <md-list *ngIf="directories">
-            <md-list-item *ngFor="let dir of directories">
-                <button (click)="subFolderSelected(dir)" md-button class="folder-item-button">{{dir}}</button>
-            </md-list-item>
-        </md-list>
+        <mat-list *ngIf="directories">
+            <mat-list-item *ngFor="let dir of directories">
+                <button (click)="subFolderSelected(dir)" mat-button class="folder-item-button">{{dir}}</button>
+            </mat-list-item>
+        </mat-list>
         <h3>Files:</h3>
-        <md-list *ngIf="files">
-            <md-list-item *ngFor="let file of files">
-                <button (click)="fileSelected(file)" md-button class="folder-item-button">{{file}}</button>
-            </md-list-item>
-        </md-list>
+        <mat-list *ngIf="files">
+            <mat-list-item *ngFor="let file of files">
+                <button (click)="fileSelected(file)" mat-button class="folder-item-button">{{file}}</button>
+            </mat-list-item>
+        </mat-list>
         <div>
-            <md-form-field class="full-width">
-                <input mdInput [(ngModel)]="selectedFile" placeholder="Selected file" />
-            </md-form-field>
+            <mat-form-field class="full-width">
+                <input matInput [(ngModel)]="selectedFile" placeholder="Selected file" />
+            </mat-form-field>
         </div>
-    </md-card>
+    </mat-card>
 </div>

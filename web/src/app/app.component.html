@@ -1,35 +1,35 @@
-<md-sidenav-container>
-  <md-sidenav mode="side" opened="true" [ngClass]="{'sidenav-collapsed': sidenavCollapsed}">
-    <md-nav-list>
-      <a md-list-item title="Client devices status" routerLink="client-devices-status" routerLinkActive="active-nav-item" class="inactive-nav-item">
-        <md-icon md-list-icon>desktop_windows</md-icon>
+<mat-sidenav-container>
+  <mat-sidenav mode="side" opened="true" [ngClass]="{'sidenav-collapsed': sidenavCollapsed}">
+    <mat-nav-list>
+      <a mat-list-item title="Client devices status" routerLink="client-devices-status" routerLinkActive="active-nav-item" class="inactive-nav-item">
+        <mat-icon mat-list-icon>desktop_windows</mat-icon>
       </a>
-      <a md-list-item title="Reports" routerLink="reports" routerLinkActive="active-nav-item" class="inactive-nav-item">
-        <md-icon md-list-icon>timeline</md-icon>
+      <a mat-list-item title="Reports" routerLink="reports" routerLinkActive="active-nav-item" class="inactive-nav-item">
+        <mat-icon mat-list-icon>timeline</mat-icon>
       </a>
-      <a md-list-item title="Settings" routerLink="settings" routerLinkActive="active-nav-item" class="inactive-nav-item">
-        <md-icon md-list-icon>settings</md-icon>
+      <a mat-list-item title="Settings" routerLink="settings" routerLinkActive="active-nav-item" class="inactive-nav-item">
+        <mat-icon mat-list-icon>settings</mat-icon>
       </a>
-    </md-nav-list>
-  </md-sidenav>
+    </mat-nav-list>
+  </mat-sidenav>
 
   <div class="primary-content">
     <div *ngIf="!isLoggedIn">
-      <md-card>
-        <md-card-title>
+      <mat-card>
+        <mat-card-title>
           You need to log in
-        </md-card-title>
-        <md-card-content>
-          <md-input-container>
-            <input mdInput #username placeholder="Username" value="">
-          </md-input-container>
-          <md-input-container>
-            <input mdInput #password type="password" placeholder="Password" value="">
-          </md-input-container>
-          <button (click)="logInEmployee(username.value, password.value)" md-raised-button color="primary">Log in</button>
-        </md-card-content>
-      </md-card>
+        </mat-card-title>
+        <mat-card-content>
+          <mat-form-field>
+            <input matInput #username placeholder="Username" value="">
+          </mat-form-field>
+          <mat-form-field>
+            <input matInput #password type="password" placeholder="Password" value="">
+          </mat-form-field>
+          <button (click)="logInEmployee(username.value, password.value)" mat-raised-button color="primary">Log in</button>
+        </mat-card-content>
+      </mat-card>
     </div>
     <router-outlet></router-outlet>
   </div>
-</md-sidenav-container>
+</mat-sidenav-container>

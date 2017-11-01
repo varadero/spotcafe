@@ -11,7 +11,6 @@ export class AuthService {
 
     private tokenKey = 'spotcafe.token';
     private token: IToken | null;
-    private isLoggedIn: boolean;
     private storage: Storage;
 
     constructor() {
@@ -21,21 +20,18 @@ export class AuthService {
     }
 
     setLoggedIn(token: IToken) {
-        this.isLoggedIn = true;
         this.token = token;
         this.setTokenToStorage(this.token);
         this.loggedIn$.next(token);
     }
 
     setLoggedOut(): void {
-        this.isLoggedIn = false;
         this.token = null;
         this.remoteTokenFromStorage();
         this.loggedIn$.next(null);
     }
 
     setUnauthenticated(): void {
-        this.isLoggedIn = false;
         this.token = null;
         this.setTokenToStorage(null);
         this.loggedIn$.next(null);

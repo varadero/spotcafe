@@ -1,21 +1,23 @@
-<md-card>
-    <md-form-field>
-        <input mdInput [(ngModel)]="clientDeviceDisplay.clientDevice.name" placeholder="Name" />
-    </md-form-field>
-    <md-form-field>
-        <input mdInput value="{{clientDeviceDisplay.clientDevice.address}}" placeholder="Address" />
-    </md-form-field>
-    <md-form-field>
-        <input mdInput [(ngModel)]="clientDeviceDisplay.clientDevice.description" placeholder="Description" />
-    </md-form-field>
-    <md-select [(ngModel)]="clientDeviceDisplay.selectedGroup" placeholder="Device group">
-        <md-option *ngFor="let deviceGroup of clientDeviceDisplay.groups" [value]="deviceGroup">{{deviceGroup.name}}</md-option>
-    </md-select>
-    <md-form-field>
-        <input mdInput value="{{clientDeviceDisplay.clientDevice.id}}" readonly placeholder="Identifier" />
-    </md-form-field>
-    <md-checkbox class="client-device-approved-check" mdInput [(ngModel)]="clientDeviceDisplay.clientDevice.approved">Approved</md-checkbox>
-    <md-card-actions>
-        <button [disabled]="clientDeviceDisplay.updating" class="client-device-button" md-raised-button color="primary" (click)="update.next()">Update</button>
-    </md-card-actions>
-</md-card>
+<mat-card>
+    <mat-form-field>
+        <input matInput [(ngModel)]="clientDeviceDisplay.clientDevice.name" placeholder="Name" />
+    </mat-form-field>
+    <mat-form-field>
+        <input matInput value="{{clientDeviceDisplay.clientDevice.address}}" placeholder="Address" />
+    </mat-form-field>
+    <mat-form-field>
+        <input matInput [(ngModel)]="clientDeviceDisplay.clientDevice.description" placeholder="Description" />
+    </mat-form-field>
+    <mat-form-field>
+        <mat-select [(ngModel)]="clientDeviceDisplay.selectedGroup" placeholder="Device group">
+            <mat-option *ngFor="let deviceGroup of clientDeviceDisplay.groups" [value]="deviceGroup">{{deviceGroup.name}}</mat-option>
+        </mat-select>
+    </mat-form-field>
+    <mat-form-field>
+        <input matInput value="{{clientDeviceDisplay.clientDevice.id}}" readonly placeholder="Identifier" />
+    </mat-form-field>
+    <mat-checkbox class="client-device-approved-check" matInput [(ngModel)]="clientDeviceDisplay.clientDevice.approved">Approved</mat-checkbox>
+    <mat-card-actions>
+        <button [disabled]="clientDeviceDisplay.updating" class="client-device-button" mat-raised-button color="primary" (click)="update.next()">Update</button>
+    </mat-card-actions>
+</mat-card>

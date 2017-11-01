@@ -1,40 +1,42 @@
 <div class="settings-feature card-container">
-    <md-card>
-        <md-card-title>Existing devices groups</md-card-title>
+    <mat-card>
+        <mat-card-title>Existing devices groups</mat-card-title>
         <spotcafe-messages #loadDevicesGroupsMessagesComponent></spotcafe-messages>
-        <md-select *ngIf="devicesGroups && devicesGroups.length" [(ngModel)]="selectedDeviceGroup">
-            <md-option *ngFor="let deviceGroup of devicesGroups" [value]="deviceGroup">{{deviceGroup.name}}</md-option>
-        </md-select>
+        <mat-form-field *ngIf="devicesGroups && devicesGroups.length">
+            <mat-select [(ngModel)]="selectedDeviceGroup" placeholder="Select device group">
+                <mat-option *ngFor="let deviceGroup of devicesGroups" [value]="deviceGroup">{{deviceGroup.name}}</mat-option>
+            </mat-select>
+        </mat-form-field>
         <div *ngIf="selectedDeviceGroup">
-            <md-form-field>
-                <input mdInput [(ngModel)]="selectedDeviceGroup.name" placeholder="Name" />
-            </md-form-field>
-            <md-form-field>
-                <input mdInput [(ngModel)]="selectedDeviceGroup.description" placeholder="Description" />
-            </md-form-field>
-            <md-form-field>
-                <input mdInput [(ngModel)]="selectedDeviceGroup.pricePerHour" placeholder="Price per hour" />
-            </md-form-field>
-            <md-card-actions>
+            <mat-form-field>
+                <input matInput [(ngModel)]="selectedDeviceGroup.name" placeholder="Name" />
+            </mat-form-field>
+            <mat-form-field>
+                <input matInput [(ngModel)]="selectedDeviceGroup.description" placeholder="Description" />
+            </mat-form-field>
+            <mat-form-field>
+                <input matInput [(ngModel)]="selectedDeviceGroup.pricePerHour" placeholder="Price per hour" />
+            </mat-form-field>
+            <mat-card-actions>
                 <spotcafe-messages #updateDevicesGroupsMessagesComponent></spotcafe-messages>
-                <button [disabled]="waiting.updatingGroup" md-raised-button (click)="updateDeviceGroup(selectedDeviceGroup)" color="primary">Update group {{selectedDeviceGroup.name}}</button>
-            </md-card-actions>
+                <button [disabled]="waiting.updatingGroup" mat-raised-button (click)="updateDeviceGroup(selectedDeviceGroup)" color="primary">Update group {{selectedDeviceGroup.name}}</button>
+            </mat-card-actions>
         </div>
-    </md-card>
-    <md-card>
-        <md-card-title>New group</md-card-title>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newDeviceGroup.name" placeholder="Name" />
-        </md-form-field>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newDeviceGroup.description" placeholder="Description" />
-        </md-form-field>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newDeviceGroup.pricePerHour" placeholder="Price per hour" />
-        </md-form-field>
-        <md-card-actions>
+    </mat-card>
+    <mat-card>
+        <mat-card-title>New group</mat-card-title>
+        <mat-form-field>
+            <input matInput [(ngModel)]="newDeviceGroup.name" placeholder="Name" />
+        </mat-form-field>
+        <mat-form-field>
+            <input matInput [(ngModel)]="newDeviceGroup.description" placeholder="Description" />
+        </mat-form-field>
+        <mat-form-field>
+            <input matInput [(ngModel)]="newDeviceGroup.pricePerHour" placeholder="Price per hour" />
+        </mat-form-field>
+        <mat-card-actions>
             <spotcafe-messages #createDevicesGroupsMessagesComponent></spotcafe-messages>
-            <button [disabled]="waiting.creatingGroup" md-raised-button (click)="createDeviceGroup(newDeviceGroup)" color="primary">Create group {{newDeviceGroup.name}}</button>
-        </md-card-actions>
-    </md-card>
+            <button [disabled]="waiting.creatingGroup" mat-raised-button (click)="createDeviceGroup(newDeviceGroup)" color="primary">Create group {{newDeviceGroup.name}}</button>
+        </mat-card-actions>
+    </mat-card>
 </div>

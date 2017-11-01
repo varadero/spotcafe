@@ -1,58 +1,58 @@
 <div class="settings-feature card-container">
-    <md-card>
-        <md-card-title>Existing roles</md-card-title>
-        <md-select *ngIf="rolesWithPermissions && permissions" [(ngModel)]="selectedRoleWithPermissions">
-            <md-option *ngFor="let roleWithPermissions of rolesWithPermissions" [value]="roleWithPermissions">{{roleWithPermissions.role.name}}</md-option>
-        </md-select>
+    <mat-card>
+        <mat-card-title>Existing roles</mat-card-title>
+        <mat-form-field *ngIf="rolesWithPermissions && permissions">
+            <mat-select [(ngModel)]="selectedRoleWithPermissions" placeholder="Select role">
+                <mat-option *ngFor="let roleWithPermissions of rolesWithPermissions" [value]="roleWithPermissions">{{roleWithPermissions.role.name}}</mat-option>
+            </mat-select>
+        </mat-form-field>
         <div *ngIf="selectedRoleWithPermissions">
-            <md-form-field>
-                <input mdInput [(ngModel)]="selectedRoleWithPermissions?.role.name" placeholder="Name" />
-            </md-form-field>
-            <md-form-field>
-                <input mdInput [(ngModel)]="selectedRoleWithPermissions?.role.description" placeholder="Description" />
-            </md-form-field>
-            <md-card>
-                <md-card-subtitle>Permissions</md-card-subtitle>
-                <md-list>
-                    <md-list-item *ngFor="let permission of selectedRoleWithPermissions?.permissions">
-                        <md-checkbox [(ngModel)]="permission.selected">
+            <mat-form-field>
+                <input matInput [(ngModel)]="selectedRoleWithPermissions?.role.name" placeholder="Name" />
+            </mat-form-field>
+            <mat-form-field>
+                <input matInput [(ngModel)]="selectedRoleWithPermissions?.role.description" placeholder="Description" />
+            </mat-form-field>
+            <mat-card>
+                <mat-card-subtitle>Permissions</mat-card-subtitle>
+                <mat-list>
+                    <mat-list-item *ngFor="let permission of selectedRoleWithPermissions?.permissions">
+                        <mat-checkbox [(ngModel)]="permission.selected">
                             {{permission.name}} : {{permission.description}}
-                        </md-checkbox>
-                    </md-list-item>
-                </md-list>
-            </md-card>
-            <md-card-actions>
-                <spotcafe-messages *ngIf="existingRoleErrors.nameIsEmpty" [staticMessage]="{text:
-                        'Name can not be empty', type: 'error'}"></spotcafe-messages>
+                        </mat-checkbox>
+                    </mat-list-item>
+                </mat-list>
+            </mat-card>
+            <mat-card-actions>
+                <spotcafe-messages *ngIf="existingRoleErrors.nameIsEmpty" [staticMessage]="{text: 'Name can not be empty', type: 'error'}"></spotcafe-messages>
                 <spotcafe-messages #updateRoleMessagesComponent></spotcafe-messages>
-                <button md-raised-button (click)="updateRoleWithPermissions(selectedRoleWithPermissions)" color="primary">Update role {{selectedRoleWithPermissions?.role.name}}</button>
-            </md-card-actions>
+                <button mat-raised-button (click)="updateRoleWithPermissions(selectedRoleWithPermissions)" color="primary">Update role {{selectedRoleWithPermissions?.role.name}}</button>
+            </mat-card-actions>
         </div>
-    </md-card>
-    <md-card>
-        <md-card-title>New role</md-card-title>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newRoleWithPermissions.role.name" maxlength="250" placeholder="Name" />
-            <md-error>Name is required</md-error>
-        </md-form-field>
-        <md-form-field>
-            <input mdInput [(ngModel)]="newRoleWithPermissions.role.description" placeholder="Description" />
-        </md-form-field>
-        <md-card>
-            <md-card-subtitle>Permissions</md-card-subtitle>
-            <md-list>
-                <md-list-item *ngFor="let permission of newRoleWithPermissions.permissions">
-                    <md-checkbox [(ngModel)]="permission.selected">
+    </mat-card>
+    <mat-card>
+        <mat-card-title>New role</mat-card-title>
+        <mat-form-field>
+            <input matInput [(ngModel)]="newRoleWithPermissions.role.name" maxlength="250" placeholder="Name" />
+            <mat-error>Name is required</mat-error>
+        </mat-form-field>
+        <mat-form-field>
+            <input matInput [(ngModel)]="newRoleWithPermissions.role.description" placeholder="Description" />
+        </mat-form-field>
+        <mat-card>
+            <mat-card-subtitle>Permissions</mat-card-subtitle>
+            <mat-list>
+                <mat-list-item *ngFor="let permission of newRoleWithPermissions.permissions">
+                    <mat-checkbox [(ngModel)]="permission.selected">
                         {{permission.name}} : {{permission.description}}
-                    </md-checkbox>
-                </md-list-item>
-            </md-list>
-        </md-card>
-        <md-card-actions>
-            <spotcafe-messages *ngIf="newRoleErrors.nameIsEmpty" [staticMessage]="{text:
-                    'Name can not be empty', type: 'error'}"></spotcafe-messages>
+                    </mat-checkbox>
+                </mat-list-item>
+            </mat-list>
+        </mat-card>
+        <mat-card-actions>
+            <spotcafe-messages *ngIf="newRoleErrors.nameIsEmpty" [staticMessage]="{text: 'Name can not be empty', type: 'error'}"></spotcafe-messages>
             <spotcafe-messages #newRoleMessagesComponent></spotcafe-messages>
-            <button md-raised-button (click)="createRoleWithPermissions(newRoleWithPermissions)" color="primary">Create role {{newRoleWithPermissions.role.name}}</button>
-        </md-card-actions>
-    </md-card>
+            <button mat-raised-button (click)="createRoleWithPermissions(newRoleWithPermissions)" color="primary">Create role {{newRoleWithPermissions.role.name}}</button>
+        </mat-card-actions>
+    </mat-card>
 </div>

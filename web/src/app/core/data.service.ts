@@ -34,7 +34,7 @@ import { IBaseEntity } from '../../../../shared/interfaces/base-entity';
 @Injectable()
 export class DataService {
     private apiPrefix = '/api/';
-    private useCache = true;
+    // private useCache = true;
 
     constructor(
         private http: HttpClient,
@@ -165,9 +165,9 @@ export class DataService {
         return this.post('employees/' + encodeURIComponent(employeeWithRoles.employee.id), employeeWithRoles);
     }
 
-    setUseCache(use: boolean) {
-        this.useCache = use;
-    }
+    // setUseCache(use: boolean) {
+    //     this.useCache = use;
+    // }
 
     // private execGetWithCache<T>(url: string): Promise<T> {
     //     return this.execWithCache(() => this.get(url), url);

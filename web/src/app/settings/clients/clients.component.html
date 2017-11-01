@@ -1,29 +1,31 @@
 <div class="settings-feature card-container">
-    <md-card>
-        <md-card-title>Existing clients</md-card-title>
+    <mat-card>
+        <mat-card-title>Existing clients</mat-card-title>
         <div *ngIf="clients">
-            <md-select [(ngModel)]="selectedClient">
-                <md-option *ngFor="let client of clients" [value]="client">{{client.client.username}} ({{client.client.firstName}} {{client.client.lastName}})</md-option>
-            </md-select>
+            <mat-form-field>
+                <mat-select [(ngModel)]="selectedClient" placeholder="Select client">
+                    <mat-option *ngFor="let client of clients" [value]="client">{{client.client.username}} ({{client.client.firstName}} {{client.client.lastName}})</mat-option>
+                </mat-select>
+            </mat-form-field>
         </div>
         <div *ngIf="selectedClient">
             <spotcafe-client [clientDisplay]="selectedClient" [hideUsername]="true" [hidePasswords]="true" [hideCredit]="false"></spotcafe-client>
             <spotcafe-messages #updateClientMessagesComponent></spotcafe-messages>
-            <md-card-actions>
-                <button [disabled]="waiting.updatingClient" md-raised-button (click)="updateClient(selectedClient)" color="primary">Update client {{selectedClient.client.username}}</button>
-                <md-form-field>
-                    <input (input)="addCreditChanged($event.target.value)" mdInput placeholder="Add credit" />
-                </md-form-field>
-                <button *ngIf="addCreditAmount" md-raised-button (click)="addClientCredit()" color="warn">Add credit {{addCreditAmount}} to {{selectedClient.client.username}}</button>
-            </md-card-actions>
+            <mat-card-actions>
+                <button [disabled]="waiting.updatingClient" mat-raised-button (click)="updateClient(selectedClient)" color="primary">Update client {{selectedClient.client.username}}</button>
+                <mat-form-field>
+                    <input (input)="addCreditChanged($event.target.value)" matInput placeholder="Add credit" />
+                </mat-form-field>
+                <button *ngIf="addCreditAmount" mat-raised-button (click)="addClientCredit()" color="warn">Add credit {{addCreditAmount}} to {{selectedClient.client.username}}</button>
+            </mat-card-actions>
         </div>
-    </md-card>
-    <md-card>
-        <md-card-title>New client</md-card-title>
+    </mat-card>
+    <mat-card>
+        <mat-card-title>New client</mat-card-title>
         <spotcafe-client [clientDisplay]="newClient" [hideCredit]="true"></spotcafe-client>
         <spotcafe-messages #newClientMessagesComponent></spotcafe-messages>
-        <md-card-actions>
-            <button [disabled]="waiting.creatingClient" md-raised-button (click)="createClient(newClient)" color="primary">Create client {{newClient.client.username}}</button>
-        </md-card-actions>
-    </md-card>
+        <mat-card-actions>
+            <button [disabled]="waiting.creatingClient" mat-raised-button (click)="createClient(newClient)" color="primary">Create client {{newClient.client.username}}</button>
+        </mat-card-actions>
+    </mat-card>
 </div>
