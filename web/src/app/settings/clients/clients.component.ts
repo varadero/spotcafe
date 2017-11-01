@@ -50,7 +50,7 @@ export class ClientsComponent implements OnInit {
 
         try {
             this.waiting.updatingClient = true;
-            const newCredit = await this.dataSvc.addClienCredit(this.selectedClient.client.id, this.addCreditAmount);
+            const newCredit = await this.dataSvc.addClientCredit(this.selectedClient.client.id, this.addCreditAmount);
             const clientUsername = this.selectedClient.client.username;
             this.updateClientMessagesComponent.addSuccessMessage(`Client '${clientUsername}' credit is now ${newCredit}`);
             this.loadData();

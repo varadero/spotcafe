@@ -35,6 +35,7 @@ import { calcEngine } from './utils/calc-engine';
 import { ReportsRoutes } from './routes/reports';
 import { WebSocketServer } from './web-socket-server';
 import { WebSocketActions } from './web-socket-actions';
+import { ApplicationGroupsRoutes } from './routes/application-groups';
 
 export class App {
     private logger: Logger;
@@ -135,6 +136,11 @@ export class App {
 
         const reportsRoutes = new ReportsRoutes(this.storageProvider, apiPrefix);
         this.koa.use(reportsRoutes.getTotalsByClientDeviceAndEmployee());
+
+        const applicationGroupsRoute = new ApplicationGroupsRoutes(this.storageProvider, apiPrefix);
+        this.koa.use(applicationGroupsRoute.getApplicationGroups());
+        this.koa.use(applicationGroupsRoute.createApplicationGroup());
+        this.koa.use(applicationGroupsRoute.updateApplicationGroup());
     }
 
     /**

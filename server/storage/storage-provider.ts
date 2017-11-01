@@ -28,7 +28,8 @@ import { ICreateEntityResult } from '../../shared/interfaces/create-entity-resul
 import { ILogInAndGetClientDataResult } from './log-in-and-get-client-data-result';
 import { IStartedDeviceCalcBillData } from './started-device-calc-bill-data';
 import { IReportTotalsByEntity } from '../../shared/interfaces/report-totals-by-entity';
-// import { IUpdateEntityResult } from '../../shared/interfaces/update-entity-result';
+import { IBaseEntity } from '../../shared/interfaces/base-entity';
+import { IUpdateEntityResult } from '../../shared/interfaces/update-entity-result';
 
 export abstract class StorageProvider {
     abstract initialize(config: any, ...args: any[]): void;
@@ -38,6 +39,10 @@ export abstract class StorageProvider {
     abstract prepareStorage(): Promise<IPrepareStorageResult>;
 
     abstract getTokenSecret(): Promise<string | null>;
+
+    abstract getApplicationGroups(): Promise<IBaseEntity[]>;
+    abstract createApplicationGroup(applicationGroup: IBaseEntity): Promise<ICreateEntityResult>;
+    abstract updateApplicationGroup(applicationGroup: IBaseEntity): Promise<IUpdateEntityResult>;
 
     abstract addClientCredit(clientId: string, amount: number): Promise<number>;
 

@@ -3,6 +3,7 @@ import { Subject } from 'rxjs/Subject';
 import { Subscription } from 'rxjs/Subscription';
 
 import { DataService } from '../../core/data.service';
+import { ErrorsService } from '../../shared/errors.service';
 import { WebSocketService, IWebSocketEventArgs } from '../../core/web-socket.service';
 import { WebSocketMessageName } from '../../../../../shared/web-socket-message-name';
 import { IWebSocketData } from '../../../../../shared/interfaces/web-socket/web-socket-data';
@@ -12,6 +13,7 @@ import { IGetFolderItemsRequest } from '../../../../../shared/interfaces/web-soc
 import { IGetFolderItemsResponse } from '../../../../../shared/interfaces/web-socket/get-folder-items-response';
 import { IClientDevice } from '../../../../../shared/interfaces/client-device';
 import { DisplayMessagesComponent } from '../../shared/display-messages.component';
+import { IBaseEntity } from '../../../../../shared/interfaces/base-entity';
 
 @Component({
     templateUrl: './application-profiles.component.html',
@@ -32,22 +34,83 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
     directories: string[] = [];
     files: string[] = [];
 
-    @ViewChild('loadInfoMessagesComponent') private loadInfoMessagesComponent: DisplayMessagesComponent;
+    applicationGroups: IBaseEntity[] = [];
+    selectedApplicationGroup: IBaseEntity;
+    newApplicationGroup: IBaseEntity;
 
-    constructor(private dataSvc: DataService, private wsSvc: WebSocketService) {
+    @ViewChild('loadInfoMessagesComponent') private loadInfoMessagesComponent: DisplayMessagesComponent;
+    @ViewChild('newApplicationGroupMessagesComponent') private newApplicationGroupMessagesComponent: DisplayMessagesComponent;
+    @ViewChild('updateApplicationGroupMessagesComponent') private updateApplicationGroupMessagesComponent: DisplayMessagesComponent;
+
+    constructor(
+        private dataSvc: DataService,
+        private wsSvc: WebSocketService,
+        private errorsSvc: ErrorsService) {
         if (this.dataSvc) { }
     }
 
     ngOnInit(): void {
+        this.resetNewApplicationGroup();
         this.wsObs = this.wsSvc.getSubject();
         this.subscription = this.wsObs.subscribe(value => {
             this.handleWebSocketMessage(value);
         });
+        this.loadApplicationGroups();
         this.loadDevices();
     }
 
     ngOnDestroy(): void {
         this.subscription.unsubscribe();
+    }
+
+    async updateApplicationGroup(applicationGroup: IBaseEntity): Promise<void> {
+        const msgComponent = this.updateApplicationGroupMessagesComponent;
+        try {
+            const id = applicationGroup.id;
+            const updateResult = await this.dataSvc.updateApplicationGroup(applicationGroup);
+            if (updateResult.alreadyExists) {
+                msgComponent.addErrorMessage(`Group with name '${applicationGroup.name}' already exist`);
+            } else {
+                msgComponent.addSuccessMessage(`Group '${applicationGroup.name}' was updated`);
+                await this.loadApplicationGroups();
+                const previouslySelectedAppGroup = this.applicationGroups.find(x => x.id === id);
+                if (previouslySelectedAppGroup) {
+                    this.selectedApplicationGroup = previouslySelectedAppGroup;
+                }
+            }
+        } catch (err) {
+            this.handleError(err, msgComponent, 'Update group error:');
+        } finally {
+
+        }
+    }
+
+    async createApplicationGroup(newApplicationGroup: IBaseEntity): Promise<void> {
+        try {
+            const createResult = await this.dataSvc.createApplicationGroup(newApplicationGroup);
+            if (createResult.alreadyExists) {
+                this.newApplicationGroupMessagesComponent.addErrorMessage(`Group with name '${newApplicationGroup.name}' already exist`);
+            } else {
+                this.newApplicationGroupMessagesComponent.addSuccessMessage(`Group '${newApplicationGroup.name}' was created`);
+                this.resetNewApplicationGroup();
+                this.loadApplicationGroups();
+            }
+        } catch (err) {
+            this.handleError(err, this.newApplicationGroupMessagesComponent, 'Create group error:');
+        } finally {
+
+        }
+    }
+
+    async loadApplicationGroups(): Promise<void> {
+        try {
+            const appGroups = await this.dataSvc.getApplicationGroups();
+            this.applicationGroups = appGroups;
+        } catch (err) {
+
+        } finally {
+
+        }
     }
 
     loadDrives(deviceId: string): void {
@@ -162,11 +225,24 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
         return false;
     }
 
-    private handleError(err: any, messagesComponent: DisplayMessagesComponent, messagePrefix: string): void {
-        if (err && err.error && err.error.message) {
-            messagesComponent.addErrorMessage(`${messagePrefix} ${err.error.message}`);
-        } else {
-            messagesComponent.addErrorMessage(`${messagePrefix} ${err.status} ${err.statusText}`);
-        }
+    private resetNewApplicationGroup(): void {
+        this.newApplicationGroup = {
+            id: '',
+            name: '',
+            description: ''
+        };
     }
+
+    private handleError(err: any, messagesComponent: DisplayMessagesComponent, messagePrefix: string): void {
+        const errMessage = this.errorsSvc.getNetworkErrorMessage(err, messagePrefix);
+        messagesComponent.addErrorMessage(errMessage);
+    }
+
+    // private handleError(err: any, messagesComponent: DisplayMessagesComponent, messagePrefix: string): void {
+    //     if (err && err.error && err.error.message) {
+    //         messagesComponent.addErrorMessage(`${messagePrefix} ${err.error.message}`);
+    //     } else {
+    //         messagesComponent.addErrorMessage(`${messagePrefix} ${err.status} ${err.statusText}`);
+    //     }
+    // }
 }

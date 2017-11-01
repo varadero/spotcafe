@@ -29,6 +29,7 @@ import { IDateAndTime } from '../../../../shared/interfaces/date-and-time';
 import { IFromToDateAndTime } from '../../../../shared/interfaces/from-to-date-and-time';
 import { ITotalsByClientDeviceAndEmployee } from '../../../../shared/interfaces/totals-by-client-device-and-employee';
 import { IAddClientCreditArgs } from '../../../../shared/interfaces/add-client-credit-args';
+import { IBaseEntity } from '../../../../shared/interfaces/base-entity';
 
 @Injectable()
 export class DataService {
@@ -41,7 +42,19 @@ export class DataService {
         // private cacheSvc: CacheService
     ) { }
 
-    addClienCredit(clientId: string, credit: number): Promise<number> {
+    updateApplicationGroup(applicationGroup: IBaseEntity): Promise<IUpdateEntityResult> {
+        return this.post('application-groups/' + encodeURI(applicationGroup.id), applicationGroup);
+    }
+
+    createApplicationGroup(applicationGroup: IBaseEntity): Promise<ICreateEntityResult> {
+        return this.post('application-groups', applicationGroup);
+    }
+
+    getApplicationGroups(): Promise<IBaseEntity[]> {
+        return this.get('application-groups');
+    }
+
+    addClientCredit(clientId: string, credit: number): Promise<number> {
         const args: IAddClientCreditArgs = {
             clientId: clientId,
             credit: credit

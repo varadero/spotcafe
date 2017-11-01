@@ -9,6 +9,7 @@ import { DurationPipe } from './duration.pipe';
 import { MoneyPipe } from './money.pipe';
 import { MessagesService } from './messages.service';
 import { ErrorsService } from './errors.service';
+import { BaseEntityComponent } from './base-entity/base-entity.component';
 
 const allModules = [
     CommonModule,
@@ -21,7 +22,8 @@ const allModules = [
         DisplayMessagesComponent,
         DateTimeSelectorComponent,
         DurationPipe,
-        MoneyPipe
+        MoneyPipe,
+        BaseEntityComponent
     ],
     imports: allModules,
     exports: [
@@ -29,7 +31,8 @@ const allModules = [
         DisplayMessagesComponent,
         DateTimeSelectorComponent,
         DurationPipe,
-        MoneyPipe
+        MoneyPipe,
+        BaseEntityComponent
     ],
     providers: [MessagesService, ErrorsService]
 })

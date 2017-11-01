@@ -3,9 +3,26 @@
         <md-card-title>
             Existing application groups
         </md-card-title>
+        <div *ngIf="applicationGroups">
+            <md-select [(ngModel)]="selectedApplicationGroup" placeholder="Select application group">
+                <md-option *ngFor="let group of applicationGroups" [value]="group">{{group.name}}</md-option>
+            </md-select>
+        </div>
+        <spotcafe-base-entity *ngIf="selectedApplicationGroup" [entity]="selectedApplicationGroup"></spotcafe-base-entity>
+        <spotcafe-messages #updateApplicationGroupMessagesComponent></spotcafe-messages>
+        <md-card-actions *ngIf="selectedApplicationGroup">
+            <button (click)="updateApplicationGroup(selectedApplicationGroup)" md-raised-button color="primary">Update group {{selectedApplicationGroup.name}}</button>
+        </md-card-actions>
+    </md-card>
+    <md-card>
         <md-card-title>
             New application group
         </md-card-title>
+        <spotcafe-base-entity [entity]="newApplicationGroup"></spotcafe-base-entity>
+        <spotcafe-messages #newApplicationGroupMessagesComponent></spotcafe-messages>
+        <md-card-actions>
+            <button (click)="createApplicationGroup(newApplicationGroup)" md-raised-button color="primary">Create application group {{newApplicationGroup.name}}</button>
+        </md-card-actions>
     </md-card>
     <md-card>
         <md-card-title>

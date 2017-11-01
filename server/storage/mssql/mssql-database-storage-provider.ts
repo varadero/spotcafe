@@ -33,11 +33,12 @@ import { IUpdateClientGroupResult } from '../../../shared/interfaces/update-clie
 import { IClient } from '../../../shared/interfaces/client';
 import { ICreateEntityResult } from '../../../shared/interfaces/create-entity-result';
 import { IReportTotalsByEntity } from '../../../shared/interfaces/report-totals-by-entity';
-// import { IUpdateEntityResult } from '../../../shared/interfaces/update-entity-result';
 import { IIdWithName } from '../../../shared/interfaces/id-with-name';
 import { ILogInAndGetClientDataResult } from '../log-in-and-get-client-data-result';
 import { IStartedDeviceCalcBillData } from '../started-device-calc-bill-data';
 import { IClientDeviceAlreadyStartedInfo } from '../../../shared/interfaces/client-device-already-started-info';
+import { IBaseEntity } from '../../../shared/interfaces/base-entity';
+import { IUpdateEntityResult } from '../../../shared/interfaces/update-entity-result';
 
 export class MSSqlDatabaseStorageProvider implements StorageProvider {
     private config: ConnectionConfig;
@@ -50,6 +51,86 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         this.config = <ConnectionConfig>(config);
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
         this.reportsHelper = new ReportsHelper(this.dbHelper);
+    }
+
+    async updateApplicationGroup(applicationGroup: IBaseEntity): Promise<IUpdateEntityResult> {
+        let sql = `
+            IF EXISTS(
+                SELECT TOP 1 [Name]
+                FROM [ApplicationGroups]
+                WHERE [Id]<>@Id
+                AND [Name]=@Name
+            )
+            BEGIN
+                SELECT [AlreadyExists]=CAST(1 as bit)
+            END
+            ELSE
+            BEGIN
+                SELECT [AlreadyExists]=CAST(0 as bit)
+                UPDATE [ApplicationGroups]
+                SET [Name]=@Name,
+                    [Description]=@Description
+                WHERE [Id]=@Id
+            END
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'Id', value: applicationGroup.id, type: TYPES.UniqueIdentifierN },
+            { name: 'Name', value: applicationGroup.name, type: TYPES.NVarChar },
+            { name: 'Description', value: applicationGroup.description, type: TYPES.NVarChar }
+        ];
+        sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
+        const insertResult = await this.dbHelper.execToObjects(sql, params);
+        const alreadyExists = (<{ alreadyExists: boolean }>insertResult.firstResultSet.rows[0]).alreadyExists;
+        return <IUpdateEntityResult>{
+            alreadyExists: alreadyExists
+        };
+    }
+
+    async createApplicationGroup(applicationGroup: IBaseEntity): Promise<ICreateEntityResult> {
+        let newId = this.dbHelper.generateId();
+        let sql = `
+            IF EXISTS(
+                SELECT TOP 1 [Name]
+                FROM [ApplicationGroups]
+                WHERE [Name]=@Name
+            )
+            BEGIN
+                SELECT [AlreadyExists]=CAST(1 as bit)
+            END
+            ELSE
+            BEGIN
+                SELECT [AlreadyExists]=CAST(0 as bit)
+                INSERT INTO [ApplicationGroups]
+                ([Id], [Name], [Description]) VALUES
+                (@Id, @Name, @Description)
+            END
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'Id', value: newId, type: TYPES.UniqueIdentifierN },
+            { name: 'Name', value: applicationGroup.name, type: TYPES.NVarChar },
+            { name: 'Description', value: applicationGroup.description, type: TYPES.NVarChar }
+        ];
+        sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
+        const insertResult = await this.dbHelper.execToObjects(sql, params);
+        const alreadyExists = (<{ alreadyExists: boolean }>insertResult.firstResultSet.rows[0]).alreadyExists;
+        if (alreadyExists) {
+            newId = '';
+        }
+
+        return <ICreateEntityResult>{
+            createdId: newId,
+            alreadyExists: alreadyExists
+        };
+    }
+
+    async getApplicationGroups(): Promise<IBaseEntity[]> {
+        const sql = `
+            SELECT [Id], [Name], [Description]
+            FROM [ApplicationGroups]
+            ORDER BY [Name]
+        `;
+        const result = await this.dbHelper.execToObjects(sql);
+        return <IBaseEntity[]>result.firstResultSet.rows;
     }
 
     async addClientCredit(clientId: string, amount: number): Promise<number> {

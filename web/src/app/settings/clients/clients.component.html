@@ -2,7 +2,7 @@
     <md-card>
         <md-card-title>Existing clients</md-card-title>
         <div *ngIf="clients">
-            <md-select *ngIf="clients" [(ngModel)]="selectedClient">
+            <md-select [(ngModel)]="selectedClient">
                 <md-option *ngFor="let client of clients" [value]="client">{{client.client.username}} ({{client.client.firstName}} {{client.client.lastName}})</md-option>
             </md-select>
         </div>
