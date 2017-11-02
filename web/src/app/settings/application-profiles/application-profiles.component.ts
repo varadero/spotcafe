@@ -54,6 +54,7 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
 
     @ViewChild('loadApplicationProfilesMessagesComponent') private loadApplicationProfilesMessagesComponent: DisplayMessagesComponent;
     @ViewChild('newApplicationProfileMessagesComponent') private newApplicationProfileMessagesComponent: DisplayMessagesComponent;
+    @ViewChild('addFileTоProfileMessagesComponent') private addFileTоProfileMessagesComponent: DisplayMessagesComponent;
 
     constructor(
         private dataSvc: DataService,
@@ -100,12 +101,15 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
     }
 
     async addFileToProfile(applicationProfileFile: IApplicationProfileFile, profileId: string): Promise<void> {
-        const msgComponent = this.newApplicationProfileMessagesComponent;
+        const msgComponent = this.addFileTоProfileMessagesComponent;
         try {
             applicationProfileFile.applicationGroupId = this.selectedApplicationGroupForNewfile.id;
             applicationProfileFile.applicationProfileId = profileId;
+            const profile = this.applicationProfiles.find(x => x.profile.id === profileId);
             await this.dataSvc.addFileToApplicationProfile(applicationProfileFile);
-            msgComponent.addSuccessMessage(`Application file '${applicationProfileFile.filePath}' was added`);
+            const profileName = profile ? profile.profile.name : '';
+            const filePath = applicationProfileFile.filePath;
+            msgComponent.addSuccessMessage(`Application file '${filePath}' was added to profile '${profileName}'`);
             await this.loadApplicationProfiles();
             const selectedProfile = this.applicationProfiles.find(x => x.profile.id === profileId);
             if (selectedProfile) {
