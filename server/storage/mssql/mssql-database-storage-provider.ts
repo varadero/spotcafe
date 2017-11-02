@@ -39,6 +39,8 @@ import { IStartedDeviceCalcBillData } from '../started-device-calc-bill-data';
 import { IClientDeviceAlreadyStartedInfo } from '../../../shared/interfaces/client-device-already-started-info';
 import { IBaseEntity } from '../../../shared/interfaces/base-entity';
 import { IUpdateEntityResult } from '../../../shared/interfaces/update-entity-result';
+import { IApplicationProfileWithFiles } from '../../../shared/interfaces/application-profile-with-files';
+import { IApplicationProfileFile } from '../../../shared/interfaces/application-profile-file';
 
 export class MSSqlDatabaseStorageProvider implements StorageProvider {
     private config: ConnectionConfig;
@@ -51,6 +53,77 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         this.config = <ConnectionConfig>(config);
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
         this.reportsHelper = new ReportsHelper(this.dbHelper);
+    }
+
+    async addeApplicationProfileFile(file: IApplicationProfileFile): Promise<void> {
+        const newId = this.dbHelper.generateId();
+        const sql = `
+            INSERT INTO [ApplicationProfilesFiles]
+            ([Id], [FilePath], [ApplicationGroupId], [Description], [Image], [ImageFileName], [ApplicationProfileId]) VALUES
+            (@Id, @FilePath, @ApplicationGroupId, @Description, @Image, @ImageFileName, @ApplicationProfileId)
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'Id', value: newId, type: TYPES.UniqueIdentifierN },
+            { name: 'FilePath', value: file.filePath, type: TYPES.NVarChar },
+            { name: 'ApplicationGroupId', value: file.applicationGroupId, type: TYPES.UniqueIdentifierN },
+            { name: 'Description', value: file.description, type: TYPES.NVarChar },
+            { name: 'Image', value: file.image, type: TYPES.NVarChar },
+            { name: 'ImageFileName', value: file.imageFileName, type: TYPES.NVarChar },
+            { name: 'ApplicationProfileId', value: file.applicationProfileId, type: TYPES.UniqueIdentifierN }
+        ];
+        await this.dbHelper.execRowCount(sql, params);
+    }
+
+    async deleteApplicationProfileFile(fileId: string): Promise<void> {
+        const sql = `
+            DELETE FROM [ApplicationProfilesFiles]
+            WHERE [Id]=@Id
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'Id', value: fileId, type: TYPES.UniqueIdentifierN }
+        ];
+        await this.dbHelper.execScalar(sql, params);
+    }
+
+    async getApplicationProfiles(): Promise<IApplicationProfileWithFiles[]> {
+        const sql = `
+            SELECT ap.[Id], ap.[Name], ap.[Description], apf.[Id] AS [FileId], apf.[FilePath],
+            apf.[ApplicationGroupId] AS [FileApplicationGroupId], ag.[Name] AS [FileApplicationGroupName],
+            apf.[Description] AS [FileDescription], apf.[Image] AS [FileImage], apf.[ImageFileName] AS [FileImageFileName]
+            FROM [ApplicationProfiles] ap
+            LEFT OUTER JOIN [ApplicationProfilesFiles] apf ON apf.[ApplicationProfileId]=ap.[Id]
+            LEFT OUTER JOIN [ApplicationGroups] ag ON ag.[Id]=apf.[ApplicationGroupId]
+            ORDER BY ap.[Name], apf.[ImageFileName]
+        `;
+        const nonGroupedResult = await this.dbHelper.execToObjects(sql);
+        type profileProp = keyof IBaseEntity;
+        const keyObjectMap = {
+            id: <profileProp>'id',
+            name: <profileProp>'name',
+            description: <profileProp>'description'
+        };
+        type fileProp = keyof IApplicationProfileFile;
+        const itemsObjectMap = {
+            fileId: <fileProp>'id',
+            filePath: <fileProp>'filePath',
+            fileApplicationGroupId: <fileProp>'applicationGroupId',
+            fileApplicationGroupName: <fileProp>'applicationGroupName',
+            fileDescription: <fileProp>'description',
+            fileImage: <fileProp>'image',
+            fileImageFileName: <fileProp>'imageFileName'
+        };
+        type profileWithFileProp = keyof IApplicationProfileWithFiles;
+        const keyPropertyName = <profileWithFileProp>'profile';
+        const itemsPropertyName = <profileWithFileProp>'files';
+        const groupedAndRenamed = <IApplicationProfileWithFiles[]>this.dbHelper.groupAndRename(
+            nonGroupedResult.firstResultSet.rows,
+            keyObjectMap,
+            itemsObjectMap,
+            keyPropertyName,
+            itemsPropertyName
+        );
+        groupedAndRenamed.forEach(x => x.files = x.files.filter(f => f.id));
+        return <IApplicationProfileWithFiles[]>groupedAndRenamed;
     }
 
     async updateApplicationGroup(applicationGroup: IBaseEntity): Promise<IUpdateEntityResult> {

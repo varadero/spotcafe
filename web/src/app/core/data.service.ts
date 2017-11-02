@@ -30,6 +30,8 @@ import { IFromToDateAndTime } from '../../../../shared/interfaces/from-to-date-a
 import { ITotalsByClientDeviceAndEmployee } from '../../../../shared/interfaces/totals-by-client-device-and-employee';
 import { IAddClientCreditArgs } from '../../../../shared/interfaces/add-client-credit-args';
 import { IBaseEntity } from '../../../../shared/interfaces/base-entity';
+import { IApplicationProfileWithFiles } from '../../../../shared/interfaces/application-profile-with-files';
+import { IApplicationProfileFile } from '../../../../shared/interfaces/application-profile-file';
 
 @Injectable()
 export class DataService {
@@ -41,6 +43,22 @@ export class DataService {
         private authSvc: AuthService // ,
         // private cacheSvc: CacheService
     ) { }
+
+    addFileToApplicationProfile(file: IApplicationProfileFile): Promise<void> {
+        return this.post('application-profiles-files', file, true);
+    }
+
+    removeFileFromApplicationProfile(fileId: string): Promise<void> {
+        return this.delete('application-profiles-files/' + encodeURI(fileId), true);
+    }
+
+    getApplicationProfiles(): Promise<IApplicationProfileWithFiles[]> {
+        return this.get('application-profiles');
+    }
+
+    createApplicationProfile(applicationProfile: IBaseEntity): Promise<ICreateEntityResult> {
+        return this.post('application-profiles', applicationProfile);
+    }
 
     updateApplicationGroup(applicationGroup: IBaseEntity): Promise<IUpdateEntityResult> {
         return this.post('application-groups/' + encodeURI(applicationGroup.id), applicationGroup);
@@ -205,12 +223,29 @@ export class DataService {
         );
     }
 
-    private post(url: string, body: any): Promise<any> {
-        const headers = this.getHeaders();
-        return this.http.post(this.getApiUrl(url), body, { headers: headers }).toPromise().then(
+    private post(url: string, body: any, allowEmptyResponse?: boolean): Promise<any> {
+        return this.http.post(this.getApiUrl(url), body, this.createOptions(allowEmptyResponse)).toPromise().then(
             res => res,
             err => this.handleErr(err, url)
         );
+    }
+
+    private delete(url: string, allowEmptyResponse?: boolean): Promise<any> {
+        return this.http.delete(this.getApiUrl(url), this.createOptions(allowEmptyResponse)).toPromise().then(
+            res => res,
+            err => this.handleErr(err, url)
+        );
+    }
+
+    private createOptions(allowEmptyResponse?: boolean): any {
+        const headers = this.getHeaders();
+        const options = <any>{
+            headers: headers
+        };
+        if (allowEmptyResponse) {
+            options.responseType = 'text';
+        }
+        return options;
     }
 
     // private patch(url: string, body: any): Promise<any> {

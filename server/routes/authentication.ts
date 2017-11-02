@@ -215,10 +215,9 @@ export class AuthenticationRoutes extends RoutesBase {
         if (urlPath.startsWith(this.apiPrefix + 'client-credit/')) {
             return [pids.clientsAddCredit];
         }
-        if (this.apiPathIs(urlPath, 'application-profiles')) {
-            return this.selectPermissionsIds(method, [pids.applicationProfilesView], [pids.applicationProfilesModify]);
-        }
-        if (this.apiPathIs(urlPath, 'application-groups')) {
+        if (this.apiPathIs(urlPath, 'application-profiles')
+            || this.apiPathIs(urlPath, 'application-groups')
+            || this.apiPathIs(urlPath, 'application-profiles-files')) {
             return this.selectPermissionsIds(method, [pids.applicationProfilesView], [pids.applicationProfilesModify]);
         }
 
@@ -241,7 +240,13 @@ export class AuthenticationRoutes extends RoutesBase {
      * @param modifyPermissionId Permission id necessary to modify the resource when method is POST
      */
     private selectPermissionsIds(method: string, viewPermissionsIds: string[], modifyPermissionsIds: string[]): string[] {
-        return (method === 'GET') ? viewPermissionsIds : (method === 'POST') ? modifyPermissionsIds : [];
+        if (method === 'GET') {
+            return viewPermissionsIds;
+        }
+        if (method === 'POST' || method === 'PUT' || method === 'DELETE') {
+            return modifyPermissionsIds;
+        }
+        return [];
     }
 
     private async logInEmployeeImpl(username: string, password: string): Promise<IRouteActionResult<IToken> | void> {

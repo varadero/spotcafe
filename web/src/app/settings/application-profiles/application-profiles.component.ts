@@ -14,6 +14,8 @@ import { IGetFolderItemsResponse } from '../../../../../shared/interfaces/web-so
 import { IClientDevice } from '../../../../../shared/interfaces/client-device';
 import { DisplayMessagesComponent } from '../../shared/display-messages.component';
 import { IBaseEntity } from '../../../../../shared/interfaces/base-entity';
+import { IApplicationProfileWithFiles } from '../../../../../shared/interfaces/application-profile-with-files';
+import { IApplicationProfileFile } from '../../../../../shared/interfaces/application-profile-file';
 
 @Component({
     templateUrl: './application-profiles.component.html',
@@ -29,18 +31,29 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
     selectedDevice: IClientDevice;
     selectedDrive: string;
     currentFolder = '';
-    selectedFile = '';
     currentPathSegments: string[] = [];
     directories: string[] = [];
     files: string[] = [];
+    filter = '*.exe';
+    showProfileFilesImages = false;
 
     applicationGroups: IBaseEntity[] = [];
     selectedApplicationGroup: IBaseEntity;
     newApplicationGroup: IBaseEntity;
 
+    applicationProfiles: IApplicationProfileWithFiles[] = [];
+    selectedApplicationProfile: IApplicationProfileWithFiles;
+    newApplicationProfile: IBaseEntity;
+
+    newApplicationProfileFile: IApplicationProfileFile;
+    selectedApplicationGroupForNewfile: IBaseEntity;
+
     @ViewChild('loadInfoMessagesComponent') private loadInfoMessagesComponent: DisplayMessagesComponent;
     @ViewChild('newApplicationGroupMessagesComponent') private newApplicationGroupMessagesComponent: DisplayMessagesComponent;
     @ViewChild('updateApplicationGroupMessagesComponent') private updateApplicationGroupMessagesComponent: DisplayMessagesComponent;
+
+    @ViewChild('loadApplicationProfilesMessagesComponent') private loadApplicationProfilesMessagesComponent: DisplayMessagesComponent;
+    @ViewChild('newApplicationProfileMessagesComponent') private newApplicationProfileMessagesComponent: DisplayMessagesComponent;
 
     constructor(
         private dataSvc: DataService,
@@ -49,18 +62,102 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
         if (this.dataSvc) { }
     }
 
-    ngOnInit(): void {
+    async ngOnInit(): Promise<void> {
         this.resetNewApplicationGroup();
+        this.resetNewApplicationProfile();
+        this.resetNewApplicationProfileFile();
         this.wsObs = this.wsSvc.getSubject();
         this.subscription = this.wsObs.subscribe(value => {
             this.handleWebSocketMessage(value);
         });
-        this.loadApplicationGroups();
-        this.loadDevices();
+        this.loadAllData();
+    }
+
+    canAddFileToSelectedProfile(): boolean {
+        if (this.selectedApplicationProfile
+            && this.selectedApplicationProfile.profile
+            && this.selectedApplicationProfile.profile.id
+            && this.newApplicationProfileFile.filePath
+            && this.selectedApplicationGroupForNewfile
+            && this.selectedApplicationGroupForNewfile.id) {
+            return true;
+        }
+        return false;
+    }
+
+    async loadAllData(): Promise<void> {
+        try {
+            await this.loadApplicationGroups();
+            await this.loadApplicationProfiles();
+            await this.loadDevices();
+        } catch (err) {
+            this.handleError(err, this.loadApplicationProfilesMessagesComponent, 'Load data error:');
+        }
     }
 
     ngOnDestroy(): void {
         this.subscription.unsubscribe();
+    }
+
+    async addFileToProfile(applicationProfileFile: IApplicationProfileFile, profileId: string): Promise<void> {
+        const msgComponent = this.newApplicationProfileMessagesComponent;
+        try {
+            applicationProfileFile.applicationGroupId = this.selectedApplicationGroupForNewfile.id;
+            applicationProfileFile.applicationProfileId = profileId;
+            await this.dataSvc.addFileToApplicationProfile(applicationProfileFile);
+            msgComponent.addSuccessMessage(`Application file '${applicationProfileFile.filePath}' was added`);
+            await this.loadApplicationProfiles();
+            const selectedProfile = this.applicationProfiles.find(x => x.profile.id === profileId);
+            if (selectedProfile) {
+                this.selectedApplicationProfile = selectedProfile;
+            }
+        } catch (err) {
+            this.handleError(err, msgComponent, 'Adding new application file failed:');
+        } finally {
+        }
+    }
+
+    async removeFileFromProfile(fileId: string): Promise<void> {
+        try {
+            const selectedProfileId = this.selectedApplicationProfile ? this.selectedApplicationProfile.profile.id : '';
+            await this.dataSvc.removeFileFromApplicationProfile(fileId);
+            await this.loadApplicationProfiles();
+            if (selectedProfileId) {
+                const findProfile = this.applicationProfiles.find(x => x.profile.id === selectedProfileId);
+                if (findProfile) {
+                    this.selectedApplicationProfile = findProfile;
+                }
+            }
+        } catch (err) {
+            this.handleError(err, this.loadApplicationProfilesMessagesComponent, 'Delete application profile error:');
+        } finally {
+
+        }
+    }
+
+    async loadApplicationProfiles(): Promise<void> {
+        try {
+            const profiles = await this.dataSvc.getApplicationProfiles();
+            this.applicationProfiles = profiles;
+        } catch (err) {
+            this.handleError(err, this.loadApplicationProfilesMessagesComponent, 'Load application profiles error:');
+        } finally {
+
+        }
+    }
+
+    async createApplicationProfile(applicationProfile: IBaseEntity): Promise<void> {
+        const msgComponent = this.newApplicationProfileMessagesComponent;
+        try {
+            const createResult = await this.dataSvc.createApplicationProfile(applicationProfile);
+            if (createResult.alreadyExists) {
+                msgComponent.addErrorMessage(`Profile with name '${applicationProfile.name}' already exist`);
+            } else {
+                msgComponent.addSuccessMessage(`Profile '${applicationProfile.name}' was created`);
+            }
+        } catch (err) {
+            this.handleError(err, msgComponent, 'Creating new application profile error:');
+        }
     }
 
     async updateApplicationGroup(applicationGroup: IBaseEntity): Promise<void> {
@@ -130,7 +227,8 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
             targetDeviceId: this.selectedDevice.id,
             payload: {
                 data: <IGetFolderItemsRequest>{
-                    folder: drive
+                    folder: drive,
+                    searchPattern: this.filter
                 }
             }
         });
@@ -143,7 +241,8 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
             payload: {
                 data: <IGetFolderItemsRequest>{
                     folder: this.currentFolder,
-                    subFolder: subFolder
+                    subFolder: subFolder,
+                    searchPattern: this.filter
                 }
             }
         });
@@ -155,14 +254,15 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
             targetDeviceId: this.selectedDevice.id,
             payload: {
                 data: <IGetFolderItemsRequest>{
-                    pathSegments: this.currentPathSegments.slice(0, index + 1)
+                    pathSegments: this.currentPathSegments.slice(0, index + 1),
+                    searchPattern: this.filter
                 }
             }
         });
     }
 
     fileSelected(file: string): void {
-        this.selectedFile = this.currentFolder + '\\' + file;
+        this.newApplicationProfileFile.filePath = this.currentFolder + '\\' + file;
     }
 
     async loadDevices(): Promise<void> {
@@ -225,6 +325,28 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
         return false;
     }
 
+    private resetNewApplicationProfileFile(): void {
+        this.newApplicationProfileFile = {
+            applicationGroupId: '',
+            applicationGroupName: '',
+            applicationProfileId: '',
+            applicationProfileName: '',
+            description: '',
+            filePath: '',
+            id: '',
+            image: '',
+            imageFileName: ''
+        };
+    }
+
+    private resetNewApplicationProfile(): void {
+        this.newApplicationProfile = {
+            id: '',
+            name: '',
+            description: ''
+        };
+    }
+
     private resetNewApplicationGroup(): void {
         this.newApplicationGroup = {
             id: '',
@@ -237,12 +359,4 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
         const errMessage = this.errorsSvc.getNetworkErrorMessage(err, messagePrefix);
         messagesComponent.addErrorMessage(errMessage);
     }
-
-    // private handleError(err: any, messagesComponent: DisplayMessagesComponent, messagePrefix: string): void {
-    //     if (err && err.error && err.error.message) {
-    //         messagesComponent.addErrorMessage(`${messagePrefix} ${err.error.message}`);
-    //     } else {
-    //         messagesComponent.addErrorMessage(`${messagePrefix} ${err.status} ${err.statusText}`);
-    //     }
-    // }
 }

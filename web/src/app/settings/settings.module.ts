@@ -17,6 +17,8 @@ import { ClientsComponent } from './clients/clients.component';
 import { ClientsService } from './clients/clients.service';
 import { ClientComponent } from './clients/client.component';
 import { ApplicationProfilesComponent } from './application-profiles/application-profiles.component';
+import { ApplicationProfileFileComponent } from './application-profiles/application-profile-file.component';
+import { ApplicationProfileFileListItemComponent } from './application-profiles/application-profile-file-list-item.component';
 
 @NgModule({
     declarations: [
@@ -29,7 +31,9 @@ import { ApplicationProfilesComponent } from './application-profiles/application
         ClientsComponent,
         ClientComponent,
         RolesComponent,
-        ApplicationProfilesComponent
+        ApplicationProfilesComponent,
+        ApplicationProfileFileComponent,
+        ApplicationProfileFileListItemComponent
     ],
     imports: [
         SharedModule,

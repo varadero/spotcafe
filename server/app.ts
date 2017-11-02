@@ -36,6 +36,8 @@ import { ReportsRoutes } from './routes/reports';
 import { WebSocketServer } from './web-socket-server';
 import { WebSocketActions } from './web-socket-actions';
 import { ApplicationGroupsRoutes } from './routes/application-groups';
+import { ApplicationProfilesRoutes } from './routes/application-profiles';
+import { ApplicationProfilesFilesRoutes } from './routes/application-profiles-files';
 
 export class App {
     private logger: Logger;
@@ -141,6 +143,13 @@ export class App {
         this.koa.use(applicationGroupsRoute.getApplicationGroups());
         this.koa.use(applicationGroupsRoute.createApplicationGroup());
         this.koa.use(applicationGroupsRoute.updateApplicationGroup());
+
+        const applicationProfilesRoutes = new ApplicationProfilesRoutes(this.storageProvider, apiPrefix);
+        this.koa.use(applicationProfilesRoutes.getApplicationProfiles());
+
+        const applicationProfilesFilesRoutes = new ApplicationProfilesFilesRoutes(this.storageProvider, apiPrefix);
+        this.koa.use(applicationProfilesFilesRoutes.deleteFile());
+        this.koa.use(applicationProfilesFilesRoutes.addFile());
     }
 
     /**

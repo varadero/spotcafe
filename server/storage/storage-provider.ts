@@ -30,6 +30,8 @@ import { IStartedDeviceCalcBillData } from './started-device-calc-bill-data';
 import { IReportTotalsByEntity } from '../../shared/interfaces/report-totals-by-entity';
 import { IBaseEntity } from '../../shared/interfaces/base-entity';
 import { IUpdateEntityResult } from '../../shared/interfaces/update-entity-result';
+import { IApplicationProfileWithFiles } from '../../shared/interfaces/application-profile-with-files';
+import { IApplicationProfileFile } from '../../shared/interfaces/application-profile-file';
 
 export abstract class StorageProvider {
     abstract initialize(config: any, ...args: any[]): void;
@@ -43,6 +45,10 @@ export abstract class StorageProvider {
     abstract getApplicationGroups(): Promise<IBaseEntity[]>;
     abstract createApplicationGroup(applicationGroup: IBaseEntity): Promise<ICreateEntityResult>;
     abstract updateApplicationGroup(applicationGroup: IBaseEntity): Promise<IUpdateEntityResult>;
+
+    abstract getApplicationProfiles(): Promise<IApplicationProfileWithFiles[]>;
+    abstract deleteApplicationProfileFile(fileId: string): Promise<void>;
+    abstract addeApplicationProfileFile(file: IApplicationProfileFile): Promise<void>;
 
     abstract addClientCredit(clientId: string, amount: number): Promise<number>;
 
