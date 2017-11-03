@@ -44,6 +44,10 @@
                 <mat-form-field>
                     <input matInput [(ngModel)]="selectedApplicationProfile.profile.description" placeholder="Description" />
                 </mat-form-field>
+                <spotcafe-messages #updateApplicationProfileMessagesComponent></spotcafe-messages>
+                <div>
+                    <button (click)="updateApplicationProfile(selectedApplicationProfile.profile)" mat-raised-button olor="primary">Update profile '{{selectedApplicationProfile.profile.name}}'</button>
+                </div>
                 <div *ngIf="selectedApplicationProfile.files">
                     <h3>
                         <span>Files:</span>

@@ -46,6 +46,10 @@ export class ApplicationGroupsRoutes extends RoutesBase {
     }
 
     private async updateApplicationGroupImpl(applicationGroup: IBaseEntity): Promise<IRouteActionResult<IUpdateEntityResult> | void> {
+        applicationGroup.name = applicationGroup.name.trim();
+        if (!applicationGroup.name) {
+            return { error: { message: 'Name is required', number: 422 } };
+        }
         const result = await this.storageProvider.updateApplicationGroup(applicationGroup);
         return { value: result };
     }

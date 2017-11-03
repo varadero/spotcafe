@@ -54,6 +54,7 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
 
     @ViewChild('loadApplicationProfilesMessagesComponent') private loadApplicationProfilesMessagesComponent: DisplayMessagesComponent;
     @ViewChild('newApplicationProfileMessagesComponent') private newApplicationProfileMessagesComponent: DisplayMessagesComponent;
+    @ViewChild('updateApplicationProfileMessagesComponent') private updateApplicationProfileMessagesComponent: DisplayMessagesComponent;
     @ViewChild('addFileTоProfileMessagesComponent') private addFileTоProfileMessagesComponent: DisplayMessagesComponent;
 
     constructor(
@@ -111,10 +112,7 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
             const filePath = applicationProfileFile.filePath;
             msgComponent.addSuccessMessage(`Application file '${filePath}' was added to profile '${profileName}'`);
             await this.loadApplicationProfiles();
-            const selectedProfile = this.applicationProfiles.find(x => x.profile.id === profileId);
-            if (selectedProfile) {
-                this.selectedApplicationProfile = selectedProfile;
-            }
+            this.setSelectedProfile(profileId);
         } catch (err) {
             this.handleError(err, msgComponent, 'Adding new application file failed:');
         } finally {
@@ -126,12 +124,7 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
             const selectedProfileId = this.selectedApplicationProfile ? this.selectedApplicationProfile.profile.id : '';
             await this.dataSvc.removeFileFromApplicationProfile(fileId);
             await this.loadApplicationProfiles();
-            if (selectedProfileId) {
-                const findProfile = this.applicationProfiles.find(x => x.profile.id === selectedProfileId);
-                if (findProfile) {
-                    this.selectedApplicationProfile = findProfile;
-                }
-            }
+            this.setSelectedProfile(selectedProfileId);
         } catch (err) {
             this.handleError(err, this.loadApplicationProfilesMessagesComponent, 'Delete application profile error:');
         } finally {
@@ -161,6 +154,20 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
             }
         } catch (err) {
             this.handleError(err, msgComponent, 'Creating new application profile error:');
+        }
+    }
+
+    async updateApplicationProfile(applicationProfile: IBaseEntity): Promise<void> {
+        const msgComponent = this.updateApplicationProfileMessagesComponent;
+        try {
+            const createResult = await this.dataSvc.updateApplicationProfile(applicationProfile);
+            if (createResult.alreadyExists) {
+                msgComponent.addErrorMessage(`Profile with name '${applicationProfile.name}' already exist`);
+            } else {
+                msgComponent.addSuccessMessage(`Profile '${applicationProfile.name}' was updated`);
+            }
+        } catch (err) {
+            this.handleError(err, msgComponent, 'Updating application profile error:');
         }
     }
 
@@ -274,6 +281,16 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
             this.devices = await this.dataSvc.getClientDevices();
         } catch (err) {
         } finally {
+        }
+    }
+
+    private setSelectedProfile(profileId: string): void {
+        if (!profileId) {
+            return;
+        }
+        const selectedProfile = this.applicationProfiles.find(x => x.profile.id === profileId);
+        if (selectedProfile) {
+            this.selectedApplicationProfile = selectedProfile;
         }
     }
 

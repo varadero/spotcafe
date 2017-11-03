@@ -60,16 +60,20 @@ export class DataService {
         return this.post('application-profiles', applicationProfile);
     }
 
-    updateApplicationGroup(applicationGroup: IBaseEntity): Promise<IUpdateEntityResult> {
-        return this.post('application-groups/' + encodeURI(applicationGroup.id), applicationGroup);
+    updateApplicationProfile(applicationProfile: IBaseEntity): Promise<ICreateEntityResult> {
+        return this.post('application-profiles/' + encodeURI(applicationProfile.id), applicationProfile);
+    }
+
+    getApplicationGroups(): Promise<IBaseEntity[]> {
+        return this.get('application-groups');
     }
 
     createApplicationGroup(applicationGroup: IBaseEntity): Promise<ICreateEntityResult> {
         return this.post('application-groups', applicationGroup);
     }
 
-    getApplicationGroups(): Promise<IBaseEntity[]> {
-        return this.get('application-groups');
+    updateApplicationGroup(applicationGroup: IBaseEntity): Promise<IUpdateEntityResult> {
+        return this.post('application-groups/' + encodeURI(applicationGroup.id), applicationGroup);
     }
 
     addClientCredit(clientId: string, credit: number): Promise<number> {

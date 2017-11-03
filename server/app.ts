@@ -146,6 +146,8 @@ export class App {
 
         const applicationProfilesRoutes = new ApplicationProfilesRoutes(this.storageProvider, apiPrefix);
         this.koa.use(applicationProfilesRoutes.getApplicationProfiles());
+        this.koa.use(applicationProfilesRoutes.createApplicationProfile());
+        this.koa.use(applicationProfilesRoutes.updateApplicationProfile());
 
         const applicationProfilesFilesRoutes = new ApplicationProfilesFilesRoutes(this.storageProvider, apiPrefix);
         this.koa.use(applicationProfilesFilesRoutes.deleteFile());

@@ -47,6 +47,8 @@ export abstract class StorageProvider {
     abstract updateApplicationGroup(applicationGroup: IBaseEntity): Promise<IUpdateEntityResult>;
 
     abstract getApplicationProfiles(): Promise<IApplicationProfileWithFiles[]>;
+    abstract createApplicationProfile(profile: IBaseEntity): Promise<ICreateEntityResult>;
+    abstract updateApplicationProfile(profile: IBaseEntity): Promise<IUpdateEntityResult>;
     abstract deleteApplicationProfileFile(fileId: string): Promise<void>;
     abstract addeApplicationProfileFile(file: IApplicationProfileFile): Promise<void>;
 

@@ -42,11 +42,14 @@ import { IUpdateEntityResult } from '../../../shared/interfaces/update-entity-re
 import { IApplicationProfileWithFiles } from '../../../shared/interfaces/application-profile-with-files';
 import { IApplicationProfileFile } from '../../../shared/interfaces/application-profile-file';
 
+
+
 export class MSSqlDatabaseStorageProvider implements StorageProvider {
     private config: ConnectionConfig;
     private dbHelper: DatabaseHelper;
     private reportsHelper: ReportsHelper;
     private logger: { log: Function, error: Function };
+
 
     initialize(config: any, logger: any): void {
         this.logger = logger;
@@ -126,84 +129,24 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         return <IApplicationProfileWithFiles[]>groupedAndRenamed;
     }
 
+    async createApplicationProfile(profile: IBaseEntity): Promise<ICreateEntityResult> {
+        return await this.createBaseEntity(profile, 'ApplicationProfiles');
+    }
+
+    async updateApplicationProfile(profile: IBaseEntity): Promise<IUpdateEntityResult> {
+        return await this.updateBaseEntity(profile, 'ApplicationProfiles');
+    }
+
     async updateApplicationGroup(applicationGroup: IBaseEntity): Promise<IUpdateEntityResult> {
-        let sql = `
-            IF EXISTS(
-                SELECT TOP 1 [Name]
-                FROM [ApplicationGroups]
-                WHERE [Id]<>@Id
-                AND [Name]=@Name
-            )
-            BEGIN
-                SELECT [AlreadyExists]=CAST(1 as bit)
-            END
-            ELSE
-            BEGIN
-                SELECT [AlreadyExists]=CAST(0 as bit)
-                UPDATE [ApplicationGroups]
-                SET [Name]=@Name,
-                    [Description]=@Description
-                WHERE [Id]=@Id
-            END
-        `;
-        const params: IRequestParameter[] = [
-            { name: 'Id', value: applicationGroup.id, type: TYPES.UniqueIdentifierN },
-            { name: 'Name', value: applicationGroup.name, type: TYPES.NVarChar },
-            { name: 'Description', value: applicationGroup.description, type: TYPES.NVarChar }
-        ];
-        sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
-        const insertResult = await this.dbHelper.execToObjects(sql, params);
-        const alreadyExists = (<{ alreadyExists: boolean }>insertResult.firstResultSet.rows[0]).alreadyExists;
-        return <IUpdateEntityResult>{
-            alreadyExists: alreadyExists
-        };
+        return await this.updateBaseEntity(applicationGroup, 'ApplicationGroups');
     }
 
     async createApplicationGroup(applicationGroup: IBaseEntity): Promise<ICreateEntityResult> {
-        let newId = this.dbHelper.generateId();
-        let sql = `
-            IF EXISTS(
-                SELECT TOP 1 [Name]
-                FROM [ApplicationGroups]
-                WHERE [Name]=@Name
-            )
-            BEGIN
-                SELECT [AlreadyExists]=CAST(1 as bit)
-            END
-            ELSE
-            BEGIN
-                SELECT [AlreadyExists]=CAST(0 as bit)
-                INSERT INTO [ApplicationGroups]
-                ([Id], [Name], [Description]) VALUES
-                (@Id, @Name, @Description)
-            END
-        `;
-        const params: IRequestParameter[] = [
-            { name: 'Id', value: newId, type: TYPES.UniqueIdentifierN },
-            { name: 'Name', value: applicationGroup.name, type: TYPES.NVarChar },
-            { name: 'Description', value: applicationGroup.description, type: TYPES.NVarChar }
-        ];
-        sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
-        const insertResult = await this.dbHelper.execToObjects(sql, params);
-        const alreadyExists = (<{ alreadyExists: boolean }>insertResult.firstResultSet.rows[0]).alreadyExists;
-        if (alreadyExists) {
-            newId = '';
-        }
-
-        return <ICreateEntityResult>{
-            createdId: newId,
-            alreadyExists: alreadyExists
-        };
+        return await this.createBaseEntity(applicationGroup, 'ApplicationGroups');
     }
 
     async getApplicationGroups(): Promise<IBaseEntity[]> {
-        const sql = `
-            SELECT [Id], [Name], [Description]
-            FROM [ApplicationGroups]
-            ORDER BY [Name]
-        `;
-        const result = await this.dbHelper.execToObjects(sql);
-        return <IBaseEntity[]>result.firstResultSet.rows;
+        return await this.getBaseEntities('ApplicationGroups');
     }
 
     async addClientCredit(clientId: string, amount: number): Promise<number> {
@@ -1214,6 +1157,86 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
 
     async prepareStorage(): Promise<IPrepareStorageResult> {
         return this.dbHelper.prepareDatabase();
+    }
+
+    private async getBaseEntities(tableName: string): Promise<IBaseEntity[]> {
+        const sql = `
+            SELECT [Id], [Name], [Description]
+            FROM [${tableName}]
+            ORDER BY [Name]
+        `;
+        const result = await this.dbHelper.execToObjects(sql);
+        return <IBaseEntity[]>result.firstResultSet.rows;
+    }
+
+    private async createBaseEntity(entity: IBaseEntity, tableName: string): Promise<ICreateEntityResult> {
+        let newId = this.dbHelper.generateId();
+        let sql = `
+                IF EXISTS(
+                    SELECT TOP 1 [Name]
+                    FROM [${tableName}]
+                    WHERE [Name]=@Name
+                )
+                BEGIN
+                    SELECT [AlreadyExists]=CAST(1 as bit)
+                END
+                ELSE
+                BEGIN
+                    SELECT [AlreadyExists]=CAST(0 as bit)
+                    INSERT INTO [${tableName}]
+                    ([Id], [Name], [Description]) VALUES
+                    (@Id, @Name, @Description)
+                END
+            `;
+        const params: IRequestParameter[] = [
+            { name: 'Id', value: newId, type: TYPES.UniqueIdentifierN },
+            { name: 'Name', value: entity.name, type: TYPES.NVarChar },
+            { name: 'Description', value: entity.description, type: TYPES.NVarChar }
+        ];
+        sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
+        const insertResult = await this.dbHelper.execToObjects(sql, params);
+        const alreadyExists = (<{ alreadyExists: boolean }>insertResult.firstResultSet.rows[0]).alreadyExists;
+        if (alreadyExists) {
+            newId = '';
+        }
+
+        return <ICreateEntityResult>{
+            createdId: newId,
+            alreadyExists: alreadyExists
+        };
+    }
+
+    private async updateBaseEntity(entity: IBaseEntity, tableName: string): Promise<IUpdateEntityResult> {
+        let sql = `
+            IF EXISTS(
+                SELECT TOP 1 [Name]
+                FROM [${tableName}]
+                WHERE [Id]<>@Id
+                AND [Name]=@Name
+            )
+            BEGIN
+                SELECT [AlreadyExists]=CAST(1 as bit)
+            END
+            ELSE
+            BEGIN
+                SELECT [AlreadyExists]=CAST(0 as bit)
+                UPDATE [${tableName}]
+                SET [Name]=@Name,
+                    [Description]=@Description
+                WHERE [Id]=@Id
+            END
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'Id', value: entity.id, type: TYPES.UniqueIdentifierN },
+            { name: 'Name', value: entity.name, type: TYPES.NVarChar },
+            { name: 'Description', value: entity.description, type: TYPES.NVarChar }
+        ];
+        sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
+        const insertResult = await this.dbHelper.execToObjects(sql, params);
+        const alreadyExists = (<{ alreadyExists: boolean }>insertResult.firstResultSet.rows[0]).alreadyExists;
+        return <IUpdateEntityResult>{
+            alreadyExists: alreadyExists
+        };
     }
 
     private getStartedDevicesCalcBillDataSql(): string {
