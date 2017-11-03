@@ -159,6 +159,7 @@ export class ClientsComponent implements OnInit {
                     id: '',
                     name: '',
                     pricePerHour: 0,
+                    applicationProfileId: ''
                 },
                 devicesGroupsIds: []
             };

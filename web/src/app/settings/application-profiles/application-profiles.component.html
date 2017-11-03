@@ -3,9 +3,9 @@
         <mat-card-title>
             Existing application groups
         </mat-card-title>
-        <div *ngIf="applicationGroups">
+        <div *ngIf="applicationGroups && applicationGroups.length">
             <mat-form-field>
-                <mat-select [(ngModel)]="selectedApplicationGroup" placeholder="Select application group">
+                <mat-select [(ngModel)]="selectedApplicationGroup" placeholder="Application group">
                     <mat-option *ngFor="let group of applicationGroups" [value]="group">{{group.name}}</mat-option>
                 </mat-select>
             </mat-form-field>
@@ -31,9 +31,9 @@
         <mat-card-title>
             Existing application profiles
         </mat-card-title>
-        <div *ngIf="applicationProfiles">
+        <div *ngIf="applicationProfiles && applicationProfiles.length">
             <mat-form-field>
-                <mat-select [(ngModel)]="selectedApplicationProfile" placeholder="Select application profile">
+                <mat-select [(ngModel)]="selectedApplicationProfile" placeholder="Application profile">
                     <mat-option *ngFor="let profile of applicationProfiles" [value]="profile">{{profile.profile.name}}</mat-option>
                 </mat-select>
             </mat-form-field>
@@ -45,10 +45,10 @@
                     <input matInput [(ngModel)]="selectedApplicationProfile.profile.description" placeholder="Description" />
                 </mat-form-field>
                 <spotcafe-messages #updateApplicationProfileMessagesComponent></spotcafe-messages>
-                <div>
-                    <button (click)="updateApplicationProfile(selectedApplicationProfile.profile)" mat-raised-button olor="primary">Update profile '{{selectedApplicationProfile.profile.name}}'</button>
-                </div>
-                <div *ngIf="selectedApplicationProfile.files">
+                <mat-card-actions>
+                    <button (click)="updateApplicationProfile(selectedApplicationProfile.profile)" mat-raised-button color="primary">Update profile '{{selectedApplicationProfile.profile.name}}'</button>
+                </mat-card-actions>
+                <div *ngIf="selectedApplicationProfile.files && selectedApplicationProfile.files.length">
                     <h3>
                         <span>Files:</span>
                         <mat-checkbox [(ngModel)]="showProfileFilesImages">Show images</mat-checkbox>
@@ -82,12 +82,12 @@
     <mat-card>
         <h3>Select application file from device:</h3>
         <mat-form-field>
-            <mat-select matInput [(ngModel)]="selectedDevice" placeholder="Select device" (change)="loadDrives(selectedDevice.id)">
+            <mat-select matInput [(ngModel)]="selectedDevice" placeholder="Device" (change)="loadDrives(selectedDevice.id)">
                 <mat-option *ngFor="let device of devices" [value]="device">{{device.name}}</mat-option>
             </mat-select>
         </mat-form-field>
         <mat-form-field *ngIf="selectedDevice">
-            <mat-select matInput [(ngModel)]="selectedDrive" placeholder="Select drive" (change)="driveSelected(selectedDrive)">
+            <mat-select matInput [(ngModel)]="selectedDrive" placeholder="Drive" (change)="driveSelected(selectedDrive)">
                 <mat-option *ngFor="let drive of drives" [value]="drive">{{drive}}</mat-option>
             </mat-select>
         </mat-form-field>

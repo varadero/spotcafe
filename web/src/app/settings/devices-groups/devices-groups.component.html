@@ -3,7 +3,7 @@
         <mat-card-title>Existing devices groups</mat-card-title>
         <spotcafe-messages #loadDevicesGroupsMessagesComponent></spotcafe-messages>
         <mat-form-field *ngIf="devicesGroups && devicesGroups.length">
-            <mat-select [(ngModel)]="selectedDeviceGroup" placeholder="Select device group">
+            <mat-select [(ngModel)]="selectedDeviceGroup" (change)="existingDeviceGroupSelected($event.value)" placeholder="Device group">
                 <mat-option *ngFor="let deviceGroup of devicesGroups" [value]="deviceGroup">{{deviceGroup.name}}</mat-option>
             </mat-select>
         </mat-form-field>
@@ -17,26 +17,36 @@
             <mat-form-field>
                 <input matInput [(ngModel)]="selectedDeviceGroup.pricePerHour" placeholder="Price per hour" />
             </mat-form-field>
+            <mat-form-field *ngIf="applicationProfiles">
+                <mat-select [(ngModel)]="selectedApplicationProfileForExistingGroup" placeholder="Application profile">
+                    <mat-option *ngFor="let profile of applicationProfiles" [value]="profile">{{profile.name}}</mat-option>
+                </mat-select>
+            </mat-form-field>
             <mat-card-actions>
                 <spotcafe-messages #updateDevicesGroupsMessagesComponent></spotcafe-messages>
-                <button [disabled]="waiting.updatingGroup" mat-raised-button (click)="updateDeviceGroup(selectedDeviceGroup)" color="primary">Update group {{selectedDeviceGroup.name}}</button>
+                <button [disabled]="!canUpdateDeviceGroup()" mat-raised-button (click)="updateDeviceGroup(selectedDeviceGroup)" color="primary">Update group {{selectedDeviceGroup.name}}</button>
             </mat-card-actions>
         </div>
     </mat-card>
     <mat-card>
-        <mat-card-title>New group</mat-card-title>
+        <mat-card-title>New devices group</mat-card-title>
         <mat-form-field>
             <input matInput [(ngModel)]="newDeviceGroup.name" placeholder="Name" />
         </mat-form-field>
         <mat-form-field>
             <input matInput [(ngModel)]="newDeviceGroup.description" placeholder="Description" />
         </mat-form-field>
+        <mat-form-field *ngIf="applicationProfiles">
+            <mat-select [(ngModel)]="selectedApplicationProfileForNewGroup" placeholder="Application profile">
+                <mat-option *ngFor="let profile of applicationProfiles" [value]="profile">{{profile.name}}</mat-option>
+            </mat-select>
+        </mat-form-field>
         <mat-form-field>
             <input matInput [(ngModel)]="newDeviceGroup.pricePerHour" placeholder="Price per hour" />
         </mat-form-field>
         <mat-card-actions>
             <spotcafe-messages #createDevicesGroupsMessagesComponent></spotcafe-messages>
-            <button [disabled]="waiting.creatingGroup" mat-raised-button (click)="createDeviceGroup(newDeviceGroup)" color="primary">Create group {{newDeviceGroup.name}}</button>
+            <button [disabled]="!canCreateNewDeviceGroup()" mat-raised-button (click)="createDeviceGroup(newDeviceGroup)" color="primary">Create group {{newDeviceGroup.name}}</button>
         </mat-card-actions>
     </mat-card>
 </div>

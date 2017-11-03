@@ -20,7 +20,7 @@
     <input matInput [(ngModel)]="clientDisplay.client.phone" placeholder="Phone" />
 </mat-form-field>
 <mat-form-field *ngIf="clientDisplay.groups">
-    <mat-select [(ngModel)]="clientDisplay.selectedGroup" placeholder="Select client group">
+    <mat-select [(ngModel)]="clientDisplay.selectedGroup" placeholder="Client group">
         <mat-option *ngFor="let group of clientDisplay.groups" [value]="group">{{group.clientGroup.name}}</mat-option>
     </mat-select>
 </mat-form-field>

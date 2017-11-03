@@ -14,9 +14,19 @@ export class ApplicationProfilesRoutes extends RoutesBase {
         super();
     }
 
+    // getApplicationProfilesWithFiles(): any {
+    //     return route.get(this.apiPrefix + 'application-profiles-with-files', async ctx => {
+    //         await this.handleActionResult(ctx, () => this.getApplicationProfilesWithFilesImpl());
+    //     });
+    // }
+
     getApplicationProfiles(): any {
         return route.get(this.apiPrefix + 'application-profiles', async ctx => {
-            await this.handleActionResult(ctx, () => this.getApplicationProfilesImpl());
+            if (ctx.query.includeFiles) {
+                await this.handleActionResult(ctx, () => this.getApplicationProfilesWithFilesImpl());
+            } else {
+                await this.handleActionResult(ctx, () => this.getApplicationProfilesImpl());
+            }
         });
     }
 
@@ -32,7 +42,12 @@ export class ApplicationProfilesRoutes extends RoutesBase {
         });
     }
 
-    private async getApplicationProfilesImpl(): Promise<IRouteActionResult<IApplicationProfileWithFiles[]>> {
+    private async getApplicationProfilesWithFilesImpl(): Promise<IRouteActionResult<IApplicationProfileWithFiles[]>> {
+        const result = await this.storageProvider.getApplicationProfilesWithFiles();
+        return { value: result };
+    }
+
+    private async getApplicationProfilesImpl(): Promise<IRouteActionResult<IBaseEntity[]>> {
         const result = await this.storageProvider.getApplicationProfiles();
         return { value: result };
     }

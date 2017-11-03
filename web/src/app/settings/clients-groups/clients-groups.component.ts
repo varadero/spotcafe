@@ -4,6 +4,7 @@ import { DisplayMessagesComponent } from '../../shared/display-messages.componen
 import { ErrorsService } from '../../shared/errors.service';
 import { IDeviceGroup } from '../../../../../shared/interfaces/device-group';
 import { ClientsGroupsService, IClientGroupDisplay } from './clients-groups.service';
+import { IBaseEntity } from '../../../../../shared/interfaces/base-entity';
 
 @Component({
     templateUrl: './clients-groups.component.html'
@@ -12,11 +13,14 @@ export class ClientsGroupsComponent implements OnInit {
     clientsGroups: IClientGroupDisplay[];
     newClientGroupWithDevicesGroups: IClientGroupDisplay;
     selectedClientGroup: IClientGroupDisplay;
+    applicationProfiles: IBaseEntity[];
     devicesGroups: IDeviceGroup[];
     devicesGroupsForExistingClientGroup: IDeviceGroup[];
     selectedDeviceGroupForExistingClientGroup: IDeviceGroup;
     devicesGroupsForNewClientGroup: IDeviceGroup[];
     selectedDeviceGroupForNewClientGroup: IDeviceGroup;
+    selectedApplicationProfileForExistingGroup: IBaseEntity;
+    selectedApplicationProfileForNewGroup: IBaseEntity;
     waiting = {
         loadingGroups: false,
         updatingGroup: false,
@@ -37,9 +41,46 @@ export class ClientsGroupsComponent implements OnInit {
         this.loadData();
     }
 
+    canCreateNewClientGroup(): boolean {
+        if (this.newClientGroupWithDevicesGroups
+            && this.newClientGroupWithDevicesGroups.clientGroup
+            && this.newClientGroupWithDevicesGroups.clientGroup.name
+            && this.newClientGroupWithDevicesGroups.clientGroup.name.trim()
+            && this.selectedApplicationProfileForNewGroup
+            && this.selectedApplicationProfileForNewGroup.id
+            && !this.waiting.creatingGroup) {
+            return true;
+        }
+        return false;
+    }
+
+    canUpdateClientGroup(): boolean {
+        if (this.selectedClientGroup
+            && this.selectedClientGroup.clientGroup
+            && this.selectedClientGroup.clientGroup.name
+            && this.selectedClientGroup.clientGroup.name.trim()
+            && this.selectedApplicationProfileForExistingGroup
+            && this.selectedApplicationProfileForExistingGroup.id
+            && !this.waiting.updatingGroup) {
+            return true;
+        }
+        return false;
+    }
+
+    existingClientGroupSelected(clientGroup: IClientGroupDisplay): void {
+        if (!this.applicationProfiles) {
+            return;
+        }
+        const appProfile = this.applicationProfiles.find(x => x.id === clientGroup.clientGroup.applicationProfileId);
+        if (appProfile) {
+            this.selectedApplicationProfileForExistingGroup = appProfile;
+        }
+    }
+
     addDeviceGroupToNewClientGroup(deviceGroup: IDeviceGroup): void {
         this.clientsGroupsSvc.addDeiceGroupToClientGroup(this.newClientGroupWithDevicesGroups, deviceGroup);
     }
+
     removeDeviceGroupFromNewClientGroup(deviceGroup: IDeviceGroup): void {
         this.clientsGroupsSvc.removeDeviceGroupFromClientGroup(this.newClientGroupWithDevicesGroups, deviceGroup);
     }
@@ -54,6 +95,7 @@ export class ClientsGroupsComponent implements OnInit {
 
     async updateClientGroup(clientGroupDisplay: IClientGroupDisplay): Promise<void> {
         try {
+            clientGroupDisplay.clientGroup.applicationProfileId = this.selectedApplicationProfileForExistingGroup.id;
             const clientGroup = clientGroupDisplay.clientGroup;
             this.waiting.updatingGroup = true;
             const clientGroupWithDevicesGroupsIds = this.clientsGroupsSvc.toClientGroupWithDevicesGroupsIds(clientGroupDisplay);
@@ -75,6 +117,7 @@ export class ClientsGroupsComponent implements OnInit {
 
     async createClientGroup(clientGroupDisplay: IClientGroupDisplay): Promise<void> {
         try {
+            clientGroupDisplay.clientGroup.applicationProfileId = this.selectedApplicationProfileForNewGroup.id;
             const clientGroup = clientGroupDisplay.clientGroup;
             this.waiting.creatingGroup = true;
             const clientGroupWithDevicesGroupsIds = this.clientsGroupsSvc.toClientGroupWithDevicesGroupsIds(clientGroupDisplay);
@@ -103,6 +146,9 @@ export class ClientsGroupsComponent implements OnInit {
             const selectedClientGroupId = this.selectedClientGroup ? this.selectedClientGroup.clientGroup.id : null;
             const clientsGroupsWithDevicesGroupsIds = await this.dataSvc.getClientsGroups();
             this.devicesGroups = await this.dataSvc.getDevicesGroups();
+            if (!this.applicationProfiles) {
+                this.applicationProfiles = await this.dataSvc.getApplicationProfiles();
+            }
             this.devicesGroupsForExistingClientGroup = this.clientsGroupsSvc.cloneDevicesGroups(this.devicesGroups);
             this.devicesGroupsForNewClientGroup = this.clientsGroupsSvc.cloneDevicesGroups(this.devicesGroups);
             this.clientsGroups = this.clientsGroupsSvc.toClientsGroupsDisplay(clientsGroupsWithDevicesGroupsIds, this.devicesGroups);
@@ -120,7 +166,8 @@ export class ClientsGroupsComponent implements OnInit {
                 description: '',
                 id: '',
                 name: '',
-                pricePerHour: 0
+                pricePerHour: 0,
+                applicationProfileId: ''
             },
             devicesGroups: []
         };

@@ -52,7 +52,12 @@ export class DataService {
         return this.delete('application-profiles-files/' + encodeURI(fileId), true);
     }
 
-    getApplicationProfiles(): Promise<IApplicationProfileWithFiles[]> {
+    getApplicationProfilesWithFiles(): Promise<IApplicationProfileWithFiles[]> {
+        // return this.get('application-profiles-with-files');
+        return this.get('application-profiles?includeFiles=true');
+    }
+
+    getApplicationProfiles(): Promise<IBaseEntity[]> {
         return this.get('application-profiles');
     }
 

@@ -65,6 +65,9 @@ export class ClientsGroupsRoutes extends RoutesBase {
         if (!trimmedName) {
             return { error: { message: 'Name is required', number: 422 } };
         }
+        if (!clientGroup.applicationProfileId) {
+            return { error: { message: 'Application profile is required', number: 422 } };
+        }
         const pricePerHour = this.numbers.stringToNumber(clientGroup.pricePerHour.toString());
         if (isNaN(pricePerHour)) {
             return { error: { message: 'Price per hour is not a valid number', number: 422 } };

@@ -1,9 +1,9 @@
 <div class="settings-feature card-container">
     <mat-card>
         <mat-card-title>Existing clients</mat-card-title>
-        <div *ngIf="clients">
+        <div *ngIf="clients && clients.length">
             <mat-form-field>
-                <mat-select [(ngModel)]="selectedClient" placeholder="Select client">
+                <mat-select [(ngModel)]="selectedClient" placeholder="Client">
                     <mat-option *ngFor="let client of clients" [value]="client">{{client.client.username}} ({{client.client.firstName}} {{client.client.lastName}})</mat-option>
                 </mat-select>
             </mat-form-field>

@@ -145,6 +145,7 @@ export class App {
         this.koa.use(applicationGroupsRoute.updateApplicationGroup());
 
         const applicationProfilesRoutes = new ApplicationProfilesRoutes(this.storageProvider, apiPrefix);
+        // this.koa.use(applicationProfilesRoutes.getApplicationProfilesWithFiles());
         this.koa.use(applicationProfilesRoutes.getApplicationProfiles());
         this.koa.use(applicationProfilesRoutes.createApplicationProfile());
         this.koa.use(applicationProfilesRoutes.updateApplicationProfile());
@@ -235,12 +236,12 @@ export class App {
                 await this.delay(delay);
             }
         }
-        if (createStorage) {
-            // Creating storage will not start the server
+        if (createStorage && !prepareStorageResult.createResult) {
+            // Creating storage failed
             return null;
         }
-        if (!prepareStorageResult.prepareResult) {
-            // Can't prepare storage
+        if (!createStorage && !prepareStorageResult.prepareResult) {
+            // Preparing storage failed
             return null;
         }
         this.tokenSecret = (await this.storageProvider.getTokenSecret()) || '';

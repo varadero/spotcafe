@@ -88,7 +88,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         await this.dbHelper.execScalar(sql, params);
     }
 
-    async getApplicationProfiles(): Promise<IApplicationProfileWithFiles[]> {
+    async getApplicationProfilesWithFiles(): Promise<IApplicationProfileWithFiles[]> {
         const sql = `
             SELECT ap.[Id], ap.[Name], ap.[Description], apf.[Id] AS [FileId], apf.[FilePath],
             apf.[ApplicationGroupId] AS [FileApplicationGroupId], ag.[Name] AS [FileApplicationGroupName],
@@ -127,6 +127,10 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         );
         groupedAndRenamed.forEach(x => x.files = x.files.filter(f => f.id));
         return <IApplicationProfileWithFiles[]>groupedAndRenamed;
+    }
+
+    async getApplicationProfiles(): Promise<IBaseEntity[]> {
+        return await this.getBaseEntities('ApplicationProfiles');
     }
 
     async createApplicationProfile(profile: IBaseEntity): Promise<ICreateEntityResult> {
@@ -310,8 +314,8 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             BEGIN
                 SELECT [AlreadyExists]=CAST(0 as bit)
                 INSERT INTO [ClientsGroups]
-                ([Id], [Name], [Description], [PricePerHour]) VALUES
-                (@Id, @Name, @Description, @PricePerHour)
+                ([Id], [Name], [Description], [PricePerHour], [ApplicationProfileId]) VALUES
+                (@Id, @Name, @Description, @PricePerHour, @ApplicationProfileId)
         `;
         const clientGroup = clientGroupWithDevicesGroupsIds.clientGroup;
         const params: IRequestParameter[] = [
@@ -319,6 +323,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             { name: 'Name', value: clientGroup.name, type: TYPES.NVarChar },
             { name: 'Description', value: clientGroup.description, type: TYPES.NVarChar },
             { name: 'PricePerHour', value: clientGroup.pricePerHour, type: TYPES.Money },
+            { name: 'ApplicationProfileId', value: clientGroup.applicationProfileId, type: TYPES.NVarChar }
         ];
         if (clientGroupWithDevicesGroupsIds) {
             for (let i = 0; i < clientGroupWithDevicesGroupsIds.devicesGroupsIds.length; i++) {
@@ -368,7 +373,8 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
                 UPDATE [ClientsGroups]
                 SET [Name]=@Name,
                     [Description]=@Description,
-                    [PricePerHour]=@PricePerHour
+                    [PricePerHour]=@PricePerHour,
+                    [ApplicationProfileId]=@ApplicationProfileId
                 WHERE [Id]=@Id
 
                 DELETE FROM [ClientsGroupsWithDevicesGroups]
@@ -380,6 +386,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             { name: 'Name', value: clientGroup.name, type: TYPES.NVarChar },
             { name: 'Description', value: clientGroup.description, type: TYPES.NVarChar },
             { name: 'PricePerHour', value: clientGroup.pricePerHour, type: TYPES.Money },
+            { name: 'ApplicationProfileId', value: clientGroup.applicationProfileId, type: TYPES.NVarChar }
         ];
         if (clientGroupWithDevicesGroupsIds) {
             for (let i = 0; i < clientGroupWithDevicesGroupsIds.devicesGroupsIds.length; i++) {
@@ -407,7 +414,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
 
     async getClientsGroupsWithDevicesGroupsIds(): Promise<IClientGroupWithDevicesGroupsIds[]> {
         const sql = `
-            SELECT cg.[Id], cg.[Name], cg.[Description], cg.[PricePerHour],
+            SELECT cg.[Id], cg.[Name], cg.[Description], cg.[PricePerHour], cg.[ApplicationProfileId],
                    dg.[Id] AS DeviceGroupId, dg.[Name] AS DeviceGroupName
             FROM [ClientsGroups] cg
             LEFT OUTER JOIN [ClientsGroupsWithDevicesGroups] cgwdg ON cgwdg.[ClientGroupId]=cg.[Id]
@@ -417,7 +424,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         const groupsWithDevicesGroupsIdsResult = await this.dbHelper.execToObjects(sql);
         const groupsWithDevicesGroupsIds = this.dbHelper.groupAndRename(
             groupsWithDevicesGroupsIdsResult.firstResultSet.rows,
-            { id: '', name: '', description: '', pricePerHour: '' },
+            { id: '', name: '', description: '', pricePerHour: '', applicationProfileId: '' },
             { deviceGroupId: 'id', deviceGroupName: 'name' },
             'clientGroup',
             'devicesGroups'
@@ -450,8 +457,8 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             BEGIN
                 SELECT [AlreadyExists]=CAST(0 as bit)
                 INSERT INTO [DevicesGroups]
-                ([Id], [Name], [Description], [PricePerHour]) VALUES
-                (@Id, @Name, @Description, @PricePerHour)
+                ([Id], [Name], [Description], [PricePerHour], [ApplicationProfileId]) VALUES
+                (@Id, @Name, @Description, @PricePerHour, @ApplicationProfileId)
             END
         `;
         const params: IRequestParameter[] = [
@@ -459,6 +466,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             { name: 'Name', value: deviceGroup.name, type: TYPES.NVarChar },
             { name: 'Description', value: deviceGroup.description, type: TYPES.NVarChar },
             { name: 'PricePerHour', value: deviceGroup.pricePerHour, type: TYPES.Money },
+            { name: 'ApplicationProfileId', value: deviceGroup.applicationProfileId, type: TYPES.UniqueIdentifierN },
         ];
         sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
         const insertResult = await this.dbHelper.execToObjects(sql, params);
@@ -490,7 +498,8 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
                 UPDATE [DevicesGroups]
                 SET [Name]=@Name,
                     [Description]=@Description,
-                    [PricePerHour]=@PricePerHour
+                    [PricePerHour]=@PricePerHour,
+                    [ApplicationProfileId]=@ApplicationProfileId
                 WHERE [Id]=@Id
             END
         `;
@@ -499,6 +508,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             { name: 'Name', value: deviceGroup.name, type: TYPES.NVarChar },
             { name: 'Description', value: deviceGroup.description, type: TYPES.NVarChar },
             { name: 'PricePerHour', value: deviceGroup.pricePerHour, type: TYPES.Money },
+            { name: 'ApplicationProfileId', value: deviceGroup.applicationProfileId, type: TYPES.UniqueIdentifierN },
         ];
         sql = this.dbHelper.encloseInBeginTryTransactionBlocks(sql);
         const insertResult = await this.dbHelper.execToObjects(sql, params);
@@ -510,7 +520,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
 
     async getDevicesGroups(): Promise<IDeviceGroup[]> {
         const sql = `
-            SELECT [Id], [Name], [Description], [PricePerHour]
+            SELECT [Id], [Name], [Description], [PricePerHour], [ApplicationProfileId]
             FROM [DevicesGroups]
             ORDER BY [Name]
         `;

@@ -216,6 +216,7 @@ export class AuthenticationRoutes extends RoutesBase {
             return [pids.clientsAddCredit];
         }
         if (this.apiPathIs(urlPath, 'application-profiles')
+            // || this.apiPathIs(urlPath, 'application-profiles-with-files')
             || this.apiPathIs(urlPath, 'application-groups')
             || this.apiPathIs(urlPath, 'application-profiles-files')) {
             return this.selectPermissionsIds(method, [pids.applicationProfilesView], [pids.applicationProfilesModify]);

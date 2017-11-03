@@ -134,7 +134,7 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
 
     async loadApplicationProfiles(): Promise<void> {
         try {
-            const profiles = await this.dataSvc.getApplicationProfiles();
+            const profiles = await this.dataSvc.getApplicationProfilesWithFiles();
             this.applicationProfiles = profiles;
         } catch (err) {
             this.handleError(err, this.loadApplicationProfilesMessagesComponent, 'Load application profiles error:');

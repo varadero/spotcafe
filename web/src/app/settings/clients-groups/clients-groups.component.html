@@ -3,7 +3,7 @@
         <mat-card-title>Existing clients groups</mat-card-title>
         <spotcafe-messages #loadClientsGroupsMessagesComponent></spotcafe-messages>
         <mat-form-field *ngIf="clientsGroups && clientsGroups.length">
-            <mat-select [(ngModel)]="selectedClientGroup" placeholder="Select client group">
+            <mat-select [(ngModel)]="selectedClientGroup" (change)="existingClientGroupSelected($event.value)" placeholder="Client group">
                 <mat-option *ngFor="let clientGroupWithDevicesGroups of clientsGroups" [value]="clientGroupWithDevicesGroups">{{clientGroupWithDevicesGroups.clientGroup.name}}</mat-option>
             </mat-select>
         </mat-form-field>
@@ -17,10 +17,15 @@
             <mat-form-field>
                 <input matInput [(ngModel)]="selectedClientGroup.clientGroup.pricePerHour" placeholder="Price per hour" />
             </mat-form-field>
+            <mat-form-field *ngIf="applicationProfiles">
+                <mat-select [(ngModel)]="selectedApplicationProfileForExistingGroup" placeholder="Application profile">
+                    <mat-option *ngFor="let profile of applicationProfiles" [value]="profile">{{profile.name}}</mat-option>
+                </mat-select>
+            </mat-form-field>
             <div>
                 <div>Devices groups access</div>
                 <mat-form-field *ngIf="devicesGroupsForExistingClientGroup">
-                    <mat-select [(ngModel)]="selectedDeviceGroupForExistingClientGroup" placeholder="Select device group">
+                    <mat-select [(ngModel)]="selectedDeviceGroupForExistingClientGroup" placeholder="Device group">
                         <mat-option *ngFor="let devicesGroup of devicesGroupsForExistingClientGroup" [value]="devicesGroup">{{devicesGroup.name}}</mat-option>
                     </mat-select>
                 </mat-form-field>
@@ -38,7 +43,7 @@
         </div>
     </mat-card>
     <mat-card>
-        <mat-card-title>New group</mat-card-title>
+        <mat-card-title>New client group</mat-card-title>
         <mat-form-field>
             <input matInput [(ngModel)]="newClientGroupWithDevicesGroups.clientGroup.name" placeholder="Name" />
         </mat-form-field>
@@ -48,10 +53,15 @@
         <mat-form-field>
             <input matInput [(ngModel)]="newClientGroupWithDevicesGroups.clientGroup.pricePerHour" placeholder="Price per hour" />
         </mat-form-field>
+        <mat-form-field *ngIf="applicationProfiles">
+            <mat-select [(ngModel)]="selectedApplicationProfileForNewGroup" placeholder="Application profile">
+                <mat-option *ngFor="let profile of applicationProfiles" [value]="profile">{{profile.name}}</mat-option>
+            </mat-select>
+        </mat-form-field>
         <div>
-            <div>Devices groups access</div>
+            <h4>Devices groups access</h4>
             <mat-form-field *ngIf="devicesGroupsForNewClientGroup">
-                <mat-select [(ngModel)]="selectedDeviceGroupForNewClientGroup" placeholder="Select device group">
+                <mat-select [(ngModel)]="selectedDeviceGroupForNewClientGroup" placeholder="Device group">
                     <mat-option *ngFor="let devicesGroup of devicesGroupsForNewClientGroup" [value]="devicesGroup">{{devicesGroup.name}}</mat-option>
                 </mat-select>
             </mat-form-field>
@@ -64,7 +74,7 @@
         </div>
         <mat-card-actions>
             <spotcafe-messages #createClientsGroupsMessagesComponent></spotcafe-messages>
-            <button [disabled]="waiting.creatingGroup" mat-raised-button (click)="createClientGroup(newClientGroupWithDevicesGroups)"
+            <button [disabled]="!canCreateNewClientGroup()" mat-raised-button (click)="createClientGroup(newClientGroupWithDevicesGroups)"
                 color="primary">Create group {{newClientGroupWithDevicesGroups.clientGroup.name}}</button>
         </mat-card-actions>
     </mat-card>
