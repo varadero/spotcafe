@@ -4,6 +4,7 @@ import { StorageProvider } from '../storage/storage-provider';
 import { RoutesBase } from './routes-base';
 import { IRouteActionResult } from './interfaces/route-action-result';
 import { IClientDeviceCurrentData } from './interfaces/client-device-current-data';
+// import { IPostStartData } from './interfaces/post-start-data';
 
 export class ClientDeviceCurrentDataRoutes extends RoutesBase {
 
@@ -16,6 +17,17 @@ export class ClientDeviceCurrentDataRoutes extends RoutesBase {
             await this.handleActionResult(ctx, () => this.getClientDeviceCurrentDataImpl(this.getServerToken(ctx).accountId));
         });
     }
+
+    // getClientDevicePostStartData(): any {
+    //     return route.get(this.apiPrefix + 'client-device-current-data/post-start', async ctx => {
+    //         await this.handleActionResult(ctx, () => this.getClientDevicePostStartDataImpl(this.getServerToken(ctx).accountId));
+    //     });
+    // }
+
+    // private async getClientDevicePostStartDataImpl(clientDeviceId: string): Promise<IRouteActionResult<IPostStartData> | void> {
+    //     const result = 6;
+    //     return { value: result };
+    // }
 
     private async getClientDeviceCurrentDataImpl(
         clientDeviceId: string

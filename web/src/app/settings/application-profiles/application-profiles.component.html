@@ -81,6 +81,7 @@
     </mat-card>
     <mat-card>
         <h3>Select application file from device:</h3>
+        <spotcafe-messages #deviceMessagesComponent></spotcafe-messages>
         <mat-form-field>
             <mat-select matInput [(ngModel)]="selectedDevice" placeholder="Device" (change)="loadDrives(selectedDevice.id)">
                 <mat-option *ngFor="let device of devices" [value]="device">{{device.name}}</mat-option>

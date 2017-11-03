@@ -50,6 +50,11 @@ CREATE UNIQUE NONCLUSTERED INDEX [IX_ApplicationProfiles_Name] ON [dbo].[Applica
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 
+INSERT INTO [ApplicationProfiles]
+([Id], [Name], [Description]) VALUES
+('D5EF0DED-7944-45EE-9A5C-BEA68C274E89', 'Default', 'Default application profile')
+GO
+
 CREATE TABLE [dbo].[ApplicationProfilesFiles](
 	[Id] [uniqueidentifier] NOT NULL,
 	[FilePath] [nvarchar](max) NULL,
@@ -113,6 +118,11 @@ GO
 ALTER TABLE [dbo].[DevicesGroups] CHECK CONSTRAINT [FK_DevicesGroups_ApplicationProfileId_ApplicationProfiles_Id]
 
 GO
+
+INSERT INTO [DevicesGroups]
+([Id], [Name], [Description], [PricePerHour], [ApplicationProfileId]) VALUES
+('E000F85C-06ED-4EF4-8C3A-FEDB89EA9EE4', 'Default', 'Default device group', 1, 'D5EF0DED-7944-45EE-9A5C-BEA68C274E89')
+
 
 INSERT INTO [Permissions]
 ([Id], [Name], [Description]) VALUES

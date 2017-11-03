@@ -917,7 +917,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         return result;
     }
 
-    async getClientDevice(deviceId: string): Promise<IClientDevice> {
+    async getClientDevice(deviceId: string): Promise<IClientDevice | null> {
         const sql = `
             SELECT TOP 1 cd.[Id], cd.[Name], cd.[Address], cd.[Description], cd.[Approved], cd.[ApprovedAt], cd.[DeviceGroupId],
                          dg.[Name] AS [DeviceGroupName]
@@ -930,6 +930,9 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             { name: 'DeviceId', value: deviceId, type: TYPES.NVarChar }
         ];
         const getResult = await this.dbHelper.execToObjects(sql, params);
+        if (!getResult.firstResultSet || !getResult.firstResultSet.rows || !getResult.firstResultSet.rows.length) {
+            return null;
+        }
         const clientDevice = this.getClientDevicesFromRows([getResult.firstResultSet.rows[0]])[0];
         return clientDevice;
     }

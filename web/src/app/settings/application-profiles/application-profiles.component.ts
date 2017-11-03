@@ -48,7 +48,6 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
     newApplicationProfileFile: IApplicationProfileFile;
     selectedApplicationGroupForNewfile: IBaseEntity;
 
-    @ViewChild('loadInfoMessagesComponent') private loadInfoMessagesComponent: DisplayMessagesComponent;
     @ViewChild('newApplicationGroupMessagesComponent') private newApplicationGroupMessagesComponent: DisplayMessagesComponent;
     @ViewChild('updateApplicationGroupMessagesComponent') private updateApplicationGroupMessagesComponent: DisplayMessagesComponent;
 
@@ -56,6 +55,8 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
     @ViewChild('newApplicationProfileMessagesComponent') private newApplicationProfileMessagesComponent: DisplayMessagesComponent;
     @ViewChild('updateApplicationProfileMessagesComponent') private updateApplicationProfileMessagesComponent: DisplayMessagesComponent;
     @ViewChild('addFileTоProfileMessagesComponent') private addFileTоProfileMessagesComponent: DisplayMessagesComponent;
+
+    @ViewChild('deviceMessagesComponent') private deviceMessagesComponent: DisplayMessagesComponent;
 
     constructor(
         private dataSvc: DataService,
@@ -300,7 +301,7 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
                 const msgEvent = <MessageEvent>socketEvent.data;
                 const data = <IWebSocketData>JSON.parse(msgEvent.data);
                 if (data.payload && data.payload.error) {
-                    this.handleError(data.payload, this.loadInfoMessagesComponent, 'Loading data from device error');
+                    this.handleError(data.payload, this.deviceMessagesComponent, 'Loading data from device error');
                     return;
                 }
 
@@ -316,14 +317,14 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
     private handleGetFolderItemsResponse(data: IWebSocketData): void {
         if (data.payload) {
             const resp = <IGetFolderItemsResponse>data.payload.data;
-            if (!resp.success) {
-                this.loadInfoMessagesComponent.addErrorMessage(`Can't load selected folder`);
-                return;
-            }
             this.currentFolder = resp.folder;
             this.currentPathSegments = resp.pathSegments;
             this.directories = resp.directories;
             this.files = resp.files;
+            if (!resp.success) {
+                this.deviceMessagesComponent.addErrorMessage(`Can't load selected folder`);
+                return;
+            }
         }
     }
 

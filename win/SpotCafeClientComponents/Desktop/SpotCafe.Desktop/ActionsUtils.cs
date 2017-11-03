@@ -25,14 +25,14 @@ namespace SpotCafe.Desktop {
                     subFolder = "";
                 }
                 var fullPath = Path.Combine(folder, subFolder ?? "");
+                result.Folder = fullPath;
+                result.PathSegments = fullPath.Split(new char[] { Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
                 var dirs = Directory.EnumerateDirectories(fullPath)
                     .Select(x => Path.GetFileName(x)).OrderBy(x => x).ToArray();
                 var files = Directory.EnumerateFiles(fullPath, searchPattern ?? "*.*")
                     .Select(x => Path.GetFileName(x)).OrderBy(x => x).ToArray();
                 result.Directories = dirs;
                 result.Files = files;
-                result.Folder = fullPath;
-                result.PathSegments = fullPath.Split(new char[] { Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
                 result.Success = true;
             } catch { }
             return result;

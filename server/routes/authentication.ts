@@ -109,7 +109,7 @@ export class AuthenticationRoutes extends RoutesBase {
 
     private async logInClientDeviceImpl(clientDeviceId: string): Promise<IRouteActionResult<IToken> | void> {
         const device = await this.storageProvider.getClientDevice(clientDeviceId);
-        if (!device.approved) {
+        if (!device || !device.approved) {
             return { status: 401, error: { message: 'Not approved' }, };
         }
 

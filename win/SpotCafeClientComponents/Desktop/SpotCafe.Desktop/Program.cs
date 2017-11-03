@@ -51,12 +51,18 @@ namespace SpotCafe.Desktop {
             var startupDesktopHandle = Interop.GetInputDesktopHandle();
 #if DEBUG
             // Send broadcast data to the server
-            System.Net.Sockets.UdpClient uc = new System.Net.Sockets.UdpClient(64128, System.Net.Sockets.AddressFamily.InterNetwork);
-            uc.MulticastLoopback = false;
-            var json = "{\"clientDeviceId\":\"" + commandLineArgs.ClientDeviceId + "\",";
-            json += "\"clientDeviceName\":\"" + Environment.MachineName + "\"}";
-            var arr = System.Text.Encoding.UTF8.GetBytes(json);
-            uc.Send(arr, arr.Length, hostname: "localhost", port: 64129);
+            // This is needed in debug version of desktop application
+            // Because the server (the one that originally sends UDP packets to register client device) is not running when developing
+            try {
+                System.Net.Sockets.UdpClient uc = new System.Net.Sockets.UdpClient(64128, System.Net.Sockets.AddressFamily.InterNetwork);
+                uc.MulticastLoopback = false;
+                var json = "{\"clientDeviceId\":\"" + commandLineArgs.ClientDeviceId + "\",";
+                json += "\"clientDeviceName\":\"" + Environment.MachineName + "\"}";
+                var arr = System.Text.Encoding.UTF8.GetBytes(json);
+                uc.Send(arr, arr.Length, hostname: commandLineArgs.ServerIP, port: 64129);
+            } catch (Exception ex) {
+                logger.LogError(ex.ToString());
+            }
             var secureDesktopHandle = startupDesktopHandle;
 #else
             var secureDesktopHandle = CreateSecureDesktop();
