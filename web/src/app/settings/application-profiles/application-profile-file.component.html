@@ -3,15 +3,22 @@
         <input matInput [(ngModel)]="applicationProfileFile.filePath" placeholder="Type the full path to the application file or select it from device"
         />
     </mat-form-field>
+    <mat-form-field>
+        <input matInput [(ngModel)]="applicationProfileFile.startupParameters" placeholder="Startup parameters" />
+    </mat-form-field>
 </div>
 <mat-card-actions>
-    <div>
-        <img [src]="applicationProfileFile.image ? applicationProfileFile.image : 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACwAAAAAAQABAAACAkQBADs='"
+    <div class="application-file-image-wrapper">
+        <img [src]="applicationProfileFile.image ? applicationProfileFile.image : 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='"
         />
+        <label class="application-file-title">{{applicationProfileFile.title}}</label>
     </div>
     <input #imageFileControl (change)="imageFileChanged(imageFileControl.files[0], applicationProfileFile)" (click)="imageFileControl.click()"
         type="file" [hidden]="true" />
     <button mat-raised-button (click)="imageFileControl.click()" color="primary">Select image...</button>
+    <mat-form-field>
+        <input matInput [(ngModel)]="applicationProfileFile.title" placeholder="Title">
+    </mat-form-field>
     <mat-form-field>
         <input matInput [(ngModel)]="applicationProfileFile.description" placeholder="Description">
     </mat-form-field>

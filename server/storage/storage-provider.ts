@@ -32,6 +32,7 @@ import { IBaseEntity } from '../../shared/interfaces/base-entity';
 import { IUpdateEntityResult } from '../../shared/interfaces/update-entity-result';
 import { IApplicationProfileWithFiles } from '../../shared/interfaces/application-profile-with-files';
 import { IApplicationProfileFile } from '../../shared/interfaces/application-profile-file';
+import { IPostStartData } from '../routes/interfaces/post-start-data';
 
 export abstract class StorageProvider {
     abstract initialize(config: any, ...args: any[]): void;
@@ -42,6 +43,8 @@ export abstract class StorageProvider {
 
     abstract getTokenSecret(): Promise<string | null>;
 
+    abstract getClientDevicePostStartData(clientDeviceId: string): Promise<IPostStartData>;
+
     abstract getApplicationGroups(): Promise<IBaseEntity[]>;
     abstract createApplicationGroup(applicationGroup: IBaseEntity): Promise<ICreateEntityResult>;
     abstract updateApplicationGroup(applicationGroup: IBaseEntity): Promise<IUpdateEntityResult>;
@@ -51,7 +54,7 @@ export abstract class StorageProvider {
     abstract createApplicationProfile(profile: IBaseEntity): Promise<ICreateEntityResult>;
     abstract updateApplicationProfile(profile: IBaseEntity): Promise<IUpdateEntityResult>;
     abstract deleteApplicationProfileFile(fileId: string): Promise<void>;
-    abstract addeApplicationProfileFile(file: IApplicationProfileFile): Promise<void>;
+    abstract addApplicationProfileFile(file: IApplicationProfileFile): Promise<void>;
 
     abstract addClientCredit(clientId: string, amount: number): Promise<number>;
 

@@ -119,6 +119,7 @@ export class App {
 
         const clientDeviceCurrentDataRoutes = new ClientDeviceCurrentDataRoutes(this.storageProvider, apiPrefix);
         this.koa.use(clientDeviceCurrentDataRoutes.getClientDeviceCurrentData());
+        this.koa.use(clientDeviceCurrentDataRoutes.getClientDevicePostStartData());
 
         const devicesGroupsRoutes = new DevicesGroupsRoutes(this.storageProvider, apiPrefix);
         this.koa.use(devicesGroupsRoutes.getAllDevicesGroups());

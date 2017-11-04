@@ -35,6 +35,11 @@ class CalcEngine {
         return this.lastCalculatedData;
     }
 
+    getLastCalcDataForDеvice(deviceId: string): ICalculatedDeviceBillData | null {
+        const data = this.lastCalculatedData.find(x => x.calcBillData.deviceId === deviceId) || null;
+        return data;
+    }
+
     setClientDeviceStarted(billData: IStartedDeviceCalcBillData): void {
         this.calcBillsAndAddToLastCalcData([billData]);
     }

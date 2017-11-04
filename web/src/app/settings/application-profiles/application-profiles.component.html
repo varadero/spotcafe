@@ -99,7 +99,7 @@
             <span>Current folder:</span>
             <button *ngFor="let segment of currentPathSegments; let i=index" (click)="segmentIndexSelected(i)" mat-raised-button>{{segment}}</button>
         </h3>
-        <div style="display: flex;">
+        <div class="device-directories-and-files">
             <mat-list *ngIf="directories">
                 <h3>Directories:</h3>
                 <mat-list-item *ngFor="let dir of directories">

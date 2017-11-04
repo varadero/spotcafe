@@ -48,6 +48,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActionsUtils.cs" />
+    <Compile Include="ApplicationFileControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ApplicationFileControl.Designer.cs">
+      <DependentUpon>ApplicationFileControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="CommandLineArgs.cs" />
     <Compile Include="CommandLineArgsParser.cs" />
     <Compile Include="Interop.cs" />
@@ -68,6 +74,7 @@
     <Compile Include="REST\LogInDeviceRequest.cs" />
     <Compile Include="REST\DeviceRestClient.cs" />
     <Compile Include="REST\ClientToken.cs" />
+    <Compile Include="REST\PostStartData.cs" />
     <Compile Include="REST\RestClientBase.cs" />
     <Compile Include="SecureForm.cs">
       <SubType>Form</SubType>

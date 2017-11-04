@@ -21,6 +21,7 @@ namespace SpotCafe.Desktop {
         public void Start(SecureFormStartArgs args) {
             InitializeState(args);
 #if DEBUG
+            Text = "Secure form";
             TopMost = false;
             MaximizeBox = true;
             MinimizeBox = true;

@@ -1,6 +1,7 @@
-<div *ngIf="showImage">
-    <img [src]="applicationProfileFile.image ? applicationProfileFile.image : 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACwAAAAAAQABAAACAkQBADs='"
+<div *ngIf="showImage" class="application-file-image-wrapper">
+    <img [src]="applicationProfileFile.image ? applicationProfileFile.image : 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='"
         [alt]="applicationProfileFile.imageFileName" />
+    <label class="application-file-title">{{applicationProfileFile.title}}</label>
 </div>
 <div>
     <button (click)="removeSelected.next()" mat-button color="warn">Remove</button>
@@ -9,7 +10,19 @@
             placeholder="Application group" />
     </mat-form-field>
     <mat-form-field>
+        <input matInput (keydown)="allowReadOnlyKeys($event)" (cut)="$event.preventDefault()" (paste)="$event.preventDefault()" [value]="applicationProfileFile.title"
+            placeholder="Title" />
+    </mat-form-field>
+    <mat-form-field>
+        <input matInput (keydown)="allowReadOnlyKeys($event)" (cut)="$event.preventDefault()" (paste)="$event.preventDefault()" [value]="applicationProfileFile.description"
+            placeholder="Description" />
+    </mat-form-field>
+    <mat-form-field>
         <input matInput (keydown)="allowReadOnlyKeys($event)" (cut)="$event.preventDefault()" (paste)="$event.preventDefault()" [value]="applicationProfileFile.filePath"
             placeholder="Full path" />
+    </mat-form-field>
+    <mat-form-field>
+        <input matInput (keydown)="allowReadOnlyKeys($event)" (cut)="$event.preventDefault()" (paste)="$event.preventDefault()" [value]="applicationProfileFile.startupParameters"
+            placeholder="Startup parameters" />
     </mat-form-field>
 </div>

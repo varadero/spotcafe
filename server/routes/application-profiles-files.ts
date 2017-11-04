@@ -23,7 +23,7 @@ export class ApplicationProfilesFilesRoutes extends RoutesBase {
     }
 
     private async addFileImpl(file: IApplicationProfileFile): Promise<void> {
-        await this.storageProvider.addeApplicationProfileFile(file);
+        await this.storageProvider.addApplicationProfileFile(file);
     }
 
     private async deleteFileImpl(fileId: string): Promise<void> {

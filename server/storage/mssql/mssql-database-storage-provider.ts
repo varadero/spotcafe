@@ -41,6 +41,8 @@ import { IBaseEntity } from '../../../shared/interfaces/base-entity';
 import { IUpdateEntityResult } from '../../../shared/interfaces/update-entity-result';
 import { IApplicationProfileWithFiles } from '../../../shared/interfaces/application-profile-with-files';
 import { IApplicationProfileFile } from '../../../shared/interfaces/application-profile-file';
+import { IPostStartData } from '../../routes/interfaces/post-start-data';
+import { IClientApplicationFile } from '../../routes/interfaces/client-application-file';
 
 
 
@@ -58,12 +60,58 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         this.reportsHelper = new ReportsHelper(this.dbHelper);
     }
 
-    async addeApplicationProfileFile(file: IApplicationProfileFile): Promise<void> {
+    async getClientDevicePostStartData(clientDeviceId: string): Promise<IPostStartData> {
+        const sql = `
+            DECLARE @StartedByClientId uniqueidentifier
+            DECLARE @StartedByEmployeeId uniqueidentifier
+
+            SELECT TOP 1 @StartedByClientId=[StartedByClientId], @StartedByEmployeeId=[StartedByEmployeeId]
+            FROM [ClientDevicesStatus]
+            WHERE [DeviceId]=@DeviceId
+
+            IF @StartedByClientId IS NOT NULL
+                BEGIN
+                    SELECT apf.[FilePath] AS [FilePath], ag.[Name] AS [ApplicationGroupName], apf.[Description],
+                           apf.[Image], apf.[Title], apf.[StartupParameters]
+                    FROM [ApplicationProfilesFiles] apf
+                    INNER JOIN [Clients] c ON c.[Id]=@StartedByClientId
+                    INNER JOIN [ApplicationGroups] ag ON ag.[Id]=apf.[ApplicationGroupId]
+                    INNER JOIN [ClientDevices] cd ON cd.[Id]=@DeviceId
+                    INNER JOIN [ClientsGroups] cg ON cg.[Id]=c.[ClientGroupId]
+                    WHERE cg.[ApplicationProfileId]=apf.[ApplicationProfileId]
+                END
+            ELSE IF @StartedByEmployeeId IS NOT NULL
+                BEGIN
+                    SELECT apf.[FilePath] AS [FilePath], ag.[Name] AS [ApplicationGroupName], apf.[Description],
+                           apf.[Image], apf.[Title], apf.[StartupParameters]
+                    FROM [ApplicationProfilesFiles] apf
+                    INNER JOIN [ApplicationGroups] ag ON ag.[Id]=apf.[ApplicationGroupId]
+                    INNER JOIN [ClientDevices] d ON d.[Id]=@DeviceId
+                    INNER JOIN [DevicesGroups] dg ON dg.[Id]=d.[DeviceGroupId]
+                    WHERE dg.[ApplicationProfileId]=apf.[ApplicationProfileId]
+                END
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'DeviceId', value: clientDeviceId, type: TYPES.NVarChar }
+        ];
+        const dbResult = await this.dbHelper.execToObjects(sql, params);
+
+        const files = <IClientApplicationFile[]>dbResult.firstResultSet.rows;
+        const result: IPostStartData = {
+            clientApplicationFiles: files
+        };
+
+        return result;
+    }
+
+    async addApplicationProfileFile(file: IApplicationProfileFile): Promise<void> {
         const newId = this.dbHelper.generateId();
         const sql = `
             INSERT INTO [ApplicationProfilesFiles]
-            ([Id], [FilePath], [ApplicationGroupId], [Description], [Image], [ImageFileName], [ApplicationProfileId]) VALUES
-            (@Id, @FilePath, @ApplicationGroupId, @Description, @Image, @ImageFileName, @ApplicationProfileId)
+            ([Id], [FilePath], [ApplicationGroupId], [Description], [Image],
+            [ImageFileName], [ApplicationProfileId], [Title], [StartupParameters]) VALUES
+            (@Id, @FilePath, @ApplicationGroupId, @Description, @Image,
+            @ImageFileName, @ApplicationProfileId, @Title, @StartupParameters)
         `;
         const params: IRequestParameter[] = [
             { name: 'Id', value: newId, type: TYPES.UniqueIdentifierN },
@@ -72,7 +120,9 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             { name: 'Description', value: file.description, type: TYPES.NVarChar },
             { name: 'Image', value: file.image, type: TYPES.NVarChar },
             { name: 'ImageFileName', value: file.imageFileName, type: TYPES.NVarChar },
-            { name: 'ApplicationProfileId', value: file.applicationProfileId, type: TYPES.UniqueIdentifierN }
+            { name: 'ApplicationProfileId', value: file.applicationProfileId, type: TYPES.UniqueIdentifierN },
+            { name: 'Title', value: file.title, type: TYPES.NVarChar },
+            { name: 'StartupParameters', value: file.startupParameters, type: TYPES.NVarChar }
         ];
         await this.dbHelper.execRowCount(sql, params);
     }
@@ -91,8 +141,9 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
     async getApplicationProfilesWithFiles(): Promise<IApplicationProfileWithFiles[]> {
         const sql = `
             SELECT ap.[Id], ap.[Name], ap.[Description], apf.[Id] AS [FileId], apf.[FilePath],
-            apf.[ApplicationGroupId] AS [FileApplicationGroupId], ag.[Name] AS [FileApplicationGroupName],
-            apf.[Description] AS [FileDescription], apf.[Image] AS [FileImage], apf.[ImageFileName] AS [FileImageFileName]
+                   apf.[ApplicationGroupId] AS [FileApplicationGroupId], ag.[Name] AS [FileApplicationGroupName],
+                   apf.[Title] AS [FileTitle], apf.[Description] AS [FileDescription], apf.[Image] AS [FileImage],
+                   apf.[ImageFileName] AS [FileImageFileName], apf.[StartupParameters] AS [FileStartupParameters]
             FROM [ApplicationProfiles] ap
             LEFT OUTER JOIN [ApplicationProfilesFiles] apf ON apf.[ApplicationProfileId]=ap.[Id]
             LEFT OUTER JOIN [ApplicationGroups] ag ON ag.[Id]=apf.[ApplicationGroupId]
@@ -113,7 +164,9 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
             fileApplicationGroupName: <fileProp>'applicationGroupName',
             fileDescription: <fileProp>'description',
             fileImage: <fileProp>'image',
-            fileImageFileName: <fileProp>'imageFileName'
+            fileImageFileName: <fileProp>'imageFileName',
+            fileTitle: <fileProp>'title',
+            fileStartupParameters: <fileProp>'startupParameters'
         };
         type profileWithFileProp = keyof IApplicationProfileWithFiles;
         const keyPropertyName = <profileWithFileProp>'profile';
@@ -1304,6 +1357,9 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
                 { name: 'DeviceId', value: deviceId, type: TYPES.UniqueIdentifierN }
             );
         }
+        sql += `
+            ORDER BY cd.[Name]
+        `;
         const getResult = await this.dbHelper.execToObjects(sql, params);
         return <IClientDeviceStatus[]>getResult.firstResultSet.rows;
     }

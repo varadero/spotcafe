@@ -1,6 +1,8 @@
 export interface IClientApplicationFile {
+    filePath: string;
+    applicationGroupName: string;
+    description: string;
     image: string;
     title: string;
-    description: string;
-    pathToFile: string;
+    startupParameters: string;
 }

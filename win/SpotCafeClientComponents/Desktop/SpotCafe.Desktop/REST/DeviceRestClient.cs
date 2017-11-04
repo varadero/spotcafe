@@ -22,5 +22,9 @@ namespace SpotCafe.Desktop.REST {
         public async Task<CurrentData> GetCurrentData() {
             return await Get<CurrentData>("client-device-current-data");
         }
+
+        public async Task<PostStartData> GetPostStartData() {
+            return await Get<PostStartData>("client-device-current-data/post-start");
+        }
     }
 }

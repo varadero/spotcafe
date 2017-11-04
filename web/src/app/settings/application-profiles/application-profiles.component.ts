@@ -152,6 +152,9 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
                 msgComponent.addErrorMessage(`Profile with name '${applicationProfile.name}' already exist`);
             } else {
                 msgComponent.addSuccessMessage(`Profile '${applicationProfile.name}' was created`);
+                const selectedProfileId = this.selectedApplicationProfile ? this.selectedApplicationProfile.profile.id : '';
+                await this.loadApplicationProfiles();
+                this.setSelectedProfile(selectedProfileId);
             }
         } catch (err) {
             this.handleError(err, msgComponent, 'Creating new application profile error:');
@@ -357,7 +360,9 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
             filePath: '',
             id: '',
             image: '',
-            imageFileName: ''
+            imageFileName: '',
+            title: '',
+            startupParameters: ''
         };
     }
 

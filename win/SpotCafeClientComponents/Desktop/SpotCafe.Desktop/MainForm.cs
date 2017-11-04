@@ -25,6 +25,19 @@ namespace SpotCafe.Desktop {
         }
 
         public void Start(MainFormStartArgs args) {
+#if DEBUG
+            Text = "Main form";
+            TopMost = false;
+            MaximizeBox = true;
+            MinimizeBox = true;
+            ShowIcon = true;
+            ShowInTaskbar = true;
+            WindowState = FormWindowState.Normal;
+            FormBorderStyle = FormBorderStyle.Sizable;
+            Size = new Size(1024, 768);
+            Location = new Point(200, 200);
+            Refresh();
+#endif
             // Accept all service sertificates
             ServicePointManager.ServerCertificateValidationCallback = ServiceCertificateValidationCallback;
 
@@ -35,14 +48,146 @@ namespace SpotCafe.Desktop {
             LogInDevice();
         }
 
-        private void ProcessCurrentData(CurrentData currentData) {
-            if (currentData == null) {
-                return;
+        private void ShowAppButtons() {
+            RemoveApplicationButtons();
+            if (_state.LastPostStartData != null) {
+                if (_state.LastPostStartData.ClientApplicationFiles != null) {
+                    var groupedByAppGroup = _state.LastPostStartData.ClientApplicationFiles.GroupBy(x => x.ApplicationGroupName).ToList();
+                    var leftOffset = 12;
+                    var topOffset = 12;
+                    var margin = 12;
+                    for (var i = 0; i < groupedByAppGroup.Count; i++) {
+                        var grp = groupedByAppGroup[i];
+                        var grpButton = CreateApplicationGroupButton(grp.Key);
+                        grpButton.Top = topOffset;
+                        grpButton.Left = leftOffset + i * (grpButton.Width + margin);
+                        grpButton.Click += ApplicationGroupButton_Click;
+                        grpButton.Visible = true;
+                        AddApplicationGroupButton(grpButton);
+
+                        var files = grp.ToList();
+                        for (var fileIndex = 0; fileIndex < files.Count; fileIndex++) {
+                            var file = files[fileIndex];
+                            var fileControl = CreateApplicationFileControl(file);
+                            fileControl.Clicked += FileControl_Clicked;
+                            fileControl.Visible = false;
+                            AddApplicationFileControl(fileControl);
+                        }
+                    }
+                    if (_state.Visual.ApplicationGroupsButtons.Count == 1) {
+                        _state.Visual.ApplicationGroupsButtons[0].PerformClick();
+                    }
+                }
             }
-            textBox1.Text = currentData.IsStarted.ToString();
-            var switched = SwitchDesktops(currentData.IsStarted);
-            if (!switched) {
-                Log($"Error on switching desktop: {Marshal.GetLastWin32Error()}");
+        }
+
+        private void ApplicationGroupButton_Click(object sender, EventArgs e) {
+            var button = (Button)sender;
+            var appGroupName = (string)button.Tag;
+            var controlIndex = 0;
+            flowPanelAppFiles.Visible = false;
+            for (var i = 0; i < _state.Visual.ApplicationFilesButtons.Count; i++) {
+                var fileControl = _state.Visual.ApplicationFilesButtons[i];
+                var file = (ClientApplicationFile)fileControl.Tag;
+                if (file.ApplicationGroupName == appGroupName) {
+                    fileControl.Visible = true;
+                    controlIndex++;
+                } else {
+                    fileControl.Visible = false;
+                }
+            }
+            flowPanelAppFiles.Visible = true;
+        }
+
+        private void FileControl_Clicked(object sender, EventArgs e) {
+            var fileControl = (ApplicationFileControl)sender;
+            var file = (ClientApplicationFile)fileControl.Tag;
+            try {
+                Process.Start(file.FilePath, file.StartupParameters ?? "");
+            } catch {
+
+            }
+        }
+
+        private ApplicationFileControl CreateApplicationFileControl(ClientApplicationFile file) {
+            var fileControl = new ApplicationFileControl();
+            fileControl.Tag = file;
+            fileControl.SetData(file.Image, file.Title, file.Description);
+            return fileControl;
+        }
+
+        private Button CreateApplicationGroupButton(string applicationGroupName) {
+            var button = new Button();
+            button.FlatStyle = FlatStyle.Flat;
+            button.FlatAppearance.BorderSize = 1;
+            button.FlatAppearance.BorderColor = Color.DarkBlue;
+            button.FlatAppearance.MouseDownBackColor = Color.FromArgb(0, 0, 32);
+            button.FlatAppearance.MouseDownBackColor = Color.FromArgb(0, 0, 64);
+            button.Font = new Font(button.Font.FontFamily, 28);
+            button.ForeColor = Color.DarkGray;
+            button.BackColor = Color.Black;
+            button.Size = new Size(374, 64);
+            button.UseVisualStyleBackColor = false;
+            button.Text = applicationGroupName;
+            button.Tag = applicationGroupName;
+            return button;
+        }
+
+        private void AddApplicationGroupButton(Button button) {
+            Controls.Add(button);
+            _state.Visual.ApplicationGroupsButtons.Add(button);
+        }
+
+        private void AddApplicationFileControl(ApplicationFileControl control) {
+            flowPanelAppFiles.Controls.Add(control);
+            _state.Visual.ApplicationFilesButtons.Add(control);
+        }
+
+        private void RemoveApplicationButtons() {
+            var appGroupsContainer = Controls;
+            var appFilesContainer = flowPanelAppFiles.Controls;
+            foreach (var item in _state.Visual.ApplicationGroupsButtons) {
+                item.Click -= ApplicationGroupButton_Click;
+                appGroupsContainer.Remove(item);
+            }
+            _state.Visual.ApplicationGroupsButtons.Clear();
+
+            foreach (var item in _state.Visual.ApplicationFilesButtons) {
+                item.Clicked -= FileControl_Clicked;
+                appFilesContainer.Remove(item);
+            }
+            _state.Visual.ApplicationFilesButtons.Clear();
+        }
+
+        private void ProcessPostStartData(PostStartData data) {
+            ShowAppButtons();
+        }
+
+        private async Task ProcessCurrentData(CurrentData currentData) {
+            try {
+                _state.LastCurrentData = currentData;
+                if (currentData == null) {
+                    return;
+                }
+                var switched = SwitchDesktops(currentData.IsStarted);
+                if (!switched) {
+                    Log($"Error on switching desktop: {Marshal.GetLastWin32Error()}");
+                }
+                if (_state.PrevIsStarted && !currentData.IsStarted) {
+                    // Transition from started to stopped
+                    RemoveApplicationButtons();
+                } else if (!_state.PrevIsStarted && currentData.IsStarted) {
+                    // Transition from stopped to started
+                    var startData = await _state.DeviceRest.GetPostStartData();
+                    _state.LastPostStartData = startData;
+                    ProcessPostStartData(_state.LastPostStartData);
+                }
+            } catch (Exception ex) {
+                LogError(ex.ToString());
+            } finally {
+                if (_state.LastCurrentData != null) {
+                    _state.PrevIsStarted = _state.LastCurrentData.IsStarted;
+                }
             }
         }
 
@@ -204,6 +349,11 @@ namespace SpotCafe.Desktop {
 
         private void InitializeState(MainFormStartArgs args) {
             _state = new MainFormState();
+
+            _state.Visual = new MainFormVisualState();
+            _state.Visual.ApplicationGroupsButtons = new List<Button>();
+            _state.Visual.ApplicationFilesButtons = new List<ApplicationFileControl>();
+
             _state.StartArgs = args;
             _state.Logger = args.Logger;
 
@@ -237,11 +387,24 @@ namespace SpotCafe.Desktop {
             public WebSocketManager WebSocketManager { get; set; }
             public ActionsUtils ActionsUtils { get; set; }
             public Serializer Serializer { get; set; }
+            public bool PrevIsStarted { get; set; }
+            public PostStartData LastPostStartData { get; set; }
+            public CurrentData LastCurrentData { get; set; }
+            public MainFormVisualState Visual { get; set; }
         }
 
         private class SecureThreadState {
             public SecureForm SecureForm { get; set; }
             public IntPtr SecureDesktopHandle { get; set; }
+        }
+
+        private class MainFormVisualState {
+            public List<Button> ApplicationGroupsButtons { get; set; }
+            public List<ApplicationFileControl> ApplicationFilesButtons { get; set; }
+        }
+
+        private class ApplicationVisualData {
+            public ClientApplicationFile File { get; set; }
         }
     }
 }

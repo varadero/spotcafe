@@ -4,7 +4,8 @@ import { IApplicationProfileFile } from '../../../../../shared/interfaces/applic
 
 @Component({
     selector: 'spotcafe-application-profile-file-list-item',
-    templateUrl: 'application-profile-file-list-item.component.html'
+    templateUrl: 'application-profile-file-list-item.component.html',
+    styleUrls: ['./application-profiles.component.css']
 })
 export class ApplicationProfileFileListItemComponent {
     @Input() applicationProfileFile: IApplicationProfileFile;

@@ -8,4 +8,6 @@ export interface IApplicationProfileFile {
     imageFileName: string;
     applicationProfileId: string;
     applicationProfileName: string;
+    title: string;
+    startupParameters: string;
 }

@@ -6,3 +6,26 @@
 .full-width {
     width: 100%;
 }
+
+.application-file-image-wrapper {
+    width: 512px;
+    height: 288px;
+    text-align: center;
+    background-color: black;
+    overflow: hidden;
+    position: relative;
+}
+
+.application-file-title {
+    font-size: 24pt;
+    color: silver;
+    left: 0;
+    bottom: 0;
+    width: 512px;
+    position: absolute;
+}
+
+.device-directories-and-files {
+    display: flex;
+    justify-content: space-between;
+}
