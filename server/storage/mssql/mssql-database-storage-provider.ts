@@ -721,7 +721,9 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         const alreadyStartedResult = <IClientDeviceAlreadyStartedInfo>execResult.firstResultSet.rows[0];
         const result = <IStartClientDeviceResult>{
             clientDeviceAlreadyStartedInfo: alreadyStartedResult,
-            notEnoughCredit: alreadyStartedResult.clientCredit <= 0
+            // TODO Refactor - "notEnoughCredit" should not be returned by storage provider
+            notEnoughCredit: alreadyStartedResult.clientCredit <= 0,
+            clientCredit: alreadyStartedResult.clientCredit
         };
         if (execResult.allResultSets[1]) {
             result.startedDeviceCallBillData = <IStartedDeviceCalcBillData>execResult.allResultSets[1].rows[0];

@@ -49,7 +49,11 @@ namespace SpotCafe.Desktop {
         }
 
         private void ShowAppButtons() {
-            RemoveApplicationButtons();
+            InvokeInUiThread(ShowAppButtonsUnsafe);
+        }
+
+        private void ShowAppButtonsUnsafe() {
+            RemoveApplicationButtonsUnsafe();
             if (_state.LastPostStartData != null) {
                 if (_state.LastPostStartData.ClientApplicationFiles != null) {
                     var groupedByAppGroup = _state.LastPostStartData.ClientApplicationFiles.GroupBy(x => x.ApplicationGroupName).ToList();
@@ -144,6 +148,10 @@ namespace SpotCafe.Desktop {
         }
 
         private void RemoveApplicationButtons() {
+            InvokeInUiThread(RemoveApplicationButtonsUnsafe);
+        }
+
+        private void RemoveApplicationButtonsUnsafe() {
             var appGroupsContainer = Controls;
             var appFilesContainer = flowPanelAppFiles.Controls;
             foreach (var item in _state.Visual.ApplicationGroupsButtons) {
@@ -161,6 +169,14 @@ namespace SpotCafe.Desktop {
 
         private void ProcessPostStartData(PostStartData data) {
             ShowAppButtons();
+        }
+
+        private void InvokeInUiThread(Action action) {
+            if (InvokeRequired) {
+                Invoke(action);
+            } else {
+                action();
+            }
         }
 
         private async Task ProcessCurrentData(CurrentData currentData) {
@@ -302,6 +318,16 @@ namespace SpotCafe.Desktop {
                 var payloadData = req.Payload.Data;
                 var res = _state.ActionsUtils.GetFolderItems(payloadData.Folder, payloadData.SubFolder, payloadData.PathSegments, payloadData.SearchPattern);
                 _state.WebSocketManager.SendFolderItems(res);
+            } else if (name == WebSocketMessageName.StartDevice) {
+                if (_state.LastCurrentData != null) {
+                    _state.LastCurrentData.IsStarted = true;
+                    ProcessCurrentData(_state.LastCurrentData);
+                }
+            } else if (name == WebSocketMessageName.StopDevice) {
+                if (_state.LastCurrentData != null) {
+                    _state.LastCurrentData.IsStarted = false;
+                    ProcessCurrentData(_state.LastCurrentData);
+                }
             }
         }
 

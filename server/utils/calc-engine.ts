@@ -44,6 +44,13 @@ class CalcEngine {
         this.calcBillsAndAddToLastCalcData([billData]);
     }
 
+    setClientDeviceStopped(deviceId: string): void {
+        const index = this.lastCalculatedData.findIndex(x => x.calcBillData && x.calcBillData.deviceId === deviceId);
+        if (index >= 0) {
+            this.lastCalculatedData.splice(index, 1);
+        }
+    }
+
     /**
      * Contacts storage and calculates started device bill. For use when the device is about to be stopped
      * @param deviceId Device id
@@ -67,10 +74,8 @@ class CalcEngine {
      */
     async execCalcBillsAndSetLastData(): Promise<ICalculatedDeviceBillData[] | null> {
         const calculatedBills = await this.loadStartedDevicesAndCalculateBills();
-        if (calculatedBills) {
-            this.lastCalculatedData = calculatedBills;
-            this.stopDevicesWithoutClientCredit(calculatedBills);
-        }
+        this.lastCalculatedData = calculatedBills;
+        this.stopDevicesWithoutClientCredit(calculatedBills);
         return calculatedBills;
     }
 
@@ -154,8 +159,8 @@ class CalcEngine {
         return result;
     }
 
-    private async loadStartedDevicesAndCalculateBills(): Promise<ICalculatedDeviceBillData[] | null> {
-        let billData: IStartedDeviceCalcBillData[] | null = null;
+    private async loadStartedDevicesAndCalculateBills(): Promise<ICalculatedDeviceBillData[]> {
+        let billData: IStartedDeviceCalcBillData[] = [];
         try {
             // Get all devices with their status and prices per hour
             billData = await this.storageProvider.getStartedDevicesCalcBillData();
@@ -163,7 +168,7 @@ class CalcEngine {
             this.logError(err);
         }
         if (!billData) {
-            return null;
+            return [];
         }
         return this.calcBillsAndAddToLastCalcData(billData);
     }

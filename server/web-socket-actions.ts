@@ -26,6 +26,14 @@ export class WebSocketActions {
         this.subscribe();
     }
 
+    sendToDevice(deviceId: string, messageName: WebSocketMessageName, data: any): void {
+        const socketInfo = this.getInfoByDeviceId(deviceId);
+        if (!socketInfo) {
+            return;
+        }
+        this.wss.sendToDevice(socketInfo.socket, messageName, data);
+    }
+
     private handleSocketEvent(value: IWebSocketEventData): void {
         if (value.name === EventName.authenticationSucceeded) {
             const authSuccData = <IWebSocketServerEventAuthenticationSuccededData>value.data;

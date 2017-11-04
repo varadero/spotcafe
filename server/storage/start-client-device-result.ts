@@ -5,4 +5,5 @@ export interface IStartClientDeviceResult {
     clientDeviceAlreadyStartedInfo: IClientDeviceAlreadyStartedInfo;
     notEnoughCredit: boolean;
     startedDeviceCallBillData?: IStartedDeviceCalcBillData;
+    clientCredit: number;
 }

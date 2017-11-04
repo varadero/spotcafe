@@ -35,9 +35,12 @@ import { calcEngine } from './utils/calc-engine';
 import { ReportsRoutes } from './routes/reports';
 import { WebSocketServer } from './web-socket-server';
 import { WebSocketActions } from './web-socket-actions';
+import { WebSocketMessageName } from '../shared/web-socket-message-name';
 import { ApplicationGroupsRoutes } from './routes/application-groups';
 import { ApplicationProfilesRoutes } from './routes/application-profiles';
 import { ApplicationProfilesFilesRoutes } from './routes/application-profiles-files';
+import { IStartClientDeviceResult } from '../shared/interfaces/start-client-device-result';
+import { IStopClientDeviceResult } from '../shared/interfaces/stop-client-device-result';
 
 export class App {
     private logger: Logger;
@@ -116,6 +119,12 @@ export class App {
         this.koa.use(clientDevicesStatesRoutes.getClientDevicesStatus());
         this.koa.use(clientDevicesStatesRoutes.startDevice());
         this.koa.use(clientDevicesStatesRoutes.stopDevice());
+        clientDevicesStatesRoutes.getDeviceStartedObservable().subscribe(startDeviceData => {
+            this.handleDeviceStarted(startDeviceData);
+        });
+        clientDevicesStatesRoutes.getDeviceStoppedObservable().subscribe(stopDeviceData => {
+            this.handleDeviceStopped(stopDeviceData);
+        });
 
         const clientDeviceCurrentDataRoutes = new ClientDeviceCurrentDataRoutes(this.storageProvider, apiPrefix);
         this.koa.use(clientDeviceCurrentDataRoutes.getClientDeviceCurrentData());
@@ -154,6 +163,27 @@ export class App {
         const applicationProfilesFilesRoutes = new ApplicationProfilesFilesRoutes(this.storageProvider, apiPrefix);
         this.koa.use(applicationProfilesFilesRoutes.deleteFile());
         this.koa.use(applicationProfilesFilesRoutes.addFile());
+    }
+
+    private handleDeviceStarted(args: { deviceId: string; startResult: IStartClientDeviceResult | null }): void {
+        if (!args.deviceId
+            || !args.startResult
+            || args.startResult.notEnoughCredit
+            || !args.startResult.alreadyStartedInfo
+            || args.startResult.alreadyStartedInfo.alreadyStarted
+            || args.startResult.alreadyStartedInfo.clientAccountAlreadyInUse) {
+            return;
+        }
+        this.webSocketActions.sendToDevice(args.deviceId, WebSocketMessageName.startDevice, null);
+    }
+
+    private handleDeviceStopped(args: { deviceId: string; stopResult: IStopClientDeviceResult }): void {
+        if (!args.stopResult
+            || args.stopResult.alreadyStopped
+            || !args.deviceId) {
+            return;
+        }
+        this.webSocketActions.sendToDevice(args.deviceId, WebSocketMessageName.stopDevice, null);
     }
 
     /**

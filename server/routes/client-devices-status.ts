@@ -1,4 +1,5 @@
 import * as route from 'koa-route';
+import { Subject } from 'rxjs/Subject';
 
 import { StorageProvider } from '../storage/storage-provider';
 import { RoutesBase } from './routes-base';
@@ -9,18 +10,34 @@ import { IStartClientDeviceResult } from '../../shared/interfaces/start-client-d
 import { IStopClientDeviceResult } from '../../shared/interfaces/stop-client-device-result';
 import { calcEngine } from '../utils/calc-engine';
 import { Time } from '../utils/time';
-
 import { IStopClientDeviceData } from '../storage/stop-client-device-data';
 import { IStartClientDeviceData } from '../storage/start-client-device-data';
 import { IServerToken } from './interfaces/server-token';
 import { ICalculatedDeviceBillData } from '../utils/calculated-device-bill-data';
+import { Observable } from 'rxjs/Observable';
 
 export class ClientDevicesStatusRoutes extends RoutesBase {
 
     private time = new Time();
+    private deviceStarted$ = new Subject<{ deviceId: string, startResult: IStartClientDeviceResult | null }>();
+    private deviceStartedObservable: Observable<{ deviceId: string, startResult: IStartClientDeviceResult | null }>;
+    private deviceStopped$ = new Subject<{ deviceId: string, stopResult: IStopClientDeviceResult }>();
+    private deviceStoppedObservable: Observable<{ deviceId: string, stopResult: IStopClientDeviceResult }>;
 
-    constructor(private storageProvider: StorageProvider, private apiPrefix: string) {
+    constructor(
+        private storageProvider: StorageProvider,
+        private apiPrefix: string) {
         super();
+        this.deviceStartedObservable = this.deviceStarted$.asObservable();
+        this.deviceStoppedObservable = this.deviceStopped$.asObservable();
+    }
+
+    getDeviceStartedObservable(): Observable<{ deviceId: string, startResult: IStartClientDeviceResult | null }> {
+        return this.deviceStartedObservable;
+    }
+
+    getDeviceStoppedObservable(): Observable<{ deviceId: string, stopResult: IStopClientDeviceResult }> {
+        return this.deviceStoppedObservable;
     }
 
     stopDevice(): any {
@@ -45,12 +62,6 @@ export class ClientDevicesStatusRoutes extends RoutesBase {
         args: IStartClientDeviceArgs,
         serverToken: IServerToken
     ): Promise<IRouteActionResult<IStopClientDeviceResult | null> | void> {
-        // const currentStatus = await this.storageProvider.getClientDeviceStatus(args.deviceId);
-        // const bill = calcEngine.calcBill({
-        //     startedAt: currentStatus.startedAt,
-        //     startedAtUptime: currentStatus.startedAtUptime,
-        //     pricePerHour: currentStatus.pricePerHour
-        // });
         const bill = await calcEngine.loadStartedDeviceAndCalcBill(args.deviceId);
         let result: IStopClientDeviceResult | null = null;
         if (bill) {
@@ -64,7 +75,10 @@ export class ClientDevicesStatusRoutes extends RoutesBase {
                 data.stoppedByEmployeeId = serverToken.accountId;
             }
             result = await this.storageProvider.stopClientDevice(data);
+            calcEngine.setClientDeviceStopped(args.deviceId);
+            this.deviceStopped$.next({ deviceId: args.deviceId, stopResult: result });
         }
+
         return { value: result };
     }
 
@@ -77,8 +91,10 @@ export class ClientDevicesStatusRoutes extends RoutesBase {
             startedAt: this.time.getCurrentTime(),
             startedAtUptime: this.time.getCurrentUptime()
         };
+        let startedByEmployee = false;
         if (this.isServerTokenEmployee(serverToken)) {
             data.startedByEmployeeId = serverToken.accountId;
+            startedByEmployee = true;
         } else if (this.isServerTokenClient(serverToken)) {
             data.startedByClientId = serverToken.accountId;
         }
@@ -86,11 +102,16 @@ export class ClientDevicesStatusRoutes extends RoutesBase {
         if (result.startedDeviceCallBillData) {
             calcEngine.setClientDeviceStarted(result.startedDeviceCallBillData);
         }
+        if (startedByEmployee || result.clientCredit > 0) {
+            result.notEnoughCredit = false;
+        }
+        const startResult: IStartClientDeviceResult = {
+            alreadyStartedInfo: result.clientDeviceAlreadyStartedInfo,
+            notEnoughCredit: result.notEnoughCredit
+        };
+        this.deviceStarted$.next({ deviceId: args.deviceId, startResult: startResult });
         return {
-            value: {
-                alreadyStartedInfo: result.clientDeviceAlreadyStartedInfo,
-                notEnoughCredit: result.notEnoughCredit
-            }
+            value: startResult
         };
     }
 

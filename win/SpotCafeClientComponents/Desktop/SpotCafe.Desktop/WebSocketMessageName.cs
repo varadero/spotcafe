@@ -11,5 +11,7 @@ namespace SpotCafe.Desktop {
         public const string GetDrivesResponse = "get-drives-response";
         public const string GetFolderItemsRequest = "get-folder-items-request";
         public const string GetFolderItemsResponse = "get-folder-items-response";
+        public const string StartDevice = "start-device";
+        public const string StopDevice = "stop-device";
     }
 }
