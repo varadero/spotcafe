@@ -168,5 +168,15 @@ namespace SpotCafe.Desktop {
                 buttonSignIn.PerformClick();
             }
         }
+
+        protected override void OnFormClosing(FormClosingEventArgs e) {
+#if !DEBUG
+            if (e.CloseReason == CloseReason.UserClosing) {
+                e.Cancel = true;
+                return;
+            }
+#endif
+            base.OnFormClosing(e);
+        }
     }
 }

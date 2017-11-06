@@ -419,6 +419,13 @@ namespace SpotCafe.Desktop {
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e) {
+#if !DEBUG
+            if (e.CloseReason == CloseReason.UserClosing) {
+                e.Cancel = true;
+                return;
+            }
+#endif
+
             var secureForm = _state.SecureThreadState?.SecureForm;
             if (secureForm != null) {
                 try {
@@ -430,6 +437,13 @@ namespace SpotCafe.Desktop {
                 }
             }
             base.OnFormClosing(e);
+        }
+
+        protected override void OnShown(EventArgs e) {
+            var workArea = Screen.PrimaryScreen.WorkingArea;
+            Location = new Point(workArea.Left, workArea.Top);
+            Size = new Size(workArea.Width, workArea.Height);
+            base.OnShown(e);
         }
 
         private void InitializeState(MainFormStartArgs args) {
