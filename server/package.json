@@ -6,7 +6,9 @@
     "node": "8.4.0"
   },
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "ts:build": "tsc -p tsconfig.dist.json"
+  },
   "author": "admin@computerclubsystem.com",
   "license": "ISC",
   "dependencies": {

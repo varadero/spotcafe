@@ -180,6 +180,15 @@ export class AuthenticationRoutes extends RoutesBase {
      */
     private getAllowingPermissions(method: string, urlPath: string): string[] {
         const pids = this.permissionsMapper.permissionIds;
+        if (urlPath.startsWith(this.apiPrefix + 'client-devices-status')) {
+            return this.selectPermissionsIds(method, [pids.clientDevicesStatusView], [pids.clientDevicesStatusModify]);
+            // if (method === 'GET') {
+            //     return [pids.clientDevicesStatusView];
+            // }
+            // if (method === 'POST') {
+            //     return [pids.clientDevicesStatusModify];
+            // }
+        }
         if (this.apiPathIs(urlPath, 'client-devices')) {
             return this.selectPermissionsIds(method, [pids.clientDevicesView], [pids.clientDevicesModify]);
         }
@@ -197,15 +206,6 @@ export class AuthenticationRoutes extends RoutesBase {
         }
         if (this.apiPathIs(urlPath, 'permissions')) {
             return this.selectPermissionsIds(method, [pids.permissionsView], [pids.permissionsModify]);
-        }
-        if (urlPath.startsWith(this.apiPrefix + 'client-devices-status')) {
-            return this.selectPermissionsIds(method, [pids.clientDevicesStatusView], [pids.clientDevicesStatusModify]);
-            // if (method === 'GET') {
-            //     return [pids.clientDevicesStatusView];
-            // }
-            // if (method === 'POST') {
-            //     return [pids.clientDevicesStatusModify];
-            // }
         }
         if (urlPath.startsWith(this.apiPrefix + 'client-device-current-data')) {
             return [pids.clientDeviceFullAccess];
