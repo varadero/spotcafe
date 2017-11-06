@@ -94,7 +94,7 @@ export class DatabaseHelper {
         return Promise.resolve(result);
     }
 
-    async prepareDatabase(): Promise<IPrepareStorageResult> {
+    async prepareDatabase(appAdministratorPassword: string): Promise<IPrepareStorageResult> {
         // This should not use connection pooling
         // Every time new connection must be created, otherwise a single connection could be used
         // And in case of an error, some of the statements could be already executed
@@ -108,7 +108,23 @@ export class DatabaseHelper {
             // Update database in transaction
             conn = await this.connectNoCache(this.config);
             await this.beginTransaction(conn);
+            const settingsTableExists = await this.checkSettingsTableExistence(conn);
+            if (!settingsTableExists) {
+                if (!appAdministratorPassword) {
+                    return Promise.reject('Database is empty - provide app administrator password');
+                }
+                // This is update after the database was created manually
+                // Such database doesn't have Settings table -we should create it
+                await this.createSettingsTable(conn);
+                await this.insertDatabaseVersion(conn, '2017-08-25 12:00:00');
+                await this.insertTokenSecret(conn, this.getSqlSanitizedRandomString(30));
+            }
             updateFilesProcessed = await this.updateDatabase(conn);
+            if (!settingsTableExists) {
+                // Settings table was just created which means the database was empty
+                // Set employee passsword
+                await this.setEmployeePassword(conn, this.constants.administratorId, appAdministratorPassword);
+            }
             await this.commitTransaction(conn);
         } finally {
             if (conn) {

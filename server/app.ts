@@ -356,7 +356,7 @@ export class App {
                 prepareStorageResult = createStorageResult.prepareStorageResult;
             } else {
                 // Storage creation is not requested - only prepare it
-                prepareStorageResult = await this.storageProvider.prepareStorage();
+                prepareStorageResult = await this.storageProvider.prepareStorage(appAdministratorPassword || '');
             }
         } catch (err) {
             this.logger.error('Storage error.');

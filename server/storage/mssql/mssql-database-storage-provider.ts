@@ -934,7 +934,8 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
     async setClientFiles(clientFiles: IClientFilesData): Promise<void> {
         let sql = `
             IF EXISTS (
-                SELECT TOP 1 [Name] FROM [Settings]
+                SELECT TOP 1 [Name]
+                FROM [Settings]
                 WHERE [Name]=@Name
             )
                 BEGIN
@@ -945,8 +946,8 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
                 ELSE
                 BEGIN
                     INSERT INTO [Settings]
-                    ([Name], [Value]) VALUES
-                    (@Name, @Value)
+                    ([Name], [Value], [IsSystem]) VALUES
+                    (@Name, @Value, 1)
                 END
         `;
         const params: IRequestParameter[] = [
@@ -1288,8 +1289,8 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         return await this.dbHelper.createDatabase(appAdministatorPassword);
     }
 
-    async prepareStorage(): Promise<IPrepareStorageResult> {
-        return this.dbHelper.prepareDatabase();
+    async prepareStorage(appAdministratorPassword: string): Promise<IPrepareStorageResult> {
+        return this.dbHelper.prepareDatabase(appAdministratorPassword);
     }
 
     private convertToInt(value: string, defaultValue: number): number {

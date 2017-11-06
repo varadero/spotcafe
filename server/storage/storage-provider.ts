@@ -41,7 +41,7 @@ export abstract class StorageProvider {
 
     abstract createStorage(appAdministratorPassword: string): Promise<ICreateStorageResult>;
 
-    abstract prepareStorage(): Promise<IPrepareStorageResult>;
+    abstract prepareStorage(appAdministratorPassword: string): Promise<IPrepareStorageResult>;
 
     abstract getTokenSecret(): Promise<string | null>;
 
