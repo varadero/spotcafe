@@ -11,15 +11,24 @@ import { IRouteActionResult } from './interfaces/route-action-result';
 import { ILogInClientResult } from '../../shared/interfaces/log-in-client-result';
 import { Time } from '../utils/time';
 import { IStartClientDeviceData } from '../storage/start-client-device-data';
+import { Subject } from 'rxjs/Subject';
+import { Observable } from 'rxjs/Observable';
 
 
 export class AuthenticationRoutes extends RoutesBase {
     private tokenSecret: string | null;
     private permissionsMapper = new PermissionsMapper();
     private time = new Time();
+    private clientLoggedIn$ = new Subject<{ deviceId: string, logInClientResult: ILogInClientResult }>();
+    private clientLoggedInObservable: Observable<{ deviceId: string, logInClientResult: ILogInClientResult }>;
 
     constructor(private storageProvider: StorageProvider, private apiPrefix: string) {
         super();
+        this.clientLoggedInObservable = this.clientLoggedIn$.asObservable();
+    }
+
+    getClientLoggedInObservable(): Observable<{ deviceId: string, logInClientResult: ILogInClientResult }> {
+        return this.clientLoggedInObservable;
     }
 
     logInEmployee(): any {
@@ -94,17 +103,17 @@ export class AuthenticationRoutes extends RoutesBase {
             'client',
             [this.permissionsMapper.permissionIds.clientFullAccess]
         );
-        return {
-            value: {
-                credit: result.credit,
-                disabled: result.disabled,
-                pricePerHour: result.pricePerHour,
-                token: token,
-                clientAlreadyInUse: false,
-                deviceAlreadyStarted: false,
-                notEnoughCredit: false
-            }
+        const logInResult: ILogInClientResult = {
+            credit: result.credit,
+            disabled: result.disabled,
+            pricePerHour: result.pricePerHour,
+            token: token,
+            clientAlreadyInUse: false,
+            deviceAlreadyStarted: false,
+            notEnoughCredit: false
         };
+        this.clientLoggedIn$.next({ deviceId: clientDeviceId, logInClientResult: logInResult });
+        return { value: logInResult };
     }
 
     private async logInClientDeviceImpl(clientDeviceId: string): Promise<IRouteActionResult<IToken> | void> {
@@ -190,12 +199,13 @@ export class AuthenticationRoutes extends RoutesBase {
             return this.selectPermissionsIds(method, [pids.permissionsView], [pids.permissionsModify]);
         }
         if (urlPath.startsWith(this.apiPrefix + 'client-devices-status')) {
-            if (method === 'GET') {
-                return [pids.clientDevicesStatusView];
-            }
-            if (method === 'POST') {
-                return [pids.clientDevicesStatusModify];
-            }
+            return this.selectPermissionsIds(method, [pids.clientDevicesStatusView], [pids.clientDevicesStatusModify]);
+            // if (method === 'GET') {
+            //     return [pids.clientDevicesStatusView];
+            // }
+            // if (method === 'POST') {
+            //     return [pids.clientDevicesStatusModify];
+            // }
         }
         if (urlPath.startsWith(this.apiPrefix + 'client-device-current-data')) {
             return [pids.clientDeviceFullAccess];
@@ -216,10 +226,12 @@ export class AuthenticationRoutes extends RoutesBase {
             return [pids.clientsAddCredit];
         }
         if (this.apiPathIs(urlPath, 'application-profiles')
-            // || this.apiPathIs(urlPath, 'application-profiles-with-files')
             || this.apiPathIs(urlPath, 'application-groups')
             || this.apiPathIs(urlPath, 'application-profiles-files')) {
             return this.selectPermissionsIds(method, [pids.applicationProfilesView], [pids.applicationProfilesModify]);
+        }
+        if (urlPath.startsWith(this.apiPrefix + 'advanced-settings')) {
+            return this.selectPermissionsIds(method, [pids.advancedSettingsView], [pids.advancedSettingsModify]);
         }
 
         return [];

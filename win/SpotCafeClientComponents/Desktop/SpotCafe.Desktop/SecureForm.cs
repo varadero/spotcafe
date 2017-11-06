@@ -162,5 +162,11 @@ namespace SpotCafe.Desktop {
             public int ContentPanelVisibilitySeconds { get; set; }
             public Timer PanelContentVisibilityTimer { get; set; }
         }
+
+        private void textBoxPassword_KeyDown(object sender, KeyEventArgs e) {
+            if (e.KeyCode == Keys.Enter) {
+                buttonSignIn.PerformClick();
+            }
+        }
     }
 }

@@ -24,7 +24,7 @@
             <input matInput #username placeholder="Username" value="">
           </mat-form-field>
           <mat-form-field>
-            <input matInput #password type="password" placeholder="Password" value="">
+            <input (keyup)="$event.key == 'Enter' ? logInEmployee(username.value, password.value) : null" matInput #password type="password" placeholder="Password" value="">
           </mat-form-field>
           <button (click)="logInEmployee(username.value, password.value)" mat-raised-button color="primary">Log in</button>
         </mat-card-content>

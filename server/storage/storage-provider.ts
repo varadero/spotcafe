@@ -33,6 +33,7 @@ import { IUpdateEntityResult } from '../../shared/interfaces/update-entity-resul
 import { IApplicationProfileWithFiles } from '../../shared/interfaces/application-profile-with-files';
 import { IApplicationProfileFile } from '../../shared/interfaces/application-profile-file';
 import { IPostStartData } from '../routes/interfaces/post-start-data';
+import { ISetting } from '../../shared/interfaces/setting';
 
 export abstract class StorageProvider {
     abstract initialize(config: any, ...args: any[]): void;
@@ -110,4 +111,6 @@ export abstract class StorageProvider {
     abstract logInAndGetClientData(username: string, password: string, clientDeviced: string): Promise<ILogInAndGetClientDataResult>;
 
     abstract getSetting(name: string): Promise<string | null>;
+    abstract getSettings(nameSearchText: string): Promise<ISetting[]>;
+    abstract updateSetting(setting: ISetting): Promise<void>;
 }

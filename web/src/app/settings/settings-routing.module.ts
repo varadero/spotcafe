@@ -10,6 +10,7 @@ import { DevicesGroupsComponent } from './devices-groups/devices-groups.componen
 import { ClientsGroupsComponent } from './clients-groups/clients-groups.component';
 import { ClientsComponent } from './clients/clients.component';
 import { ApplicationProfilesComponent } from './application-profiles/application-profiles.component';
+import { AdvancedSettingsComponent } from './advanced-settings/advanced-settings.component';
 
 const routes: Routes = [
     {
@@ -36,6 +37,9 @@ const routes: Routes = [
         }, {
             path: 'application-profiles',
             component: ApplicationProfilesComponent
+        }, {
+            path: 'advanced-settings',
+            component: AdvancedSettingsComponent
         }]
     }
 ];

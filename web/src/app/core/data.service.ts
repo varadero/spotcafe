@@ -32,6 +32,7 @@ import { IAddClientCreditArgs } from '../../../../shared/interfaces/add-client-c
 import { IBaseEntity } from '../../../../shared/interfaces/base-entity';
 import { IApplicationProfileWithFiles } from '../../../../shared/interfaces/application-profile-with-files';
 import { IApplicationProfileFile } from '../../../../shared/interfaces/application-profile-file';
+import { ISetting } from '../../../../shared/interfaces/setting';
 
 @Injectable()
 export class DataService {
@@ -43,6 +44,15 @@ export class DataService {
         private authSvc: AuthService // ,
         // private cacheSvc: CacheService
     ) { }
+
+    updateSetting(setting: ISetting): Promise<void> {
+        return this.post('advanced-settings/' + encodeURIComponent(setting.name), setting, true);
+    }
+
+    getSettings(nameSearchText: string): Promise<ISetting[]> {
+        const query = nameSearchText ? '?nameSearchText=' + encodeURIComponent(nameSearchText) : '';
+        return this.get('advanced-settings' + query);
+    }
 
     addFileToApplicationProfile(file: IApplicationProfileFile): Promise<void> {
         return this.post('application-profiles-files', file, true);

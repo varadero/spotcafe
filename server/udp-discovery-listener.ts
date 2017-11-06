@@ -16,7 +16,7 @@ export class UdpDiscoveryListener {
         const socket = dgram.createSocket('udp4');
 
         socket.on('error', err => {
-            this.logger.error('Discovery servie error', err);
+            this.logger.error('Discovery service error', err);
             socket.close(() => {
                 this.listen();
             });

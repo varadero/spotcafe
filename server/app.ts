@@ -41,6 +41,7 @@ import { ApplicationProfilesRoutes } from './routes/application-profiles';
 import { ApplicationProfilesFilesRoutes } from './routes/application-profiles-files';
 import { IStartClientDeviceResult } from '../shared/interfaces/start-client-device-result';
 import { IStopClientDeviceResult } from '../shared/interfaces/stop-client-device-result';
+import { AdvancedSettingsRoutes } from './routes/advanced-settings';
 
 export class App {
     private logger: Logger;
@@ -92,6 +93,14 @@ export class App {
         this.koa.use(authRoutes.logInEmployee());
         this.koa.use(authRoutes.logInClientDevice());
         this.koa.use(authRoutes.logInClient());
+        authRoutes.getClientLoggedInObservable().subscribe(clientLoggedInData => {
+            if (!clientLoggedInData.logInClientResult
+                || clientLoggedInData.logInClientResult.deviceAlreadyStarted
+                || clientLoggedInData.logInClientResult.disabled) {
+                return;
+            }
+            this.webSocketActions.sendToDevice(clientLoggedInData.deviceId, WebSocketMessageName.startDevice, null);
+        });
 
         this.koa.use(requireToken({ secret: tokenSecret }));
         this.koa.use(authRoutes.checkAuthorization());
@@ -163,6 +172,10 @@ export class App {
         const applicationProfilesFilesRoutes = new ApplicationProfilesFilesRoutes(this.storageProvider, apiPrefix);
         this.koa.use(applicationProfilesFilesRoutes.deleteFile());
         this.koa.use(applicationProfilesFilesRoutes.addFile());
+
+        const advancedSettingsRoutes = new AdvancedSettingsRoutes(this.storageProvider, apiPrefix);
+        this.koa.use(advancedSettingsRoutes.getSettings());
+        this.koa.use(advancedSettingsRoutes.updateSetting());
     }
 
     private handleDeviceStarted(args: { deviceId: string; startResult: IStartClientDeviceResult | null }): void {
@@ -291,9 +304,9 @@ export class App {
     }
 
     private async startCalcEngine(): Promise<void> {
-        const billsCalcInterval = await this.getNumberSetting('bills.calculateInterval', 5000);
+        const billsCalcInterval = await this.getNumberSetting('bills.calculateInterval', 5);
         this.calcEngine.initialize({
-            billsCalcInterval: billsCalcInterval,
+            billsCalcInterval: billsCalcInterval * 1000,
             storageProvider: this.storageProvider,
             logger: this.logger
         });

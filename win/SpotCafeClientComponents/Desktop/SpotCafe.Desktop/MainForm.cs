@@ -191,11 +191,17 @@ namespace SpotCafe.Desktop {
                 }
                 if (_state.PrevIsStarted && !currentData.IsStarted) {
                     // Transition from started to stopped
+                    _state.LastStoppedDateTime = DateTime.Now;
+                    _state.LastPostStartData = null;
                     RemoveApplicationButtons();
                 } else if (!_state.PrevIsStarted && currentData.IsStarted) {
                     // Transition from stopped to started
+                    _state.HasBeenStarted = true;
                     var startData = await _state.DeviceRest.GetPostStartData();
+                    _state.LastStartedDateTime = DateTime.Now;
                     _state.LastPostStartData = startData;
+                    _state.RestartAfterIdleFor = _state.LastPostStartData.RestartAfterIdleFor;
+                    _state.ShutdownAfterIdleFor = _state.LastPostStartData.ShutdownAfterIdleFor;
                     ProcessPostStartData(_state.LastPostStartData);
                 }
             } catch (Exception ex) {
@@ -262,6 +268,17 @@ namespace SpotCafe.Desktop {
         }
 
         private async void CurrentDataTimer_Tick(object sender, EventArgs e) {
+            if (_state.RestartInitiated) {
+                // Don't do anything if restart is initiated
+                return;
+            }
+            var idleActivitiesProcessResult = ProcessRestartOnIdleActivities();
+            if (idleActivitiesProcessResult) {
+                // Processing initiated either restart, shutdown or log off
+                // Don't process further
+                return;
+            }
+
             try {
                 _state.CurrentDataTimer.Stop();
                 var currentData = await _state.DeviceRest.GetCurrentData();
@@ -271,6 +288,48 @@ namespace SpotCafe.Desktop {
             } finally {
                 _state.CurrentDataTimer.Start();
             }
+        }
+
+        private bool ProcessRestartOnIdleActivities() {
+            if (!_state.RestartInitiated
+                && _state.LastCurrentData != null
+                && !_state.LastCurrentData.IsStarted
+                && _state.HasBeenStarted) {
+                var duration = DateTime.Now - _state.LastStoppedDateTime;
+                if (_state.RestartAfterIdleFor > 0) {
+                    if (duration.TotalSeconds > _state.RestartAfterIdleFor) {
+                        _state.RestartInitiated = true;
+                        Log($"Restarting after {_state.RestartAfterIdleFor} seconds of idle time ({duration})");
+#if DEBUG
+#else
+                        try {
+                            Interop.Restart();
+                        } catch (Exception ex) {
+                            LogError(ex.ToString());
+                        }
+                        Log($"Restart windows error: {Marshal.GetLastWin32Error()}");
+#endif
+                        return true;
+                    }
+                }
+                if (_state.ShutdownAfterIdleFor > 0) {
+                    if (duration.TotalSeconds > _state.ShutdownAfterIdleFor) {
+                        _state.RestartInitiated = true;
+                        Log($"Shutting down after {_state.ShutdownAfterIdleFor} seconds of idle time ({duration})");
+#if DEBUG
+#else
+                        try {
+                            Interop.ShutDown();
+                        } catch (Exception ex) {
+                            LogError(ex.ToString());
+                        }
+                        Log($"ShutDown windows error: {Marshal.GetLastWin32Error()}");
+#endif
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         private async void LogInDevice() {
@@ -398,6 +457,8 @@ namespace SpotCafe.Desktop {
 
             _state.ActionsUtils = new ActionsUtils();
             _state.Serializer = new Serializer();
+
+            _state.LastStoppedDateTime = DateTime.Now;
         }
 
         private class MainFormState {
@@ -415,8 +476,14 @@ namespace SpotCafe.Desktop {
             public Serializer Serializer { get; set; }
             public bool PrevIsStarted { get; set; }
             public PostStartData LastPostStartData { get; set; }
+            public int RestartAfterIdleFor { get; set; }
+            public int ShutdownAfterIdleFor { get; set; }
+            public DateTime LastStartedDateTime { get; set; }
+            public DateTime LastStoppedDateTime { get; set; }
             public CurrentData LastCurrentData { get; set; }
             public MainFormVisualState Visual { get; set; }
+            public bool RestartInitiated { get; set; }
+            public bool HasBeenStarted { get; set; }
         }
 
         private class SecureThreadState {

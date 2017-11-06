@@ -1,0 +1,31 @@
+<div class="settings-feature card-container">
+    <mat-card>
+        <mat-card-title>
+            Advanced settings
+        </mat-card-title>
+        <div>
+            <spotcafe-messages #loadSettingMessagesComponent></spotcafe-messages>
+            <mat-form-field>
+                <input [(ngModel)]="nameSearchText" matInput placeholder="Name search text" />
+            </mat-form-field>
+            <button (click)="loadSettings(nameSearchText)" mat-raised-button color="primary">Refresh</button>
+        </div>
+    </mat-card>
+    <mat-card>
+        <div *ngIf="settings && settings.length">
+            <mat-card-title *ngIf="nameSearchText">Settings filtered by '{{nameSearchText}}'</mat-card-title>
+            <mat-card-title *ngIf="!nameSearchText">All settings</mat-card-title>
+            <spotcafe-messages #updateSettingMessagesComponent></spotcafe-messages>
+            <mat-card *ngFor="let setting of settings">
+                <mat-form-field class="setting-name">
+                    <input (keydown)="allowReadOnlyKeys($event)" (cut)="$event.preventDefault()" (paste)="$event.preventDefault()" matInput placeholder="Name"
+                        value="{{setting.name}}" />
+                </mat-form-field>
+                <mat-form-field>
+                    <input [(ngModel)]="setting.value" matInput placeholder="Value" />
+                </mat-form-field>
+                <button (click)="updateSetting(setting)" mat-raised-button color="primary">Update</button>
+            </mat-card>
+        </div>
+    </mat-card>
+</div>

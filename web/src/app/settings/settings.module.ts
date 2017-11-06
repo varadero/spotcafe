@@ -19,6 +19,7 @@ import { ClientComponent } from './clients/client.component';
 import { ApplicationProfilesComponent } from './application-profiles/application-profiles.component';
 import { ApplicationProfileFileComponent } from './application-profiles/application-profile-file.component';
 import { ApplicationProfileFileListItemComponent } from './application-profiles/application-profile-file-list-item.component';
+import { AdvancedSettingsComponent } from './advanced-settings/advanced-settings.component';
 
 @NgModule({
     declarations: [
@@ -33,7 +34,8 @@ import { ApplicationProfileFileListItemComponent } from './application-profiles/
         RolesComponent,
         ApplicationProfilesComponent,
         ApplicationProfileFileComponent,
-        ApplicationProfileFileListItemComponent
+        ApplicationProfileFileListItemComponent,
+        AdvancedSettingsComponent
     ],
     imports: [
         SharedModule,

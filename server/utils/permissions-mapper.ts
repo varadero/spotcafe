@@ -25,6 +25,8 @@ export class PermissionsMapper {
         clientsAddCredit: string;
         applicationProfilesView: string;
         applicationProfilesModify: string;
+        advancedSettingsView: string;
+        advancedSettingsModify: string;
     };
 
     private permissionsOrder: string[] = [];
@@ -55,6 +57,8 @@ export class PermissionsMapper {
         po.push(pids.clientsAddCredit = '48A51FF2-7D94-4F8C-ACC3-4D828A956154');
         po.push(pids.applicationProfilesView = '8EFDAB66-3323-4885-860C-43978F4743DF');
         po.push(pids.applicationProfilesModify = '63C03B2B-BDC7-483E-910B-F1FFE0C3C119');
+        po.push(pids.advancedSettingsView = '593942DD-8A91-45DE-A8EC-03D4EAEF5B29');
+        po.push(pids.advancedSettingsModify = '484ADCE0-85EA-4498-99FC-0537DB8C5BBB');
     }
 
     mapToBinaryString(permissionIds: string[]): string {

@@ -43,8 +43,7 @@ import { IApplicationProfileWithFiles } from '../../../shared/interfaces/applica
 import { IApplicationProfileFile } from '../../../shared/interfaces/application-profile-file';
 import { IPostStartData } from '../../routes/interfaces/post-start-data';
 import { IClientApplicationFile } from '../../routes/interfaces/client-application-file';
-
-
+import { ISetting } from '../../../shared/interfaces/setting';
 
 export class MSSqlDatabaseStorageProvider implements StorageProvider {
     private config: ConnectionConfig;
@@ -90,6 +89,10 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
                     INNER JOIN [DevicesGroups] dg ON dg.[Id]=d.[DeviceGroupId]
                     WHERE dg.[ApplicationProfileId]=apf.[ApplicationProfileId]
                 END
+            SELECT [Name], [Value]
+            FROM [Settings]
+            WHERE [Name] IN ('clientDevice.restartAfterIdleFor',
+                             'clientDevice.shutdownAfterIdleFor')
         `;
         const params: IRequestParameter[] = [
             { name: 'DeviceId', value: clientDeviceId, type: TYPES.NVarChar }
@@ -97,10 +100,20 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         const dbResult = await this.dbHelper.execToObjects(sql, params);
 
         const files = <IClientApplicationFile[]>dbResult.firstResultSet.rows;
-        const result: IPostStartData = {
+        const result = <IPostStartData>{
             clientApplicationFiles: files
         };
 
+        const settingsRows = <ISetting[]>dbResult.allResultSets[1].rows;
+        for (let i = 0; i < settingsRows.length; i++) {
+            const setting = settingsRows[i];
+            const { name, value } = setting;
+            if (name === 'clientDevice.restartAfterIdleFor') {
+                result.restartAfterIdleFor = this.convertToInt(value, 0);
+            } else if (name === 'clientDevice.shutdownAfterIdleFor') {
+                result.shutdownAfterIdleFor = this.convertToInt(value, 0);
+            }
+        }
         return result;
     }
 
@@ -236,6 +249,45 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
 
     async getSetting(name: string): Promise<string | null> {
         return await this.dbHelper.getDatabaseSetting(null, name);
+    }
+
+    async getSettings(nameSearchText: string): Promise<ISetting[]> {
+        let sql = `
+            SELECT [Name], [Value]
+            FROM [Settings]
+        `;
+        const params: IRequestParameter[] = [];
+        if (nameSearchText) {
+            nameSearchText = nameSearchText.trim();
+        }
+        if (nameSearchText) {
+            sql += `
+                WHERE [IsSystem]=0 AND [Name] LIKE '%' + @NameSearchText + '%'
+            `;
+            params.push({ name: 'NameSearchText', value: nameSearchText, type: TYPES.NVarChar });
+        } else {
+            sql += `
+                WHERE [IsSystem]=0
+            `;
+        }
+        sql += `
+            ORDER BY [Name]
+        `;
+        const dbResult = await this.dbHelper.execToObjects(sql, params);
+        return <ISetting[]>dbResult.firstResultSet.rows;
+    }
+
+    async updateSetting(setting: ISetting): Promise<void> {
+        const sql = `
+            UPDATE TOP (1) [Settings]
+            SET [Value]=@Value
+            WHERE [Name]=@Name
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'Name', value: setting.name, type: TYPES.NVarChar },
+            { name: 'Value', value: setting.value, type: TYPES.NVarChar }
+        ];
+        await this.dbHelper.execRowCount(sql, params);
     }
 
     async getStartedDeviceCalcBillData(deviceId: string): Promise<IStartedDeviceCalcBillData> {
@@ -1225,6 +1277,10 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
 
     async prepareStorage(): Promise<IPrepareStorageResult> {
         return this.dbHelper.prepareDatabase();
+    }
+
+    private convertToInt(value: string, defaultValue: number): number {
+        return parseInt(value, 10) || defaultValue;
     }
 
     private async getBaseEntities(tableName: string): Promise<IBaseEntity[]> {

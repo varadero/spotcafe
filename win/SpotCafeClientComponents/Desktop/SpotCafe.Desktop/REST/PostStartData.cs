@@ -10,6 +10,12 @@ namespace SpotCafe.Desktop.REST {
     public class PostStartData {
         [DataMember(Name = "clientApplicationFiles")]
         public ClientApplicationFile[] ClientApplicationFiles { get; set; }
+
+        [DataMember(Name = "restartAfterIdleFor")]
+        public int RestartAfterIdleFor { get; set; }
+
+        [DataMember(Name = "shutdownAfterIdleFor")]
+        public int ShutdownAfterIdleFor { get; set; }
     }
 
     [DataContract]
