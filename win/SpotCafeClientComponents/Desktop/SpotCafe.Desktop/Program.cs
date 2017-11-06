@@ -42,11 +42,24 @@ namespace SpotCafe.Desktop {
                 return;
             }
 
+            var regEntriesFileName = "CurrentUserRegistryEntries.reg";
+            try {
+                if (File.Exists(regEntriesFileName)) {
+                    var fi = new FileInfo(regEntriesFileName);
+                    if (fi.Length > 0) {
+                        Log($"Applying {regEntriesFileName}");
+                        Process.Start("regedit.exe", " /s " + fi.FullName);
+                    }
+                }
+            } catch (Exception ex) {
+                LogError($"Can't apply {regEntriesFileName}: {ex.ToString()}");
+            }
+
             var args = Environment.GetCommandLineArgs();
             Log($"Starting with arguments {string.Join(" ", args)}");
             var cmdArgsParser = new CommandLineArgsParser();
             var commandLineArgs = cmdArgsParser.Parse(args);
-            logger.Log($"ClientDeviceId={commandLineArgs.ClientDeviceId} ; ServerIP={commandLineArgs.ServerIP}");
+            Log($"ClientDeviceId={commandLineArgs.ClientDeviceId} ; ServerIP={commandLineArgs.ServerIP}");
 
             var startupDesktopHandle = Interop.GetInputDesktopHandle();
 #if DEBUG

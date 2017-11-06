@@ -34,6 +34,7 @@ import { IApplicationProfileWithFiles } from '../../shared/interfaces/applicatio
 import { IApplicationProfileFile } from '../../shared/interfaces/application-profile-file';
 import { IPostStartData } from '../routes/interfaces/post-start-data';
 import { ISetting } from '../../shared/interfaces/setting';
+import { IClientDeviceSettings } from '../routes/interfaces/client-device-settings';
 
 export abstract class StorageProvider {
     abstract initialize(config: any, ...args: any[]): void;
@@ -43,6 +44,8 @@ export abstract class StorageProvider {
     abstract prepareStorage(): Promise<IPrepareStorageResult>;
 
     abstract getTokenSecret(): Promise<string | null>;
+
+    abstract getClientDeviceSettings(clientDeviceId: string): Promise<IClientDeviceSettings>;
 
     abstract getClientDevicePostStartData(clientDeviceId: string): Promise<IPostStartData>;
 

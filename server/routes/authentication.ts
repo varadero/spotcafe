@@ -210,6 +210,9 @@ export class AuthenticationRoutes extends RoutesBase {
         if (urlPath.startsWith(this.apiPrefix + 'client-device-current-data')) {
             return [pids.clientDeviceFullAccess];
         }
+        if (urlPath.startsWith(this.apiPrefix + 'client-device-settings')) {
+            return [pids.clientDeviceFullAccess];
+        }
         if (this.apiPathIs(urlPath, 'devices-groups')) {
             return this.selectPermissionsIds(method, [pids.devicesGroupsView], [pids.devicesGroupsModify]);
         }

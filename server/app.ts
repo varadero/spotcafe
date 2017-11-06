@@ -235,6 +235,7 @@ export class App {
                 result.files.push({ name: fileName, base64Content: base64 });
             }
         }
+        result.startupName = 'SpotCafe.Desktop.exe';
         if (result.files.length > 0) {
             await this.storageProvider.setClientFiles(result);
         } else {

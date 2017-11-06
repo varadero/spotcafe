@@ -44,6 +44,7 @@ import { IApplicationProfileFile } from '../../../shared/interfaces/application-
 import { IPostStartData } from '../../routes/interfaces/post-start-data';
 import { IClientApplicationFile } from '../../routes/interfaces/client-application-file';
 import { ISetting } from '../../../shared/interfaces/setting';
+import { IClientDeviceSettings } from '../../routes/interfaces/client-device-settings';
 
 export class MSSqlDatabaseStorageProvider implements StorageProvider {
     private config: ConnectionConfig;
@@ -57,6 +58,14 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         this.config = <ConnectionConfig>(config);
         this.dbHelper = new DatabaseHelper(this.config, this.logger);
         this.reportsHelper = new ReportsHelper(this.dbHelper);
+    }
+
+    async getClientDeviceSettings(clientDeviceId: string): Promise<IClientDeviceSettings> {
+        if (clientDeviceId) { }
+        const currentUserRegFile = await this.getSetting('clientDevice.currentUserRegistryFile') || '';
+        return {
+            currentUserRegistryEntriesFile: currentUserRegFile
+        };
     }
 
     async getClientDevicePostStartData(clientDeviceId: string): Promise<IPostStartData> {

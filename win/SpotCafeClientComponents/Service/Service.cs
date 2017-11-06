@@ -18,6 +18,8 @@ using System.Threading.Tasks;
 namespace SpotCafe.Service {
     class Service : ServiceBase {
         public static readonly string Name = "SpotCafe Service";
+        public static readonly string DisplayName = "SpotCafe Service";
+        public static readonly string Description = "Service for supporting SpotCafe clients";
 
         private Logger logger;
         private ServerDiscoverer discoverer;
@@ -75,6 +77,7 @@ namespace SpotCafe.Service {
             discoverer = new ServerDiscoverer(serviceConfig.ClientDeviceId, Environment.MachineName, serviceConfig.ServerIp, discoverySearchInterval);
             discoverer.DiscoveryDataReceived += Discoverer_DataReceived;
             StartServerDiscovery();
+            //ForceDiscoverer_DataReceived();
             base.OnStart(args);
         }
 
@@ -307,7 +310,7 @@ namespace SpotCafe.Service {
                 File.WriteAllText(configFileFullPath, serializer.Serialize(config));
                 Log($"Configuration written to {configFileFullPath} with ClientDeviceId={config.ClientDeviceId}", LogEventIds.SaveServiceConfiguration);
             } catch (Exception ex) {
-                LogError($"Can't save configuration. It must be manually selected, otherwise new ClientDeviecId will be generated on each start-up. Error: {ex}", LogEventIds.SaveServiceConfigurationError);
+                LogError($"Can't save configuration. It must be manually selected, otherwise new ClientDeviceId will be generated on each start-up. Error: {ex}", LogEventIds.SaveServiceConfigurationError);
             }
         }
 
