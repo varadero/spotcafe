@@ -1,0 +1,42 @@
+{
+    // Use IntelliSense to learn about possible Node.js debug attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Create DB",
+            "cwd": "${workspaceRoot}/server",
+            "program": "${workspaceRoot}/server/index",
+            "outFiles": [
+                "${workspaceRoot}/out/**/*.js"
+            ],
+            "args": [
+                "--create-storage",
+                "--app-administrator-password=123456"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Normal start",
+            "cwd": "${workspaceRoot}/server",
+            "program": "${workspaceRoot}/server/index",
+            "outFiles": [
+                "${workspaceRoot}/out/**/*.js"
+            ],
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
+            "name": "ng test",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:9876/debug.html",
+            "webRoot": "${workspaceRoot}/web"
+        }
+    ]
+}
