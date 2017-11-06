@@ -13,13 +13,10 @@ export class AdvancedSettingsComponent {
     settings: ISetting[];
     nameSearchText = '';
 
-    private allowedKeys: string[];
-
     @ViewChild('updateSettingMessagesComponent') private updateSettingMessagesComponent: DisplayMessagesComponent;
     @ViewChild('loadSettingMessagesComponent') private loadSettingMessagesComponent: DisplayMessagesComponent;
 
     constructor(private dataSvc: DataService, private errorsSvc: ErrorsService) {
-        this.setAllowedKeys();
     }
 
     async loadSettings(nameSearchText: string): Promise<void> {
@@ -41,24 +38,6 @@ export class AdvancedSettingsComponent {
         } finally {
 
         }
-    }
-
-    allowReadOnlyKeys(event: KeyboardEvent): void {
-        if (this.allowedKeys.indexOf(event.key) < 0) {
-            event.preventDefault();
-            return;
-        }
-    }
-
-    private setAllowedKeys(): void {
-        this.allowedKeys = [
-            'ArrowLeft',
-            'ArrowRight',
-            'ArrowTop',
-            'ArrowBottom',
-            'End',
-            'Home'
-        ];
     }
 
     private handleError(err: any, messagesComponent: DisplayMessagesComponent, messagePrefix: string): void {

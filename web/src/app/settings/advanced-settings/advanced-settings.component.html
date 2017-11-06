@@ -18,7 +18,7 @@
             <spotcafe-messages #updateSettingMessagesComponent></spotcafe-messages>
             <mat-card *ngFor="let setting of settings">
                 <mat-form-field class="setting-name">
-                    <input (keydown)="allowReadOnlyKeys($event)" (cut)="$event.preventDefault()" (paste)="$event.preventDefault()" matInput placeholder="Name"
+                    <input spotcafeNotChangeable matInput placeholder="Name"
                         value="{{setting.name}}" />
                 </mat-form-field>
                 <mat-form-field>

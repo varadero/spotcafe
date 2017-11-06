@@ -6,23 +6,23 @@
 <div>
     <button (click)="removeSelected.next()" mat-button color="warn">Remove</button>
     <mat-form-field>
-        <input matInput (keydown)="allowReadOnlyKeys($event)" (cut)="$event.preventDefault()" (paste)="$event.preventDefault()" [value]="applicationProfileFile.applicationGroupName"
+        <input matInput spotcafeNotChangeable [value]="applicationProfileFile.applicationGroupName"
             placeholder="Application group" />
     </mat-form-field>
     <mat-form-field>
-        <input matInput (keydown)="allowReadOnlyKeys($event)" (cut)="$event.preventDefault()" (paste)="$event.preventDefault()" [value]="applicationProfileFile.title"
+        <input matInput spotcafeNotChangeable [value]="applicationProfileFile.title"
             placeholder="Title" />
     </mat-form-field>
     <mat-form-field>
-        <input matInput (keydown)="allowReadOnlyKeys($event)" (cut)="$event.preventDefault()" (paste)="$event.preventDefault()" [value]="applicationProfileFile.description"
+        <input matInput spotcafeNotChangeable [value]="applicationProfileFile.description"
             placeholder="Description" />
     </mat-form-field>
     <mat-form-field>
-        <input matInput (keydown)="allowReadOnlyKeys($event)" (cut)="$event.preventDefault()" (paste)="$event.preventDefault()" [value]="applicationProfileFile.filePath"
+        <input matInput spotcafeNotChangeable [value]="applicationProfileFile.filePath"
             placeholder="Full path" />
     </mat-form-field>
     <mat-form-field>
-        <input matInput (keydown)="allowReadOnlyKeys($event)" (cut)="$event.preventDefault()" (paste)="$event.preventDefault()" [value]="applicationProfileFile.startupParameters"
+        <input matInput spotcafeNotChangeable [value]="applicationProfileFile.startupParameters"
             placeholder="Startup parameters" />
     </mat-form-field>
 </div>

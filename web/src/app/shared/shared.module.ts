@@ -10,6 +10,7 @@ import { MoneyPipe } from './money.pipe';
 import { MessagesService } from './messages.service';
 import { ErrorsService } from './errors.service';
 import { BaseEntityComponent } from './base-entity/base-entity.component';
+import { NotChangeableDirective } from './not-changeable/not-changeable.directive';
 
 const allModules = [
     CommonModule,
@@ -23,7 +24,8 @@ const allModules = [
         DateTimeSelectorComponent,
         DurationPipe,
         MoneyPipe,
-        BaseEntityComponent
+        BaseEntityComponent,
+        NotChangeableDirective
     ],
     imports: allModules,
     exports: [
@@ -32,7 +34,8 @@ const allModules = [
         DateTimeSelectorComponent,
         DurationPipe,
         MoneyPipe,
-        BaseEntityComponent
+        BaseEntityComponent,
+        NotChangeableDirective
     ],
     providers: [MessagesService, ErrorsService]
 })

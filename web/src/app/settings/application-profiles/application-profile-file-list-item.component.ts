@@ -12,28 +12,4 @@ export class ApplicationProfileFileListItemComponent {
     @Input() showImage: boolean;
 
     @Output() removeSelected = new EventEmitter<void>();
-
-    private allowedKeys: string[];
-
-    constructor() {
-        this.setAllowedKeys();
-    }
-
-    allowReadOnlyKeys(event: KeyboardEvent): void {
-        if (this.allowedKeys.indexOf(event.key) < 0) {
-            event.preventDefault();
-            return;
-        }
-    }
-
-    private setAllowedKeys(): void {
-        this.allowedKeys = [
-            'ArrowLeft',
-            'ArrowRight',
-            'ArrowTop',
-            'ArrowBottom',
-            'End',
-            'Home'
-        ];
-    }
 }
