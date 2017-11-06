@@ -31,10 +31,12 @@ export class ReportsRoutes extends RoutesBase {
         const byClient = await this.storageProvider.getTotalsByClientReport(startedAt, stoppedAt);
         const byDevice = await this.storageProvider.getTotalsByDeviceReport(startedAt, stoppedAt);
         const byEmployee = await this.storageProvider.getTotalsByEmployeeReport(startedAt, stoppedAt);
+        const totalForPeriod = await this.storageProvider.getTotalForPeriod(startedAt, stoppedAt);
         const resultValue = <ITotalsByClientDeviceAndEmployee>{
             clients: byClient,
             devices: byDevice,
-            employees: byEmployee
+            employees: byEmployee,
+            totalForPeriod: totalForPeriod
         };
         return { value: resultValue };
     }

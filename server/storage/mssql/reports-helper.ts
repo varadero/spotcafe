@@ -7,6 +7,20 @@ export class ReportsHelper {
     constructor(private dbHelper: DatabaseHelper) {
     }
 
+    async totalForPeriod(startedAt: number, stoppedAt: number): Promise<number> {
+        const sql = `
+            SELECT SUM([Bill])
+            FROM [ClientDevicesStatusHistory]
+            WHERE [StartedAt]>=@StartedAt AND [StoppedAt]<=@StoppedAt
+        `;
+        const params: IRequestParameter[] = [
+            { name: 'StartedAt', value: startedAt, type: TYPES.Decimal },
+            { name: 'StoppedAt', value: stoppedAt, type: TYPES.Decimal }
+        ];
+        const result = await this.dbHelper.execScalar(sql, params);
+        return <number>result.value;
+    }
+
     async totalsByDevice(startedAt: number, stoppedAt: number): Promise<IReportTotalsByEntity[]> {
         const sql = `
             SELECT cd.[Name],

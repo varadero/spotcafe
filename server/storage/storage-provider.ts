@@ -62,6 +62,7 @@ export abstract class StorageProvider {
     abstract getTotalsByDeviceReport(startedAd: number, stoppedAt: number): Promise<IReportTotalsByEntity[]>;
     abstract getTotalsByClientReport(startedAd: number, stoppedAt: number): Promise<IReportTotalsByEntity[]>;
     abstract getTotalsByEmployeeReport(startedAd: number, stoppedAt: number): Promise<IReportTotalsByEntity[]>;
+    abstract getTotalForPeriod(startedAd: number, stoppedAt: number): Promise<number>;
 
     abstract getStartedDevicesCalcBillData(): Promise<IStartedDeviceCalcBillData[]>;
     abstract getStartedDeviceCalcBillData(deviceId: string): Promise<IStartedDeviceCalcBillData>;

@@ -235,6 +235,10 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
         return <number>newCredit;
     }
 
+    async getTotalForPeriod(startedAd: number, stoppedAt: number): Promise<number> {
+        return await this.reportsHelper.totalForPeriod(startedAd, stoppedAt);
+    }
+
     async getTotalsByDeviceReport(startedAt: number, stoppedAt: number): Promise<IReportTotalsByEntity[]> {
         return await this.reportsHelper.totalsByDevice(startedAt, stoppedAt);
     }

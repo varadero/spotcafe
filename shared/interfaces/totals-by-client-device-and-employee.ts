@@ -4,4 +4,5 @@ export interface ITotalsByClientDeviceAndEmployee {
     clients: IReportTotalsByEntity[];
     devices: IReportTotalsByEntity[];
     employees: IReportTotalsByEntity[];
+    totalForPeriod: number;
 }

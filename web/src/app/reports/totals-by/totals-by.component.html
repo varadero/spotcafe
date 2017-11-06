@@ -36,4 +36,7 @@
         <mat-card-title>Employees</mat-card-title>
         <spotcafe-totals-by-table [rows]="report.employees"></spotcafe-totals-by-table>
     </mat-card>
+    <mat-card>
+        <mat-card-title>Total for period: {{report.totalForPeriod | money}}</mat-card-title>
+    </mat-card>
 </div>
