@@ -100,3 +100,23 @@ button.client-device-button {
 .client-device-approved-check {
     margin-right: 1em;
 }
+
+.alert-success {
+    background-color: #4caf50;
+    color: #fff;
+}
+
+.alert-info {
+    background-color: #03a9f4;
+    color: #fff;
+}
+
+.alert-warning {
+    background-color: #ff5722;
+    color: #fff;
+}
+
+.alert-error {
+    background-color: #f44336;
+    color: #fff;
+}
