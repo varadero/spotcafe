@@ -16,6 +16,7 @@ import { DisplayMessagesComponent } from '../../shared/display-messages.componen
 import { IBaseEntity } from '../../../../../shared/interfaces/base-entity';
 import { IApplicationProfileWithFiles } from '../../../../../shared/interfaces/application-profile-with-files';
 import { IApplicationProfileFile } from '../../../../../shared/interfaces/application-profile-file';
+import { WebSocketUtilsService } from '../../core/web-socket-utils.service';
 
 @Component({
     templateUrl: './application-profiles.component.html',
@@ -61,6 +62,7 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
     constructor(
         private dataSvc: DataService,
         private wsSvc: WebSocketService,
+        private wsUtilsSvc: WebSocketUtilsService,
         private errorsSvc: ErrorsService) {
         if (this.dataSvc) { }
     }
@@ -307,11 +309,12 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
                     this.handleError(data.payload, this.deviceMessagesComponent, 'Loading data from device error');
                     return;
                 }
-
-                if (this.matchesMessage(data, WebSocketMessageName.getDrivesResponse, this.selectedDevice)) {
-                    this.handleGetDrivesResponse(data);
-                } else if (this.matchesMessage(data, WebSocketMessageName.getFolderItemsResponse, this.selectedDevice)) {
-                    this.handleGetFolderItemsResponse(data);
+                if (this.selectedDevice) {
+                    if (this.wsUtilsSvc.matchesMessage(data, WebSocketMessageName.getDrivesResponse, this.selectedDevice.id)) {
+                        this.handleGetDrivesResponse(data);
+                    } else if (this.wsUtilsSvc.matchesMessage(data, WebSocketMessageName.getFolderItemsResponse, this.selectedDevice.id)) {
+                        this.handleGetFolderItemsResponse(data);
+                    }
                 }
             } catch (err) { }
         }
@@ -337,17 +340,6 @@ export class ApplicationProfilesComponent implements OnInit, OnDestroy {
             this.drives = resp.drives;
             this.selectedDrive = '';
         }
-    }
-
-    private matchesMessage(msg: IWebSocketData, messageName: WebSocketMessageName, selectedDevice: IClientDevice): boolean {
-        if (!msg.sender) {
-            return false;
-        }
-        if (msg.name === messageName && selectedDevice && msg.sender.deviceId === selectedDevice.id) {
-            // This data is for the selected device
-            return true;
-        }
-        return false;
     }
 
     private resetNewApplicationProfileFile(): void {

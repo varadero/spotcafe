@@ -19,6 +19,7 @@ namespace SpotCafe.Desktop.REST {
             this.baseApiPath = baseApiPath.EndsWith("/") ? baseApiPath : baseApiPath + "/";
             this.ClientDeviceId = clientDeviceId;
             client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Connection", "close");
             var ub = new UriBuilder();
             ub.Scheme = "https";
             ub.Host = serviceHost;

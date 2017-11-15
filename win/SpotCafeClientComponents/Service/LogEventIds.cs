@@ -30,5 +30,6 @@ namespace SpotCafe.Service {
         public const int DownloadingClientFiles = 22;
         public const int StartServerDiscovery = 23;
         public const int NoStartupDataReceived = 24;
+        public const int StartUtilsServiceFailed = 25;
     }
 }

@@ -1,0 +1,15 @@
+.year-field {
+    width: 4em;
+}
+
+.month-field {
+    width: 9em;
+}
+
+.day-field {
+    width: 3em;
+}
+
+.hour-field {
+    width: 5em;
+}

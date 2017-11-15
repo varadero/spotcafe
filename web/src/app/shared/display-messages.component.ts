@@ -67,7 +67,7 @@ export class DisplayMessagesComponent implements OnInit {
         this.addMessage(text, 'error');
     }
 
-    addMessage(text: string, type: string): void {
+    addMessage(text: string, type: 'success' | 'info' | 'warning' | 'error'): void {
         const msg: IMessage = { text, type, addedAt: new Date().getTime() };
         this.messagesSvc.addMessage(msg);
         this.messages.push(msg);

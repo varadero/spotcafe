@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpotCafe.Service.Contracts;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -33,6 +34,27 @@ namespace SpotCafe.Desktop {
 
         public void SendFolderItems(GetFolderItemsResponse data) {
             Send(WebSocketMessageName.GetFolderItemsResponse, data);
+        }
+
+        public void SendProcesses(GetProcessesResponse data) {
+            Send(WebSocketMessageName.GetProcessesResponse, data);
+        }
+
+        public void SendProcessesErrorResponse(string errorMessage, int number) {
+            SendErrorResponse(WebSocketMessageName.GetProcessesResponse, errorMessage, number);
+        }
+
+        public void SendKillProcessErrorResponse(string errorMessage, int number) {
+            SendErrorResponse(WebSocketMessageName.KillProcessResponse, errorMessage, number);
+        }
+
+        public void SendErrorResponse(string messageName, string errorMessage, int number) {
+            try {
+                var wsData = new WebSocketData<string> { Name = messageName, Payload = new WebSocketPayload<string> { Data = null } };
+                wsData.Payload.Error = new WebSocketPayloadError { Message = errorMessage, Number = number };
+                var arrData = GetArraySegment(wsData);
+                _state.WebSocket.SendAsync(arrData, WebSocketMessageType.Text, true, CancellationToken.None);
+            } catch { }
         }
 
         public void Send<T>(string name, T data) {

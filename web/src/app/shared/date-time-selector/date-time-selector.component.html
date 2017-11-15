@@ -1,19 +1,19 @@
-<mat-form-field>
+<mat-form-field class="year-field">
     <mat-select placeholder="Year" [(ngModel)]="value.selectedYear">
         <mat-option *ngFor="let year of value.years" [value]="year">{{year.name}}</mat-option>
     </mat-select>
 </mat-form-field>
-<mat-form-field>
+<mat-form-field class="month-field">
     <mat-select placeholder="Month" [(ngModel)]="value.selectedMonth">
         <mat-option *ngFor="let month of value.months" [value]="month">{{month.name}}</mat-option>
     </mat-select>
 </mat-form-field>
-<mat-form-field>
+<mat-form-field class="day-field">
     <mat-select placeholder="Day" [(ngModel)]="value.selectedDay">
         <mat-option *ngFor="let day of value.days" [value]="day">{{day.name}}</mat-option>
     </mat-select>
 </mat-form-field>
-<mat-form-field>
+<mat-form-field class="hour-field">
     <mat-select placeholder="Hour" [(ngModel)]="value.selectedHour">
         <mat-option *ngFor="let hour of value.hours" [value]="hour">{{hour.name}}</mat-option>
     </mat-select>

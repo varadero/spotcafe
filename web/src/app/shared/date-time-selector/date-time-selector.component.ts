@@ -2,7 +2,8 @@ import { Component, OnInit, Input } from '@angular/core';
 
 @Component({
     selector: 'spotcafe-date-time-selector',
-    templateUrl: './date-time-selector.component.html'
+    templateUrl: './date-time-selector.component.html',
+    styleUrls: ['./date-time-selector.component.css']
 })
 export class DateTimeSelectorComponent implements OnInit {
     @Input() value: IDateTimeSelectorModel;

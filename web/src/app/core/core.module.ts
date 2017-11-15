@@ -5,6 +5,7 @@ import { DataService } from './data.service';
 import { AuthService } from './auth.service';
 import { CacheService } from './cache.service';
 import { WebSocketService } from './web-socket.service';
+import { WebSocketUtilsService } from './web-socket-utils.service';
 
 const allModules = [
     HttpClientModule
@@ -19,7 +20,8 @@ const allModules = [
         DataService,
         AuthService,
         CacheService,
-        WebSocketService
+        WebSocketService,
+        WebSocketUtilsService
     ]
 })
 export class CoreModule {

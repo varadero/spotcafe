@@ -1,15 +1,18 @@
-﻿using SpotCafe.Service.Discovery;
+﻿using SpotCafe.Service.Contracts;
+using SpotCafe.Service.Discovery;
 using SpotCafe.Service.REST;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.IO.Pipes;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
+using System.ServiceModel;
 using System.ServiceProcess;
 using System.Text;
 using System.Threading;
@@ -172,6 +175,18 @@ namespace SpotCafe.Service {
             return true;
         }
 
+        private void StartUtilsService() {
+            Task.Factory.StartNew(() => {
+                try {
+                    ServiceHost host = new ServiceHost(typeof(UtilsService), new Uri[] { new Uri("net.pipe://localhost/spotcafe/services") });
+                    host.AddServiceEndpoint(typeof(IUtilsService), new NetNamedPipeBinding(), "utils");
+                    host.Open();
+                } catch (Exception ex) {
+                    LogError(ex.ToString(), LogEventIds.StartUtilsServiceFailed);
+                }
+            });
+        }
+
         private async void Discoverer_DataReceived(object sender, DiscoveryDataReceivedEventArgs e) {
             var text = Encoding.UTF8.GetString(e.Data);
             Log($"Discovery data received from {e.RemoteEndPoint.Address}: {text}", LogEventIds.DataReceivedFromDiscoverer);
@@ -190,6 +205,7 @@ namespace SpotCafe.Service {
                     } else {
                         LogError("No startup data received from the server", LogEventIds.NoStartupDataReceived);
                     }
+                    StartUtilsService();
                 }
             } catch (Exception ex) {
                 LogError($"Discovery data is not a valid JSON: {ex}", LogEventIds.DiscoveryDataNotValidJson);

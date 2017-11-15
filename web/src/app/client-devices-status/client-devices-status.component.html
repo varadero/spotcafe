@@ -1,17 +1,28 @@
 <div class="card-container">
   <mat-card *ngFor="let device of clientDevicesStatus" class="device-status-card" [ngClass]="{'client-device-in-use': device.isStarted, 'client-device-free': !device.isStarted}">
     <mat-card-title>
+      <button mat-icon-button [matMenuTriggerFor]="deviceUtilsMenu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
       <div class="device-status-name">{{device.name}}</div>
-      <div class="device-status-bill">{{device.billText}}</div>
+      <mat-menu #deviceUtilsMenu="matMenu" [overlapTrigger]="false">
+        <button (click)="deviceUtilsSelected(device, utilNames.taskManager)" mat-menu-item>Task Manager</button>
+      </mat-menu>
+      <div class="device-status-bill">{{device.displayItems.billText}}</div>
       <div class="device-status-duration">{{device.duration | duration}}</div>
     </mat-card-title>
     <mat-card-content>
+      <spotcafe-client-device-processes *ngIf="device.displayItems.utilTaskManagerVisible" (closed)="deviceUtilsClosed(device, utilNames.taskManager)"
+        (refreshed)="getDeviceProcesses(device)" (processKilled)="killDeviceProcess(device, $event)" (actionExecuted)="deviceActionExecuted(device, $event)"
+        [deviceName]="device.name" [processes]="device.displayItems.processes" [actions]="deviceActions"></spotcafe-client-device-processes>
     </mat-card-content>
     <mat-card-actions>
-      <button (click)="startDevice(device.deviceId)" mat-button color="primary" class="device-status-start-button" [style.visibility]="device.isStarted ? 'hidden': ''">
-        <mat-icon>play_arrow</mat-icon>Start</button>
-      <button (click)="stopDevice(device.deviceId)" mat-raised-button color="accent" [style.visibility]="device.isStarted ? '' : 'hidden'">
-        <mat-icon>stop</mat-icon>Stop</button>
+      <button (click)="startDevice(device)" mat-button color="primary" class="device-status-start-button" [style.visibility]="device.isStarted ? 'hidden': ''">
+        <mat-icon>play_arrow</mat-icon>Start
+      </button>
+      <button (click)="stopDevice(device)" mat-raised-button color="accent" [style.visibility]="device.isStarted ? '' : 'hidden'">
+        <mat-icon>stop</mat-icon>Stop
+      </button>
     </mat-card-actions>
   </mat-card>
 </div>

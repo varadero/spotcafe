@@ -1,5 +1,5 @@
 export interface IMessage {
-    addedAt: number;
+    addedAt?: number;
     text: string;
-    type: string;
+    type: 'success' | 'info' | 'warning' | 'error';
 }

@@ -86,7 +86,104 @@ export class WebSocketActions {
             this.handleGetFolderItemsRequestMessage(callerInfo, targetDeviceId, data);
         } else if (name === WebSocketMessageName.getFolderItemsResponse) {
             this.handleGetFolderItemsResponseMessage(callerInfo, data);
+        } else if (name === WebSocketMessageName.getProcessesRequest) {
+            this.handleGetProcessesRequestMessage(callerInfo, targetDeviceId, data);
+        } else if (name === WebSocketMessageName.getProcessesResponse) {
+            this.handleGetProcessesResponseMessage(callerInfo, data);
+        } else if (name === WebSocketMessageName.killProcessRequest) {
+            this.handleKillProcessRequest(callerInfo, targetDeviceId, data);
+        } else if (name === WebSocketMessageName.executeActionRequest) {
+            this.handleExecuteActionRequest(callerInfo, targetDeviceId, data);
         }
+    }
+
+    private handleExecuteActionRequest(callerInfo: ISocketInfo, targetDeviceId: string, payload?: IWebSocketPayload): void {
+        if (!targetDeviceId) {
+            return;
+        }
+        if (!payload) {
+            return;
+        }
+        const infoByDeviceId = this.getInfoByDeviceId(targetDeviceId);
+        if (!infoByDeviceId) {
+            this.sendDeviceNotFound(callerInfo.socket);
+            return;
+        }
+
+        const msgName = WebSocketMessageName.executeActionRequest;
+        this.wss.sendToDevice(infoByDeviceId.socket, msgName, payload);
+    }
+
+    private handleKillProcessRequest(callerInfo: ISocketInfo, targetDeviceId: string, payload?: IWebSocketPayload): void {
+        if (!targetDeviceId) {
+            return;
+        }
+        if (!payload) {
+            return;
+        }
+        const infoByDeviceId = this.getInfoByDeviceId(targetDeviceId);
+        if (!infoByDeviceId) {
+            this.sendDeviceNotFound(callerInfo.socket);
+            return;
+        }
+
+        const msgName = WebSocketMessageName.killProcessRequest;
+        // callerInfo.notFullfilledRequests.push({
+        //     data: null,
+        //     deviceId: targetDeviceId,
+        //     name: msgName,
+        //     requestedAt: Date.now()
+        // });
+        this.wss.sendToDevice(infoByDeviceId.socket, msgName, payload);
+    }
+
+    private handleGetProcessesResponseMessage(callerInfo: ISocketInfo, payload?: IWebSocketPayload): void {
+        const requestCallers = this.getInfosByRequestData(
+            WebSocketMessageName.getProcessesRequest,
+            callerInfo.serverToken.deviceId,
+            null
+        );
+        if (!requestCallers) {
+            return;
+        }
+        for (const getCaller of requestCallers) {
+            // Remove not fullfilled request because now it will be fullfilled
+            this.removeNotFullfilledRequest(
+                getCaller,
+                WebSocketMessageName.getProcessesRequest,
+                callerInfo.serverToken.deviceId,
+                null
+            );
+            this.wss.sendToWebClient(
+                getCaller.socket,
+                WebSocketMessageName.getProcessesResponse,
+                <ISenderData>{ deviceId: callerInfo.serverToken.deviceId },
+                payload
+            );
+        }
+    }
+
+    private handleGetProcessesRequestMessage(callerInfo: ISocketInfo, targetDeviceId: string, payload?: IWebSocketPayload): void {
+        if (!targetDeviceId) {
+            return;
+        }
+        if (!payload) {
+            return;
+        }
+        const infoByDeviceId = this.getInfoByDeviceId(targetDeviceId);
+        if (!infoByDeviceId) {
+            this.sendDeviceNotFound(callerInfo.socket);
+            return;
+        }
+        // Send message to target device
+        const msgName = WebSocketMessageName.getProcessesRequest;
+        callerInfo.notFullfilledRequests.push({
+            data: null,
+            deviceId: targetDeviceId,
+            name: msgName,
+            requestedAt: Date.now()
+        });
+        this.wss.sendToDevice(infoByDeviceId.socket, msgName, payload);
     }
 
     private handleGetFolderItemsResponseMessage(callerInfo: ISocketInfo, payload?: IWebSocketPayload): void {
@@ -195,7 +292,7 @@ export class WebSocketActions {
     private sendDeviceNotFound(socket: ws): void {
         this.wss.sendToWebClient(
             socket,
-            WebSocketMessageName.getFolderItemsResponse,
+            WebSocketMessageName.deviceNotFoundError,
             null,
             this.createDeviceNotConnectedErrorResponse()
         );

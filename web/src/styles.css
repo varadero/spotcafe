@@ -62,8 +62,10 @@ html, body, app-root, mat-sidenav-container, .primary-content {
 
 .device-status-card .device-status-name {
     width: 9em;
+    max-width: 9em;
     display: inline-block;
     word-break: break-all;
+    font-size: 24px;
 }
 
 .device-status-card .device-status-bill {
@@ -119,4 +121,29 @@ button.client-device-button {
 .alert-error {
     background-color: #f44336;
     color: #fff;
+}
+
+.device-processes-content {
+    max-height: 240px;
+    overflow: auto;
+}
+
+.device-processes-table {
+    cursor: default;
+}
+
+.device-processes-table thead th {
+    text-align: left;
+}
+
+.device-processes-table tbody td {
+    text-align: left;
+}
+
+.text-cell {
+    text-align: left;
+}
+
+.value-cell {
+    text-align: right;
 }

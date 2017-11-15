@@ -134,7 +134,7 @@ AdjustTokenPrivileges hToken, False, mPriv, 4 + (12 * mPriv.PrivilegeCount), mNe
 
         public static void LogOff() {
             // return ExitWindowsEx(EWX_LOGOFF | EWX_FORCE | EWX_FORCEIFHUNG, 0);
-            LibClass.ExitWindows(RestartOptions.Reboot, true);
+            LibClass.ExitWindows(RestartOptions.LogOff, true);
         }
 
         public static void ShutDown() {

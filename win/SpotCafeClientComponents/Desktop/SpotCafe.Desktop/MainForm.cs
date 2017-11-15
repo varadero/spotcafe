@@ -1,4 +1,11 @@
-﻿using SpotCafe.Desktop.REST;
+﻿#if DEBUG
+//you have nothing to do here but c# requires it
+#else
+#define NOT_DEBUG //define a symbol specifying a non debug environment
+#endif
+
+using SpotCafe.Desktop.REST;
+using SpotCafe.Service.Contracts;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -300,15 +307,7 @@ namespace SpotCafe.Desktop {
                     if (duration.TotalSeconds > _state.RestartAfterIdleFor) {
                         _state.RestartInitiated = true;
                         Log($"Restarting after {_state.RestartAfterIdleFor} seconds of idle time ({duration})");
-#if DEBUG
-#else
-                        try {
-                            Interop.Restart();
-                        } catch (Exception ex) {
-                            LogError(ex.ToString());
-                        }
-                        Log($"Restart windows error: {Marshal.GetLastWin32Error()}");
-#endif
+                        Restart();
                         return true;
                     }
                 }
@@ -316,15 +315,7 @@ namespace SpotCafe.Desktop {
                     if (duration.TotalSeconds > _state.ShutdownAfterIdleFor) {
                         _state.RestartInitiated = true;
                         Log($"Shutting down after {_state.ShutdownAfterIdleFor} seconds of idle time ({duration})");
-#if DEBUG
-#else
-                        try {
-                            Interop.ShutDown();
-                        } catch (Exception ex) {
-                            LogError(ex.ToString());
-                        }
-                        Log($"ShutDown windows error: {Marshal.GetLastWin32Error()}");
-#endif
+                        Shutdown();
                         return true;
                     }
                 }
@@ -337,6 +328,7 @@ namespace SpotCafe.Desktop {
                 try {
                     _state.DeviceToken = await _state.DeviceRest.LogInDevice();
                     _state.DeviceRest.SetToken(_state.DeviceToken);
+                    _state.UtilsServiceClient = new UtilsServiceClient("net.pipe://localhost/spotcafe/services/utils");
                     StartWebSocketManager(_state.DeviceToken.Token);
                     CurrentDataTimer_Tick(_state.CurrentDataTimer, EventArgs.Empty);
                     StartCurrentDataTimer();
@@ -387,7 +379,68 @@ namespace SpotCafe.Desktop {
                     _state.LastCurrentData.IsStarted = false;
                     ProcessCurrentData(_state.LastCurrentData);
                 }
+            } else if (name == WebSocketMessageName.GetProcessesRequest) {
+                try {
+                    var processesRes = _state.UtilsServiceClient.GetProcesses(new Service.Contracts.GetProcessesRequest());
+                    _state.WebSocketManager.SendProcesses(processesRes);
+                } catch {
+                    _state.WebSocketManager.SendProcessesErrorResponse("Error getting processes", WebSocketError.CantGetProcesses);
+                }
+            } else if (name == WebSocketMessageName.KillProcessRequest) {
+                var pid = 0;
+                try {
+                    var req = _state.Serializer.Deserialize<WebSocketData<KillProcessRequest>>(data);
+                    pid = req.Payload.Data.PID;
+                    var killProcessRes = _state.UtilsServiceClient.KillProcess(new Service.Contracts.KillProcessRequest { PID = pid });
+                } catch {
+                    _state.WebSocketManager.SendKillProcessErrorResponse($"Error killing process with id {pid}", WebSocketError.CantKillProcess);
+                }
+            } else if (name == WebSocketMessageName.ExecuteActionRequest) {
+                try {
+                    var req = _state.Serializer.Deserialize<WebSocketData<ExecuteActionRequest>>(data);
+                    var actionId = req.Payload.Data.ActionId;
+                    if (actionId == "log-off") {
+                        LogOff();
+                    } else if (actionId == "restart") {
+                        Restart();
+                    } else if (actionId == "shutdown") {
+                        Shutdown();
+                    }
+                } catch { }
             }
+        }
+
+        [Conditional("NOT_DEBUG")]
+        private void LogOff() {
+            try {
+                Log("Logging off");
+                Interop.LogOff();
+            } catch (Exception ex) {
+                LogError(ex.ToString());
+            }
+            Log($"Logoff error: {Marshal.GetLastWin32Error()}");
+        }
+
+        [Conditional("NOT_DEBUG")]
+        private void Restart() {
+            try {
+                Log("Restarting");
+                Interop.Restart();
+            } catch (Exception ex) {
+                LogError(ex.ToString());
+            }
+            Log($"Restart windows error: {Marshal.GetLastWin32Error()}");
+        }
+
+        [Conditional("NOT_DEBUG")]
+        private void Shutdown() {
+            try {
+                Log("Shutting down");
+                Interop.ShutDown();
+            } catch (Exception ex) {
+                LogError(ex.ToString());
+            }
+            Log($"ShutDown windows error: {Marshal.GetLastWin32Error()}");
         }
 
         private void WebSocketManager_SocketEvent(object sender, WebSocketEventArgs e) {
@@ -440,10 +493,12 @@ namespace SpotCafe.Desktop {
         }
 
         protected override void OnShown(EventArgs e) {
+#if !DEBUG
             var workArea = Screen.PrimaryScreen.WorkingArea;
             Location = new Point(workArea.Left, workArea.Top);
             Size = new Size(workArea.Width, workArea.Height);
             base.OnShown(e);
+#endif 
         }
 
         private void InitializeState(MainFormStartArgs args) {
@@ -498,6 +553,7 @@ namespace SpotCafe.Desktop {
             public MainFormVisualState Visual { get; set; }
             public bool RestartInitiated { get; set; }
             public bool HasBeenStarted { get; set; }
+            public UtilsServiceClient UtilsServiceClient { get; set; }
         }
 
         private class SecureThreadState {

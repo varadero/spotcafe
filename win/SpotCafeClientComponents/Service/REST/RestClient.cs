@@ -13,6 +13,7 @@ namespace SpotCafe.Service.REST {
         public RestClient(string serviceHost, string baseApiPath) {
             this.baseApiPath = baseApiPath.EndsWith("/") ? baseApiPath : baseApiPath + "/";
             client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Connection", "close");
             var ub = new UriBuilder();
             ub.Scheme = "https";
             ub.Host = serviceHost;

@@ -1,0 +1,32 @@
+<mat-card>
+    <mat-card-subtitle>{{deviceName}}'s Task Manager
+        <span *ngIf="processes">({{processes.length}} processes)</span>
+    </mat-card-subtitle>
+    <mat-card-content class="device-processes-content">
+        <table *ngIf="processes && processes.length" class="device-processes-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Path</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let process of processes" (click)="selectProcess(process)" [class.selected-process]="selectedProcess==process">
+                    <td>{{process.name}}</td>
+                    <td>{{process.path}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </mat-card-content>
+    <mat-card-actions>
+        <button (click)="refreshed.next()" mat-button>Refresh</button>
+        <button [disabled]="!selectedProcess" (click)="killProcess(selectedProcess)" mat-button color="warn">End '{{selectedProcess?.name}}'</button>
+        <mat-form-field *ngIf="actions && actions.length" style="width: 120px;">
+            <mat-select [(ngModel)]="selectedAction" placeholder="Action">
+                <mat-option *ngFor="let action of actions" [value]="action">{{action.name}}</mat-option>
+            </mat-select>
+        </mat-form-field>
+        <button (click)="actionExecuted.next(selectedAction)" [disabled]="!selectedAction" mat-button>Execute</button>
+        <button (click)="closed.next()" mat-button>Close</button>
+    </mat-card-actions>
+</mat-card>
