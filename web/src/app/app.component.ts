@@ -5,6 +5,7 @@ import { DataService } from './core/data.service';
 import { AuthService } from './core/auth.service';
 import { WebSocketService, IWebSocketEventArgs } from './core/web-socket.service';
 import { IToken } from '../../../shared/interfaces/token';
+import { MessagesService } from './shared/messages.service';
 
 @Component({
   selector: 'spotcafe-root',
@@ -20,16 +21,25 @@ export class AppComponent implements OnInit {
   constructor(
     private dataSvc: DataService,
     private authSvc: AuthService,
-    private wsSvc: WebSocketService) {
+    private wsSvc: WebSocketService,
+    private msgSvc: MessagesService) {
     this.wsAddr = this.getWebSocketAddress();
   }
 
   ngOnInit(): void {
     this.authSvc.loggedIn$.subscribe(token => {
+      if (token) {
+        setTimeout(() =>
+          this.msgSvc.addSuccessMessage(`Succesfully logged in`)
+        );
+      }
       this.handleLoggedIn(token);
     });
     this.authSvc.unauthorized$.subscribe(() => {
-      // TODO Show toaster with unauthorized message
+      this.msgSvc.addErrorMessage('Not authorized');
+    });
+    this.authSvc.unauthenticated$.subscribe(() => {
+      this.msgSvc.addErrorMessage('Not authenticated. You need to log in');
     });
   }
 

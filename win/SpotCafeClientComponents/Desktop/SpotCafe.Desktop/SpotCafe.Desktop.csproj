@@ -81,6 +81,7 @@
     <Compile Include="REST\LogInDeviceRequest.cs" />
     <Compile Include="REST\DeviceRestClient.cs" />
     <Compile Include="REST\ClientToken.cs" />
+    <Compile Include="REST\LogInDeviceResponse.cs" />
     <Compile Include="REST\PostStartData.cs" />
     <Compile Include="REST\RestClientBase.cs" />
     <Compile Include="SecureForm.cs">

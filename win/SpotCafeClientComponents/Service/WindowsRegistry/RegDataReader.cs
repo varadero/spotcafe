@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace SpotCafe.Service.WindowsRegistry {
@@ -14,6 +15,7 @@ namespace SpotCafe.Service.WindowsRegistry {
 
         public void Init(string fileContent) {
             InitializeState();
+            fileContent = Regex.Replace(fileContent, @"\r\n?|\n", Environment.NewLine);
             _state.Reader = new StringReader(fileContent);
             ReadToFirstSection();
         }

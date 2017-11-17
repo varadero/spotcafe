@@ -1,3 +1,3 @@
 export interface IClientDeviceSettings {
-    currentUserRegistryEntriesFile: string;
+    startupRegistryEntries: string;
 }

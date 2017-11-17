@@ -62,9 +62,9 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
 
     async getClientDeviceSettings(clientDeviceId: string): Promise<IClientDeviceSettings> {
         if (clientDeviceId) { }
-        const currentUserRegFile = await this.getSetting('clientDevice.currentUserRegistryFile') || '';
+        const startupRegistryEntries = await this.getSetting('clientDevice.startupRegistryEntries') || '';
         return {
-            currentUserRegistryEntriesFile: currentUserRegFile
+            startupRegistryEntries: startupRegistryEntries
         };
     }
 
@@ -266,7 +266,7 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
 
     async getSettings(nameSearchText: string): Promise<ISetting[]> {
         let sql = `
-            SELECT [Name], [Value]
+            SELECT [Name], [Value], [DataType]
             FROM [Settings]
         `;
         const params: IRequestParameter[] = [];
@@ -946,8 +946,8 @@ export class MSSqlDatabaseStorageProvider implements StorageProvider {
                 ELSE
                 BEGIN
                     INSERT INTO [Settings]
-                    ([Name], [Value], [IsSystem]) VALUES
-                    (@Name, @Value, 1)
+                    ([Name], [Value], [IsSystem], [DataType]) VALUES
+                    (@Name, @Value, 1, 'json')
                 END
         `;
         const params: IRequestParameter[] = [

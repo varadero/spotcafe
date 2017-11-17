@@ -18,7 +18,9 @@ using System.Net.Security;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Principal;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -326,10 +328,11 @@ namespace SpotCafe.Desktop {
         private async void LogInDevice() {
             for (var i = 0; i < 10000; i++) {
                 try {
-                    _state.DeviceToken = await _state.DeviceRest.LogInDevice();
-                    _state.DeviceRest.SetToken(_state.DeviceToken);
+                    _state.LogInDeviceResponse = await _state.DeviceRest.LogInDevice();
+                    _state.DeviceRest.SetToken(_state.LogInDeviceResponse.DeviceToken);
                     _state.UtilsServiceClient = new UtilsServiceClient("net.pipe://localhost/spotcafe/services/utils");
-                    StartWebSocketManager(_state.DeviceToken.Token);
+                    ApplyRegistryEntries(_state.LogInDeviceResponse.ClientDeviceSettings.StartupRegistryEntries);
+                    StartWebSocketManager(_state.LogInDeviceResponse.DeviceToken.Token);
                     CurrentDataTimer_Tick(_state.CurrentDataTimer, EventArgs.Empty);
                     StartCurrentDataTimer();
                     break;
@@ -340,13 +343,32 @@ namespace SpotCafe.Desktop {
             }
         }
 
+        [Conditional("NOT_DEBUG")]
+        private void ApplyRegistryEntries(string registryEntries) {
+            try {
+                var req = new ApplyRegistryDataRequest();
+                req.CurrentUserSid = WindowsIdentity.GetCurrent().User.Value;
+                req.RegistryData = registryEntries;
+                var normalizedNewLines = Regex.Replace(registryEntries, @"\r\n?|\n", Environment.NewLine);
+                Log($"Applying registry entries for user {req.CurrentUserSid}: {normalizedNewLines}");
+                var res = _state.UtilsServiceClient.ApplyRegistryData(req);
+                if (res.Errors != null) {
+                    foreach (var error in res.Errors) {
+                        LogError($"Apply registry entry error: {error}");
+                    }
+                }
+            } catch (Exception ex) {
+                LogError($"Can't apply registry entries: {ex}");
+            }
+        }
+
         private void StartWebSocketManager(string token) {
             if (_state.WebSocketManager != null) {
                 _state.WebSocketManager = null;
             }
             var wssAddr = $"wss://{_state.StartArgs.CommandLineArguments.ServerIP}/api/websocket";
             _state.WebSocketManager = new WebSocketManager();
-            _state.WebSocketManager.Start(wssAddr, _state.DeviceToken.Token);
+            _state.WebSocketManager.Start(wssAddr, _state.LogInDeviceResponse.DeviceToken.Token);
             _state.WebSocketManager.SocketEvent += WebSocketManager_SocketEvent;
             _state.WebSocketManager.MessageReceived += WebSocketManager_MessageReceived;
         }
@@ -531,7 +553,8 @@ namespace SpotCafe.Desktop {
         }
 
         private class MainFormState {
-            public ClientToken DeviceToken { get; set; }
+            public LogInDeviceResponse LogInDeviceResponse { get; set; }
+            //public ClientToken DeviceToken { get; set; }
             public DeviceRestClient DeviceRest { get; set; }
             public ClientToken ClientToken { get; set; }
             public ClientRestClient ClientRest { get; set; }

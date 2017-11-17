@@ -13,9 +13,9 @@ namespace SpotCafe.Desktop.REST {
         }
 
 
-        public async Task<ClientToken> LogInDevice() {
+        public async Task<LogInDeviceResponse> LogInDevice() {
             var req = new LogInDeviceRequest { ClientDeviceId = ClientDeviceId };
-            var result = await Post<ClientToken>("login-device", req);
+            var result = await Post<LogInDeviceResponse>("login-device", req);
             return result;
         }
 

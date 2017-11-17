@@ -8,6 +8,7 @@ import { IToken } from '../../../../shared/interfaces/token';
 export class AuthService {
     loggedIn$ = new BehaviorSubject<IToken | null>(null);
     unauthorized$ = new Subject<string>();
+    unauthenticated$ = new Subject();
 
     private tokenKey = 'spotcafe.token';
     private token: IToken | null;
@@ -35,6 +36,7 @@ export class AuthService {
         this.token = null;
         this.setTokenToStorage(null);
         this.loggedIn$.next(null);
+        this.unauthenticated$.next();
     }
 
     setUnauthorized(url: string): void {

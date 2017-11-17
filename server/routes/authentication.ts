@@ -13,6 +13,7 @@ import { Time } from '../utils/time';
 import { IStartClientDeviceData } from '../storage/start-client-device-data';
 import { Subject } from 'rxjs/Subject';
 import { Observable } from 'rxjs/Observable';
+import { ILoginClientDeviceResponse } from './interfaces/login-client-device-respose';
 
 
 export class AuthenticationRoutes extends RoutesBase {
@@ -116,7 +117,7 @@ export class AuthenticationRoutes extends RoutesBase {
         return { value: logInResult };
     }
 
-    private async logInClientDeviceImpl(clientDeviceId: string): Promise<IRouteActionResult<IToken> | void> {
+    private async logInClientDeviceImpl(clientDeviceId: string): Promise<IRouteActionResult<ILoginClientDeviceResponse> | void> {
         const device = await this.storageProvider.getClientDevice(clientDeviceId);
         if (!device || !device.approved) {
             return { status: 401, error: { message: 'Not approved' }, };
@@ -129,7 +130,12 @@ export class AuthenticationRoutes extends RoutesBase {
             'client-device',
             [this.permissionsMapper.permissionIds.clientDeviceFullAccess]
         );
-        return { value: token };
+        const clientDeviceSettings = await this.storageProvider.getClientDeviceSettings(clientDeviceId);
+        const response: ILoginClientDeviceResponse = {
+            clientDeviceSettings: clientDeviceSettings,
+            deviceToken: token
+        };
+        return { value: response };
     }
 
     private async checkAuthorizationImpl(ctx: Koa.Context, next: () => Promise<any>): Promise<any> {

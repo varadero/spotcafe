@@ -147,3 +147,7 @@ button.client-device-button {
 .value-cell {
     text-align: right;
 }
+
+.full-width {
+    width: 100%;
+}

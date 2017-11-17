@@ -14,6 +14,14 @@ namespace SpotCafe.Service {
     class Program {
         static void Main(string[] args) {
             var serviceFileLocation = Assembly.GetExecutingAssembly().Location;
+            if (!args.Contains("/use-current-folder")) {
+                var folder = Path.GetDirectoryName(serviceFileLocation);
+                if (folder.ToUpper() != Environment.SystemDirectory.ToUpper()) {
+                    Console.WriteLine($"ERROR: Copy files to {Environment.SystemDirectory} and start from there or use flag /use-current-folder");
+                    Console.Read();
+                    return;
+                }
+            }
             //var install = args.Length > 0 && args.Contains("/i");
             //if (install) {
             //    Console.WriteLine($"Installing service {serviceFileLocation}");
