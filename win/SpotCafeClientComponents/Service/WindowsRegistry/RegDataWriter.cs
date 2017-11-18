@@ -20,11 +20,12 @@ namespace SpotCafe.Service.WindowsRegistry {
             var rootKeyName = keyParts[0];
             var subKeyPath = record.Key.Substring(record.Key.IndexOf("\\") + 1);
             RegistryKey rootKey = null;
-            if (keyParts[0] == "HKEY_CURRENT_USER") {
+            if (keyParts[0] == "HKEY_CURRENT_USER" || keyParts[0] == "HKCU") {
                 rootKey = Registry.Users;
                 subKeyPath = currentUserSid + "\\" + subKeyPath;
-            } else if (keyParts[0] == "HKEY_LOCAL_MACHINE") {
+            } else if (keyParts[0] == "HKEY_LOCAL_MACHINE" || keyParts[0] == "HKLM") {
                 rootKey = Registry.LocalMachine;
+            } else if (keyParts[0] == "HKEY_CLASSES_ROOT" || keyParts[0] == "HKCR") {
             } else {
             }
             if (rootKey == null) {
@@ -63,14 +64,8 @@ namespace SpotCafe.Service.WindowsRegistry {
                 if (regItem.MustRemove) {
                     key.DeleteValue(regItem.Name);
                 } else if (regItem.Error == null && regItem.Kind != RegistryValueKind.Unknown && regItem.Kind != RegistryValueKind.None) {
-                    object valueToSave = null;
-                    if (regItem.Kind == RegistryValueKind.DWord && regItem.IntValue != null) {
-                        valueToSave = regItem.IntValue;
-                    } else if (regItem.Kind == RegistryValueKind.String) {
-                        valueToSave = regItem.StringValue;
-                    }
-                    if (valueToSave != null) {
-                        key.SetValue(regItem.Name, valueToSave, regItem.Kind);
+                    if (regItem.Value != null) {
+                        key.SetValue(regItem.Name, regItem.Value, regItem.Kind);
                     }
                 }
             }

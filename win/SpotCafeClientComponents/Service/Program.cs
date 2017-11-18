@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpotCafe.Service.WindowsRegistry;
+using System;
 using System.Collections.Generic;
 using System.Configuration.Install;
 using System.Diagnostics;
