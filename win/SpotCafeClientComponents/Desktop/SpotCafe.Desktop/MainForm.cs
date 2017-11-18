@@ -343,7 +343,6 @@ namespace SpotCafe.Desktop {
             }
         }
 
-        [Conditional("NOT_DEBUG")]
         private void ApplyRegistryEntries(string registryEntries) {
             try {
                 var req = new ApplyRegistryDataRequest();

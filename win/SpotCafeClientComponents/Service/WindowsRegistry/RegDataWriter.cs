@@ -22,6 +22,7 @@ namespace SpotCafe.Service.WindowsRegistry {
             RegistryKey rootKey = null;
             if (keyParts[0] == "HKEY_CURRENT_USER") {
                 rootKey = Registry.Users;
+                subKeyPath = currentUserSid + "\\" + subKeyPath;
             } else if (keyParts[0] == "HKEY_LOCAL_MACHINE") {
                 rootKey = Registry.LocalMachine;
             } else {
@@ -32,10 +33,8 @@ namespace SpotCafe.Service.WindowsRegistry {
             if (record.MustRemove) {
                 rootKey.DeleteSubKeyTree(subKeyPath);
             } else {
-                using (var subKey = rootKey.OpenSubKey(currentUserSid, RegistryKeyPermissionCheck.ReadWriteSubTree)) {
-                    using (var key = subKey.CreateSubKey(subKeyPath, RegistryKeyPermissionCheck.ReadWriteSubTree)) {
-                        WriteRegItems(key, record.Items);
-                    }
+                using (var key = rootKey.CreateSubKey(subKeyPath, RegistryKeyPermissionCheck.ReadWriteSubTree)) {
+                    WriteRegItems(key, record.Items);
                 }
             }
         }
