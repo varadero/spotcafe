@@ -21,7 +21,10 @@ export class ClientDeviceProcessesComponent {
     selectedProcess: IProcessInfo | null;
     selectedAction: IIdWithName;
 
-    killProcess(process: IProcessInfo): void {
+    killProcess(process: IProcessInfo | null): void {
+        if (!process) {
+            return;
+        }
         this.processKilled.next(process);
         this.selectedProcess = null;
     }
