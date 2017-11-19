@@ -1,6 +1,6 @@
 import { IStorageConfig, IStorageProviderConfig } from '../config/storage-interfaces';
 import { StorageProvider } from './storage-provider';
-
+import { MSSqlDatabaseStorageProvider } from './mssql/mssql-database-storage-provider';
 
 export class StorageProviderHelper {
     /**
@@ -23,30 +23,33 @@ export class StorageProviderHelper {
             throw new Error(`Can't find default provider '${defaultProviderName}'. Check config file.`);
         }
 
-        const loadedModule = require(providerConfig.module);
-        // The loaded module contains all exported members
-        // We need to find property which is a function and which name ends with 'StorageProvider' by convention
-        const loadedModulePropNames = Object.getOwnPropertyNames(loadedModule);
-        let providerClassConstructor: any = null;
-        const profiderNameSuffix = 'StorageProvider';
-        for (let i = 0; i < loadedModulePropNames.length; i++) {
-            const modulePropName = loadedModulePropNames[i];
-            if (typeof loadedModule[modulePropName] === 'function' && modulePropName.endsWith(profiderNameSuffix)) {
-                providerClassConstructor = loadedModule[modulePropName];
-                break;
-            }
-        }
+        // // Always load MSSQL provider in order to satisfy
+        // // const loadedModule = require(providerConfig.module);
+        // const loadedModule = require('./mssql/mssql-database-storage-provider');
 
-        let providerInstance: StorageProvider;
-        if (providerClassConstructor) {
-            // Storage provider class constructor is found - make new instance
-            providerInstance = new providerClassConstructor();
-        } else {
-            // Exported class with specified convention name is not found
-            // Assume that loaded module exports default function, which when executed returns new instance
-            providerInstance = loadedModule();
-        }
+        // // The loaded module contains all exported members
+        // // We need to find property which is a function and which name ends with 'StorageProvider' by convention
+        // const loadedModulePropNames = Object.getOwnPropertyNames(loadedModule);
+        // let providerClassConstructor: any = null;
+        // const profiderNameSuffix = 'StorageProvider';
+        // for (let i = 0; i < loadedModulePropNames.length; i++) {
+        //     const modulePropName = loadedModulePropNames[i];
+        //     if (typeof loadedModule[modulePropName] === 'function' && modulePropName.endsWith(profiderNameSuffix)) {
+        //         providerClassConstructor = loadedModule[modulePropName];
+        //         break;
+        //     }
+        // }
 
+        // let providerInstance: StorageProvider;
+        // if (providerClassConstructor) {
+        //     // Storage provider class constructor is found - make new instance
+        //     providerInstance = new providerClassConstructor();
+        // } else {
+        //     // Exported class with specified convention name is not found
+        //     // Assume that loaded module exports default function, which when executed returns new instance
+        //     providerInstance = loadedModule();
+        // }
+        const providerInstance = new MSSqlDatabaseStorageProvider();
         // Initialze the instance
         providerInstance.initialize(providerConfig.config, logger);
         return providerInstance;

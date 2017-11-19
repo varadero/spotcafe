@@ -278,6 +278,7 @@ export class App {
                     await this.delay(delay);
                 }
             } catch (err) {
+                this.logger.log(err);
                 await this.delay(delay);
             }
         }

@@ -1,0 +1,10 @@
+{
+    "name": "spotcafe-build",
+    "version": "0.0.1",
+    "description": "SpotCafe web and server applications build",
+    "scripts": {
+        "build": "./web/ng build && webpack --config ./server/webpack.config.js"
+    },
+    "author": "admin@computerclubsystem.com",
+    "license": "ISC"
+}
