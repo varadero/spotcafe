@@ -1,3 +1,5 @@
 #.vscode
 shared/**/*.js
 shared/**/*.js.map
+web-app
+dist

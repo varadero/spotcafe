@@ -6,11 +6,11 @@
                 "name": "MSSQL Database Provider",
                 "module": "./mssql/mssql-database-storage-provider.js",
                 "config": {
-                    "userName": "admin",
+                    "userName": "spotcafe-user",
                     "password": "123",
                     "server": "localhost",
                     "options": {
-                        "database": "SpotCafe-Dev"
+                        "database": "SpotCafe"
                     }
                 }
             }

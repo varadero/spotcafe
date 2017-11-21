@@ -1,10 +1,14 @@
 {
     "name": "spotcafe-build",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "SpotCafe web and server applications build",
     "scripts": {
-        "build": "./web/ng build && webpack --config ./server/webpack.config.js"
+        "build": "npm run --prefix ./web build:prod && npm run --prefix ./server ts:build && npm run --prefix ./server webpack:build",
+        "build-update": "npm run --prefix ./web build:prod && npm run --prefix ./server ts:build && npm run --prefix ./server webpack:build-update",
+        "build:web": "npm run --prefix ./web build:prod",
+        "build:server": "npm run --prefix ./server ts:build",
+        "build:server:webpack": "npm run --prefix ./server webpack:build",
+        "build:server:webpack-update": "npm run --prefix ./server webpack:build-update"
     },
-    "author": "admin@computerclubsystem.com",
-    "license": "ISC"
+    "author": "admin@computerclubsystem.com"
 }
