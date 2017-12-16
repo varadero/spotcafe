@@ -2,15 +2,6 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { SettingsComponent } from './settings.component';
-import { EmployeesComponent } from './employees/employees.component';
-// import { DisplayMessagesComponent } from '../shared/display-messages.component';
-import { ClientDevicesComponent } from './client-devices/client-devices.component';
-import { RolesComponent } from './roles/roles.component';
-import { DevicesGroupsComponent } from './devices-groups/devices-groups.component';
-import { ClientsGroupsComponent } from './clients-groups/clients-groups.component';
-import { ClientsComponent } from './clients/clients.component';
-import { ApplicationProfilesComponent } from './application-profiles/application-profiles.component';
-import { AdvancedSettingsComponent } from './advanced-settings/advanced-settings.component';
 
 const routes: Routes = [
     {
@@ -18,28 +9,28 @@ const routes: Routes = [
         component: SettingsComponent,
         children: [{
             path: 'employees',
-            component: EmployeesComponent
+            loadChildren: './employees/employees.module#EmployeesModule'
         }, {
             path: 'client-devices',
-            component: ClientDevicesComponent
+            loadChildren: './client-devices/client-devices.module#ClientDevicesModule'
         }, {
             path: 'roles',
-            component: RolesComponent
+            loadChildren: './roles/roles.module#RolesModule'
         }, {
             path: 'devices-groups',
-            component: DevicesGroupsComponent
+            loadChildren: './devices-groups/devices-groups.module#DevicesGroupsModule'
         }, {
             path: 'clients-groups',
-            component: ClientsGroupsComponent
+            loadChildren: './clients-groups/clients-groups.module#ClientsGroupsModule'
         }, {
             path: 'clients',
-            component: ClientsComponent
+            loadChildren: './clients/clients.module#ClientsModule'
         }, {
             path: 'application-profiles',
-            component: ApplicationProfilesComponent
+            loadChildren: './application-profiles/application-profiles.module#ApplicationProfilesModule'
         }, {
             path: 'advanced-settings',
-            component: AdvancedSettingsComponent
+            loadChildren: './advanced-settings/advanced-settings.module#AdvancedSettingsModule'
         }]
     }
 ];

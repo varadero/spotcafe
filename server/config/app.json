@@ -4,7 +4,7 @@
         "port": 443,
         "secure": true,
         "redirectHttpToHttps": true,
-        "webAppFolder": "../web-app/"
+        "webAppFolder": "../dist/web-app/"
     },
     "logging": {
         "filePath": "./logs/spotcafe.server.log"
