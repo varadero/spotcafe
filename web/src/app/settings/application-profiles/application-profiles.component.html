@@ -3,13 +3,11 @@
         <mat-card-title>
             Existing application groups
         </mat-card-title>
-        <div *ngIf="applicationGroups && applicationGroups.length">
-            <mat-form-field>
-                <mat-select [(ngModel)]="selectedApplicationGroup" placeholder="Application group">
-                    <mat-option *ngFor="let group of applicationGroups" [value]="group">{{group.name}}</mat-option>
-                </mat-select>
-            </mat-form-field>
-        </div>
+        <mat-form-field>
+            <mat-select [(ngModel)]="selectedApplicationGroup" placeholder="Application group">
+                <mat-option *ngFor="let group of applicationGroups" [value]="group">{{group.name}}</mat-option>
+            </mat-select>
+        </mat-form-field>
         <spotcafe-base-entity *ngIf="selectedApplicationGroup" [entity]="selectedApplicationGroup"></spotcafe-base-entity>
         <spotcafe-messages #updateApplicationGroupMessagesComponent></spotcafe-messages>
         <mat-card-actions *ngIf="selectedApplicationGroup">
@@ -31,33 +29,31 @@
         <mat-card-title>
             Existing application profiles
         </mat-card-title>
-        <div *ngIf="applicationProfiles && applicationProfiles.length">
+        <mat-form-field>
+            <mat-select [(ngModel)]="selectedApplicationProfile" placeholder="Application profile">
+                <mat-option *ngFor="let profile of applicationProfiles" [value]="profile">{{profile.profile.name}}</mat-option>
+            </mat-select>
+        </mat-form-field>
+        <div *ngIf="selectedApplicationProfile">
             <mat-form-field>
-                <mat-select [(ngModel)]="selectedApplicationProfile" placeholder="Application profile">
-                    <mat-option *ngFor="let profile of applicationProfiles" [value]="profile">{{profile.profile.name}}</mat-option>
-                </mat-select>
+                <input matInput [(ngModel)]="selectedApplicationProfile.profile.name" placeholder="Name" />
             </mat-form-field>
-            <div *ngIf="selectedApplicationProfile">
-                <mat-form-field>
-                    <input matInput [(ngModel)]="selectedApplicationProfile.profile.name" placeholder="Name" />
-                </mat-form-field>
-                <mat-form-field>
-                    <input matInput [(ngModel)]="selectedApplicationProfile.profile.description" placeholder="Description" />
-                </mat-form-field>
-                <spotcafe-messages #updateApplicationProfileMessagesComponent></spotcafe-messages>
-                <mat-card-actions>
-                    <button (click)="updateApplicationProfile(selectedApplicationProfile.profile)" mat-raised-button color="primary">Update profile '{{selectedApplicationProfile.profile.name}}'</button>
-                </mat-card-actions>
-                <div *ngIf="selectedApplicationProfile.files && selectedApplicationProfile.files.length">
-                    <h3>
-                        <span>Files:</span>
-                        <mat-checkbox [(ngModel)]="showProfileFilesImages">Show images</mat-checkbox>
-                    </h3>
-                    <mat-card *ngFor="let file of selectedApplicationProfile.files">
-                        <spotcafe-application-profile-file-list-item (removeSelected)="removeFileFromProfile(file.id)" [applicationProfileFile]="file"
-                            [showImage]="showProfileFilesImages"></spotcafe-application-profile-file-list-item>
-                    </mat-card>
-                </div>
+            <mat-form-field>
+                <input matInput [(ngModel)]="selectedApplicationProfile.profile.description" placeholder="Description" />
+            </mat-form-field>
+            <spotcafe-messages #updateApplicationProfileMessagesComponent></spotcafe-messages>
+            <mat-card-actions>
+                <button (click)="updateApplicationProfile(selectedApplicationProfile.profile)" mat-raised-button color="primary">Update profile '{{selectedApplicationProfile.profile.name}}'</button>
+            </mat-card-actions>
+            <div *ngIf="selectedApplicationProfile.files && selectedApplicationProfile.files.length">
+                <h3>
+                    <span>Files:</span>
+                    <mat-checkbox [(ngModel)]="showProfileFilesImages">Show images</mat-checkbox>
+                </h3>
+                <mat-card *ngFor="let file of selectedApplicationProfile.files">
+                    <spotcafe-application-profile-file-list-item (removeSelected)="removeFileFromProfile(file.id)" [applicationProfileFile]="file"
+                        [showImage]="showProfileFilesImages"></spotcafe-application-profile-file-list-item>
+                </mat-card>
             </div>
         </div>
     </mat-card>
@@ -100,19 +96,15 @@
             <button *ngFor="let segment of currentPathSegments; let i=index" (click)="segmentIndexSelected(i)" mat-raised-button>{{segment}}</button>
         </h3>
         <div class="device-directories-and-files">
-            <mat-list *ngIf="directories">
-                <h3>Directories:</h3>
-                <mat-list-item *ngFor="let dir of directories">
-                    <button (click)="subFolderSelected(dir)" mat-button class="folder-item-button">{{dir}}</button>
-                </mat-list-item>
-            </mat-list>
-            <mat-list *ngIf="files">
-                <h3>Files
-                    <span *ngIf="filter">({{filter}})</span>:</h3>
-                <mat-list-item *ngFor="let file of files">
-                    <button (click)="fileSelected(file)" mat-button class="folder-item-button">{{file}}</button>
-                </mat-list-item>
-            </mat-list>
+            <h3>Directories:</h3>
+            <mat-list-item *ngFor="let dir of directories">
+                <button (click)="subFolderSelected(dir)" mat-button class="folder-item-button">{{dir}}</button>
+            </mat-list-item>
+            <h3>Files
+                <span *ngIf="filter">({{filter}})</span>:</h3>
+            <mat-list-item *ngFor="let file of files">
+                <button (click)="fileSelected(file)" mat-button class="folder-item-button">{{file}}</button>
+            </mat-list-item>
         </div>
     </mat-card>
 </div>

@@ -11,22 +11,20 @@
             <button (click)="loadSettings(nameSearchText)" mat-raised-button color="primary">Refresh</button>
         </div>
     </mat-card>
-    <mat-card>
-        <div *ngIf="settings && settings.length">
-            <mat-card-title *ngIf="nameSearchText">Settings filtered by '{{nameSearchText}}'</mat-card-title>
-            <mat-card-title *ngIf="!nameSearchText">All settings</mat-card-title>
-            <spotcafe-messages #updateSettingMessagesComponent></spotcafe-messages>
-            <mat-card *ngFor="let setting of settings">
-                <mat-form-field class="setting-name">
-                    <input spotcafeNotChangeable matInput placeholder="Name" value="{{setting.name}}" />
-                </mat-form-field>
-                <mat-form-field [class.full-width]="setting.dataType === 'multiline-text'">
-                    <input *ngIf="setting.dataType !== 'multiline-text'" [(ngModel)]="setting.value" matInput placeholder="Value ({{setting.dataType}})"
-                    />
-                    <textarea *ngIf="setting.dataType === 'multiline-text'" [(ngModel)]="setting.value" matInput rows="8" placeholder="Value ({{setting.dataType}})"></textarea>
-                </mat-form-field>
-                <button (click)="updateSetting(setting)" mat-raised-button color="primary">Update</button>
-            </mat-card>
-        </div>
+    <mat-card *ngIf="settings && settings.length">
+        <mat-card-title *ngIf="nameSearchText">Settings filtered by '{{nameSearchText}}'</mat-card-title>
+        <mat-card-title *ngIf="!nameSearchText">All settings</mat-card-title>
+        <spotcafe-messages #updateSettingMessagesComponent></spotcafe-messages>
+        <mat-card *ngFor="let setting of settings">
+            <mat-form-field class="setting-name">
+                <input spotcafeNotChangeable matInput placeholder="Name" value="{{setting.name}}" />
+            </mat-form-field>
+            <mat-form-field [class.full-width]="setting.dataType === 'multiline-text'">
+                <input *ngIf="setting.dataType !== 'multiline-text'" [(ngModel)]="setting.value" matInput placeholder="Value ({{setting.dataType}})"
+                />
+                <textarea *ngIf="setting.dataType === 'multiline-text'" [(ngModel)]="setting.value" matInput rows="8" placeholder="Value ({{setting.dataType}})"></textarea>
+            </mat-form-field>
+            <button (click)="updateSetting(setting)" mat-raised-button color="primary">Update</button>
+        </mat-card>
     </mat-card>
 </div>

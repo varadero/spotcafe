@@ -1,7 +1,7 @@
 <div class="settings-feature card-container">
     <mat-card>
         <mat-card-title>Existing roles</mat-card-title>
-        <mat-form-field *ngIf="rolesWithPermissions && permissions">
+        <mat-form-field>
             <mat-select [(ngModel)]="selectedRoleWithPermissions" placeholder="Role">
                 <mat-option *ngFor="let roleWithPermissions of rolesWithPermissions" [value]="roleWithPermissions">{{roleWithPermissions.role.name}}</mat-option>
             </mat-select>

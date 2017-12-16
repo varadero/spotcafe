@@ -2,7 +2,7 @@
     <mat-card>
         <mat-card-title>Existing employees</mat-card-title>
         <spotcafe-messages #loadEmployeesMessagesComponent></spotcafe-messages>
-        <mat-form-field *ngIf="employeesWithRoles && roles">
+        <mat-form-field>
             <mat-select [(ngModel)]="selectedEmployeeWithRoles" placeholder="Employee">
                 <mat-option *ngFor="let employeeWithRole of employeesWithRoles" [value]="employeeWithRole">{{employeeWithRole.employee.username}} ({{employeeWithRole.employee.firstName}} {{employeeWithRole.employee.lastName}})</mat-option>
             </mat-select>

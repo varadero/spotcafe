@@ -1,13 +1,11 @@
 <div class="settings-feature card-container">
     <mat-card>
         <mat-card-title>Existing clients</mat-card-title>
-        <div *ngIf="clients && clients.length">
-            <mat-form-field>
-                <mat-select [(ngModel)]="selectedClient" placeholder="Client">
-                    <mat-option *ngFor="let client of clients" [value]="client">{{client.client.username}} ({{client.client.firstName}} {{client.client.lastName}})</mat-option>
-                </mat-select>
-            </mat-form-field>
-        </div>
+        <mat-form-field>
+            <mat-select [(ngModel)]="selectedClient" placeholder="Client">
+                <mat-option *ngFor="let client of clients" [value]="client">{{client.client.username}} ({{client.client.firstName}} {{client.client.lastName}})</mat-option>
+            </mat-select>
+        </mat-form-field>
         <div *ngIf="selectedClient">
             <spotcafe-client [clientDisplay]="selectedClient" [hideUsername]="true" [hidePasswords]="true" [hideCredit]="false"></spotcafe-client>
             <spotcafe-messages #updateClientMessagesComponent></spotcafe-messages>

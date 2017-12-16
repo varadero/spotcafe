@@ -2,7 +2,7 @@
     <mat-card>
         <mat-card-title>Existing client devices</mat-card-title>
         <spotcafe-messages #loadClientDevicesMessagesComponent></spotcafe-messages>
-        <div *ngIf="clientDevices && clientDevices.length" class="client-device">
+        <div class="client-device">
             <spotcafe-client-device *ngFor="let device of clientDevices" [clientDeviceDisplay]="device" (update)="updateDevice(device)"></spotcafe-client-device>
         </div>
     </mat-card>

@@ -2,7 +2,7 @@
     <mat-card>
         <mat-card-title>Existing devices groups</mat-card-title>
         <spotcafe-messages #loadDevicesGroupsMessagesComponent></spotcafe-messages>
-        <mat-form-field *ngIf="devicesGroups && devicesGroups.length">
+        <mat-form-field>
             <mat-select [(ngModel)]="selectedDeviceGroup" (change)="existingDeviceGroupSelected($event.value)" placeholder="Device group">
                 <mat-option *ngFor="let deviceGroup of devicesGroups" [value]="deviceGroup">{{deviceGroup.name}}</mat-option>
             </mat-select>
@@ -17,7 +17,7 @@
             <mat-form-field>
                 <input matInput [(ngModel)]="selectedDeviceGroup.pricePerHour" placeholder="Price per hour" />
             </mat-form-field>
-            <mat-form-field *ngIf="applicationProfiles">
+            <mat-form-field>
                 <mat-select [(ngModel)]="selectedApplicationProfileForExistingGroup" placeholder="Application profile">
                     <mat-option *ngFor="let profile of applicationProfiles" [value]="profile">{{profile.name}}</mat-option>
                 </mat-select>
@@ -36,7 +36,7 @@
         <mat-form-field>
             <input matInput [(ngModel)]="newDeviceGroup.description" placeholder="Description" />
         </mat-form-field>
-        <mat-form-field *ngIf="applicationProfiles">
+        <mat-form-field>
             <mat-select [(ngModel)]="selectedApplicationProfileForNewGroup" placeholder="Application profile">
                 <mat-option *ngFor="let profile of applicationProfiles" [value]="profile">{{profile.name}}</mat-option>
             </mat-select>
