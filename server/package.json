@@ -22,7 +22,7 @@
     "rxjs": "^5.5.2",
     "tedious": "^2.0.0",
     "uuid": "^3.1.0",
-    "ws": "^3.2.0"
+    "ws": "^3.3.1"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^7.2.3",
