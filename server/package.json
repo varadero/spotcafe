@@ -16,7 +16,7 @@
   "dependencies": {
     "koa": "^2.3.0",
     "koa-bodyparser": "^4.2.0",
-    "koa-jwt": "^3.2.2",
+    "koa-jwt": "^4.0.4",
     "koa-route": "^3.2.0",
     "koa-static": "^4.0.1",
     "rxjs": "^5.5.2",
